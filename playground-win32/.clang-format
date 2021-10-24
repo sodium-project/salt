@@ -1,0 +1,33 @@
+---
+Language:                                       Cpp
+BasedOnStyle:                                   LLVM
+AccessModifierOffset:                           -4
+ColumnLimit:                                    120
+ConstructorInitializerIndentWidth:              8
+ContinuationIndentWidth:                        8
+IndentPPDirectives:                             AfterHash
+IndentWidth:                                    4
+PointerAlignment:                               Left
+ReflowComments:                                 true
+Standard:                                       c++20
+UseTab:                                         Never
+AlignConsecutiveAssignments:                    Consecutive
+AlignConsecutiveBitFields:                      true
+AlignConsecutiveDeclarations:                   true
+AlignConsecutiveMacros:                         true
+AllowShortBlocksOnASingleLine:                  Empty
+AllowShortCaseLabelsOnASingleLine:              false
+AllowShortFunctionsOnASingleLine:               Empty
+AllowShortIfStatementsOnASingleLine:            Never
+AllowShortLambdasOnASingleLine:                 Empty
+AllowShortLoopsOnASingleLine:                   false
+BreakConstructorInitializers:                   BeforeColon
+---
+Language:                                       ObjC
+BasedOnStyle:                                   LLVM
+ColumnLimit:                                    120
+IndentWidth:                                    4
+PointerAlignment:                               Left
+IndentPPDirectives:                             AfterHash
+AlignConsecutiveAssignments:                    Consecutive
+ObjCSpaceBeforeProtocolList:                    false
