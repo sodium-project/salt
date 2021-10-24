@@ -10,4 +10,4 @@
 [submodule "libs/glad"]
 	path = libs/glad
 	url = https://github.com/Dav1dde/glad.git
-	branch = glad2
+	branch = master
