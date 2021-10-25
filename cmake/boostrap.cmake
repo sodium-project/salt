@@ -16,6 +16,8 @@ execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
                 RESULT_VARIABLE COMMAND_RESULT)
 if(NOT COMMAND_RESULT EQUAL "0")
     message(FATAL_ERROR "Failed to update Git submodules.")
+else()
+    message(STATUS "Git submodules are already up-to-date.")
 endif()
 
 ########################################################################################################################
