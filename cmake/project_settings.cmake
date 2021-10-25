@@ -96,15 +96,206 @@ function(salt_win32_app _NAME)
         message(FATAL_ERROR " Target '${_NAME}' has no sources.\n"
                             " Perhaps you have forgotten to provide the SOURCES argument?")
     endif()
-    set(SALT_APP_NAME "salt_${_NAME}")
-    add_executable("${SALT_APP_NAME}")
-    target_sources("${SALT_APP_NAME}" PRIVATE "${_SALT_WIN32_APP_SOURCES}")
-    target_link_libraries("${SALT_APP_NAME}" PRIVATE salt::project_settings)
+    add_executable("salt_${_NAME}")
+    target_sources("salt_${_NAME}" PRIVATE "${_SALT_WIN32_APP_SOURCES}")
+    target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
     if(_SALT_WIN32_APP_LINK)
-        target_link_libraries("${SALT_APP_NAME}" PRIVATE "${_SALT_WIN32_APP_LINK}")
+        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_WIN32_APP_LINK}")
     endif()
-    install(TARGETS "${SALT_APP_NAME}" RUNTIME DESTINATION "salt-${_NAME}")
+    install(TARGETS "salt_${_NAME}"
+            RUNTIME DESTINATION "salt-${_NAME}")
 endfunction(salt_win32_app)
+
+function(salt_macosx_app _NAME)
+    if(NOT SALT_TARGET_OS STREQUAL "MacOSX")
+        message("Target '${_NAME}' is ignored because the target OS is set to '${SALT_TARGET_OS}'.")
+        return()
+    endif()
+    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
+                          _SALT_MACOSX_APP
+                          ""                    # options
+                          "BUNDLE_NAME"         # one   value keywords
+                          "SOURCES;LINK")       # multi value keywords
+    if(NOT _SALT_MACOSX_APP_SOURCES)
+        message(FATAL_ERROR " Target '${_NAME}' has no sources.\n"
+                            " Perhaps you have forgotten to provide the SOURCES argument?")
+    endif()
+    if(NOT _SALT_MACOSX_BUNDLE_NAME)
+        set(_SALT_MACOSX_BUNDLE_NAME "${_NAME}")
+    endif()
+    add_executable("salt_${_NAME}" MACOSX_BUNDLE)
+    set_target_properties("salt_${_NAME}" PROPERTIES
+                          MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}")
+    target_sources("salt_${_NAME}" PRIVATE "${_SALT_MACOSX_APP_SOURCES}")
+    target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
+    target_link_libraries("salt_${_NAME}" PRIVATE "-framework AppKit")
+    if(_SALT_MACOSX_APP_LINK)
+        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_MACOSX_APP_LINK}")
+    endif()
+    install(TARGETS "salt_${_NAME}"
+            BUNDLE DESTINATION "salt-${_NAME}")
+endfunction(salt_macosx_app)
+
+# This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
+# it unless you know what you are doing.
+macro(_salt_unit_tests _ARG_NAME _TESTS_SOURCE _ARG_TEST_LINK)
+    if(_TESTS_SOURCE)
+        find_package(Catch2 REQUIRED)
+        set(_TESTS "salt_${_ARG_NAME}_tests")
+        add_executable("${_TESTS}")
+        target_sources("${_TESTS}" PRIVATE "${_TESTS_SOURCE}")
+        target_link_libraries("${_TESTS}"
+                              PRIVATE Catch2::Catch2
+                                      "salt::${_ARG_NAME}"
+                                      "${_ARG_TEST_LINK}")
+        install(TARGETS "${_TESTS}"
+                RUNTIME DESTINATION "salt-${_ARG_NAME}/bin")
+    endif()
+endmacro(_salt_unit_tests)
+
+# This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
+# it unless you know what you are doing.
+macro(_salt_install_headers _ARG_NAME)
+    install(DIRECTORY   "${CMAKE_CURRENT_LIST_DIR}/salt"
+            DESTINATION "salt-${_ARG_NAME}/include"
+            FILES_MATCHING PATTERN "*.hpp")
+endmacro(_salt_install_headers)
+
+# salt_static_library(<name>
+#                     [<DEBUG>]
+#                     [<MACOSX_SOURCE>    <item>...]
+#                     [<MACOSX_TEST>      <item>...]
+#                     [<COMMON_SOURCE>    <item>...]
+#                     [<COMMON_TEST>      <item>...]
+#                     [<PUBLIC_LINK>      <item>...]
+#                     [<PRIVATE_LINK>     <item>...]
+#                     [<TEST_LINK>        <item>...])
+#
+# Build and install a static library and its unit tests.
+#
+# The `DEBUG` option causes the function to print a debug message. You don't have to use this option
+# unless you're trying to debug the funciton itself.
+#
+# The `MACOSX_SOURCE` option specifies a list of source files which are specific to MacOSX.
+# The `MACOSX_TEST` option specifies a list of unit tests which are specific to MacOSX.
+#
+# The `COMMON_SOURCE` option specifies a list of platform-independent source files.
+# The `COMMON_TEST` option specifies a list of platform-independent unit tests.
+#
+# The `PUBLIC_LINK` option specifies a list of libraries and targets which are link dependencies of the
+# library. They are made part of its link interface.
+#
+# The `PRIVATE_LINK` option specifies a list of libraries and targets which are link dependencies of the
+# library. They are not made part of its link interface.
+#
+# The `TEST_LINK` option specifies a list of libraries and targets which are link dependencies of the
+# unit tests.
+function(salt_static_library _ARG_NAME)
+    set(_MULTI_VALUE_KEYWORDS
+        MACOSX_SOURCE       # MacOSX-specific source code
+        MACOSX_TEST         # MacOSX-specific unit tests
+        COMMON_SOURCE       # common source code
+        COMMON_TEST         # common unit tests
+        PUBLIC_LINK         # public link libraries
+        PRIVATE_LINK        # private link libraries
+        TEST_LINK)          # tests-specific link libraries
+    cmake_parse_arguments(PARSE_ARGV 1                  # start at the 1st argument
+                          _ARG                          # variable prefix
+                          "DEBUG"                       # options
+                          ""                            # one value keywords
+                          "${_MULTI_VALUE_KEYWORDS}")   # multi value kewywords
+    if(_ARG_DEBUG)
+        message(" (DEBUG) salt_static_library:\n"
+                " NAME:             [${_ARG_NAME}]\n"
+                " DEBUG:            [${_ARG_DEBUG}]\n"
+                " MACOSX_SOURCE:    [${_ARG_MACOSX_SOURCE}]\n"
+                " MACOSX_TEST:      [${_ARG_MACOSX_TEST}]\n"
+                " COMMON_SOURCE:    [${_ARG_COMMON_SOURCE}]\n"
+                " COMMON_TEST:      [${_ARG_COMMON_TEST}]\n"
+                " PUBLIC_LINK:      [${_ARG_PUBLIC_LINK}]\n"
+                " PRIVATE_LINK:     [${_ARG_PRIVATE_LINK}]\n"
+                " TEST_LINK:        [${_ARG_TEST_LINK}]")
+    endif()
+    set(_TARGET_SOURCE "${_ARG_COMMON_SOURCE}")
+    set(_TESTS_SOURCE  "${_ARG_COMMON_TEST}")
+    if(SALT_TARGET_VENDOR STREQUAL "Apple")
+        if(SALT_TARGET_OS STREQUAL "MacOSX")
+            list(APPEND _TARGET_SOURCE "${_ARG_MACOSX_SOURCE}")
+            list(APPEND _TESTS_SOURCE  "${_ARG_MACOSX_TEST}")
+        endif()
+    endif()
+    set(_TARGET "salt_${_ARG_NAME}")
+    add_library("${_TARGET}" STATIC)
+    add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
+    target_include_directories("${_TARGET}" PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
+    target_link_libraries("${_TARGET}"
+                          PUBLIC  salt::project_settings
+                                  "${_ARG_PUBLIC_LINK}"
+                          PRIVATE "${_ARG_PRIVATE_LINK}")
+    target_sources("${_TARGET}" PRIVATE "${_TARGET_SOURCE}")
+    install(TARGETS "${_TARGET}"
+            ARCHIVE DESTINATION "salt-${_ARG_NAME}/lib")
+    _salt_install_headers("${_ARG_NAME}")
+    _salt_unit_tests("${_ARG_NAME}" "${_TESTS_SOURCE}" "${_ARG_TEST_LINK}")
+endfunction(salt_static_library)
+
+# salt_interface_library(<name>
+#                        [<DEBUG>]
+#                        [<MACOSX_TEST>      <item>...]
+#                        [<COMMON_TEST>      <item>...]
+#                        [<PUBLIC_LINK>      <item>...]
+#                        [<TEST_LINK>        <item>...])
+#
+# Build and install an interface (aka header-only) library and its unit tests.
+#
+# The `DEBUG` option causes the function to print a debug message. You don't have to use this option
+# unless you're trying to debug the funciton itself.
+#
+# The `MACOSX_TEST` option specifies a list of unit tests which are specific to MacOSX.
+#
+# The `COMMON_TEST` option specifies a list of platform-independent unit tests.
+#
+# The `PUBLIC_LINK` option specifies a list of libraries and targets which are link dependencies of the
+# library. They are made part of its link interface.
+#
+# The `TEST_LINK` option specifies a list of libraries and targets which are link dependencies of the
+# unit tests.
+function(salt_interface_library _ARG_NAME)
+    set(_MULTI_VALUE_KEYWORDS
+        MACOSX_TEST         # MacOSX-specific unit tests
+        COMMON_TEST         # common unit tests
+        PUBLIC_LINK         # public link libraries
+        TEST_LINK)          # tests-specific link libraries
+    cmake_parse_arguments(PARSE_ARGV 1                  # start at the 1st argument
+                          _ARG                          # variable prefix
+                          "DEBUG"                       # options
+                          ""                            # one value keywords
+                          "${_MULTI_VALUE_KEYWORDS}")   # multi value kewywords
+    if(_ARG_DEBUG)
+        message(" (DEBUG) salt_static_library:\n"
+                " NAME:             [${_ARG_NAME}]\n"
+                " DEBUG:            [${_ARG_DEBUG}]\n"
+                " MACOSX_TEST:      [${_ARG_MACOSX_TEST}]\n"
+                " COMMON_TEST:      [${_ARG_COMMON_TEST}]\n"
+                " PUBLIC_LINK:      [${_ARG_PUBLIC_LINK}]\n"
+                " TEST_LINK:        [${_ARG_TEST_LINK}]")
+    endif()
+    set(_TESTS_SOURCE  "${_ARG_COMMON_TEST}")
+    if(SALT_TARGET_VENDOR STREQUAL "Apple")
+        if(SALT_TARGET_OS STREQUAL "MacOSX")
+            list(APPEND _TESTS_SOURCE  "${_ARG_MACOSX_TEST}")
+        endif()
+    endif()
+    set(_TARGET "salt_${_ARG_NAME}")
+    add_library("${_TARGET}" INTERFACE)
+    add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
+    target_include_directories("${_TARGET}" INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
+    target_link_libraries("${_TARGET}"
+                          INTERFACE salt::project_settings
+                                    "${_ARG_PUBLIC_LINK}")
+    _salt_install_headers("${_ARG_NAME}")
+    _salt_unit_tests("${_ARG_NAME}" "${_TESTS_SOURCE}" "${_ARG_TEST_LINK}")
+endfunction(salt_interface_library)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Build type.
@@ -118,15 +309,52 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Link time optimization.
+#-----------------------------------------------------------------------------------------------------------------------
+
+if(CMAKE_BUILD_TYPE MATCHES "Release")
+    option(SALT_ENABLE_LTO "Enable link time optimization. This is only valid for Release builds." YES)
+endif()
+
+if(SALT_ENABLE_LTO)
+    # The code below changes the CMAKE_<LANG>_FLAGS and CMAKE_<LANG>_LINK_FLAGS variables. It does this for a good
+    # reason. Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
+
+    # For LTO to work, we have to pass `-flto` flag to the compiler both at compile...
+    string(APPEND CMAKE_C_FLAGS      " -flto")
+    string(APPEND CMAKE_CXX_FLAGS    " -flto")
+    string(APPEND CMAKE_OBJC_FLAGS   " -flto")
+    string(APPEND CMAKE_OBJCXX_FLAGS " -flto")
+
+    # and link time.
+    string(APPEND CMAKE_C_LINKER_FLAGS      " -flto")
+    string(APPEND CMAKE_CXX_LINKER_FLAGS    " -flto")
+    string(APPEND CMAKE_OBJC_LINKER_FLAGS   " -flto")
+    string(APPEND CMAKE_OBJCXX_LINKER_FLAGS " -flto")
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Enable colored diagnostics.
 #-----------------------------------------------------------------------------------------------------------------------
 
-if(CMAKE_CXX_COMPILER MATCHES ".*Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(salt::project_settings INTERFACE -fcolor-diagnostics)
 endif()
 
-if(CMAKE_CXX_COMPILER MATCHES "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(salt::project_settings INTERFACE -fdiagnostics-color=always)
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Compiler cache.
+#-----------------------------------------------------------------------------------------------------------------------
+
+find_program(SALT_CCACHE_COMMAND ccache)
+
+if(SALT_CCACHE_COMMAND)
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${SALT_CCACHE_COMMAND})
+else()
+    message(WARNING "Cannot find ccache. Incremental builds may get slower.")
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -185,30 +413,32 @@ option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO
 option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
 option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
 
-if((ENABLE_SANITIZER_LEAK OR ENABLE_SANITIZER_ADDRESS) AND ENABLE_SANITIZER_THREAD)
+if((SALT_ENABLE_SANITIZER_LEAK OR SALT_ENABLE_SANITIZER_ADDRESS) AND SALT_ENABLE_SANITIZER_THREAD)
     message(WARNING "Thread sanitizer does not work with Address or Leak sanitizer enabled.")
 endif()
 
-set(SANITIZERS "")
+set(SALT_SANITIZERS "")
 
-if(ENABLE_SANITIZER_ADDRESS)
-    list(APPEND SANITIZERS "address")
+if(SALT_ENABLE_SANITIZER_ADDRESS)
+    list(APPEND SALT_SANITIZERS "address")
 endif()
 
-if(ENABLE_SANITIZER_THREAD)
-    list(APPEND SANITIZERS "thread")
+if(SALT_ENABLE_SANITIZER_THREAD)
+    list(APPEND SALT_SANITIZERS "thread")
 endif()
 
-if(ENABLE_SANITIZER_UNDEFINED)
-    list(APPEND SANITIZERS "undefined")
+if(SALT_ENABLE_SANITIZER_UNDEFINED)
+    list(APPEND SALT_SANITIZERS "undefined")
 endif()
 
-if(ENABLE_SANITIZER_LEAK)
-    list(APPEND SANITIZERS "leak")
+if(SALT_ENABLE_SANITIZER_LEAK)
+    list(APPEND SALT_SANITIZERS "leak")
 endif()
 
-list(JOIN SANITIZERS "," ENABLED_SANITIZERS)
+list(JOIN SALT_SANITIZERS "," SALT_ENABLED_SANITIZERS)
 
-target_compile_options(salt::project_settings INTERFACE -fsanitize=${ENABLED_SANITIZERS})
+target_compile_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
 
-target_link_options(salt::project_settings INTERFACE -fsanitize=${ENABLED_SANITIZERS})
+target_link_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
+
+# code: language="CMake" insertSpaces=true tabSize=4
