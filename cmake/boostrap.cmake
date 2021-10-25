@@ -38,9 +38,18 @@ set(SALT_CMAKE_ARGUMENTS
 )
 
 if(SALT_TARGET_OS STREQUAL "MacOSX")
-    string(APPEND SALT_CMAKE_ARGUMENTS " -DCMAKE_OSX_ARCHITECTURES=${CMAKE_SYSTEM_PROCESSOR}")
-    string(APPEND SALT_CMAKE_ARGUMENTS " -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
-    string(APPEND SALT_CMAKE_ARGUMENTS " -DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}")
+
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJC_COMPILER=${CMAKE_OBJC_COMPILER}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJCXX_COMPILER=${CMAKE_OBJCXX_COMPILER}")
+
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJC_FLAGS=${CMAKE_OBJC_FLAGS}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJCXX_FLAGS=${CMAKE_OBJCXX_FLAGS}")
+
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJC_LINKER_FLAGS=${CMAKE_OBJC_LINKER_FLAGS}")
+    list(APPEND SALT_CMAKE_ARGUMENTS "-DCMAKE_OBJCXX_LINKER_FLAGS=${CMAKE_OBJCXX_LINKER_FLAGS}")
 endif()
 
 ########################################################################################################################
@@ -82,72 +91,78 @@ endif()
 # Configure, build, and install GLFW.
 ########################################################################################################################
 
-message(" ==============================================================================\n"
-        " Configuring GLFW, please wait...\n"
-        " ==============================================================================")
-execute_process(COMMAND ${CMAKE_COMMAND}
-                        -B${CMAKE_BINARY_DIR}/libs/glfw
-                        -S${CMAKE_SOURCE_DIR}/libs/glfw
-                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
-                        -DENKITS_BUILD_EXAMPLES=OFF
-                        -DGLFW_BUILD_EXAMPLES=OFF
-                        -DGLFW_BUILD_TESTS=OFF
-                        -DGLFW_BUILD_DOCS=OFF
-                        -DGLFW_BUILD_INSTALL=OFF
-                        ${SALT_CMAKE_ARGUMENTS}
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                RESULT_VARIABLE COMMAND_RESULT
-                COMMAND_ECHO STDOUT)
-if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to configure GLFW.")
-endif()
+if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
+    message(" ==============================================================================\n"
+            " Configuring GLFW, please wait...\n"
+            " ==============================================================================")
+    execute_process(COMMAND ${CMAKE_COMMAND}
+                            -B${CMAKE_BINARY_DIR}/libs/glfw
+                            -S${CMAKE_SOURCE_DIR}/libs/glfw
+                            -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
+                            -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
+                            -DENKITS_BUILD_EXAMPLES=OFF
+                            -DGLFW_BUILD_EXAMPLES=OFF
+                            -DGLFW_BUILD_TESTS=OFF
+                            -DGLFW_BUILD_DOCS=OFF
+                            -DGLFW_BUILD_INSTALL=OFF
+                            ${SALT_CMAKE_ARGUMENTS}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    RESULT_VARIABLE COMMAND_RESULT
+                    COMMAND_ECHO STDOUT)
+    if(NOT COMMAND_RESULT STREQUAL "0")
+        message(FATAL_ERROR "Failed to configure GLFW.")
+    endif()
 
-message(" ==============================================================================\n"
-        " Building and installing GLFW, please wait...\n"
-        " ==============================================================================")
-execute_process(COMMAND ${CMAKE_COMMAND}
-                        --build ${CMAKE_BINARY_DIR}/libs/glfw
-                        --target install
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                RESULT_VARIABLE COMMAND_RESULT
-                COMMAND_ECHO STDOUT)
-if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to install GLFW.")
+    message(" ==============================================================================\n"
+            " Building and installing GLFW, please wait...\n"
+            " ==============================================================================")
+    execute_process(COMMAND ${CMAKE_COMMAND}
+                            --build ${CMAKE_BINARY_DIR}/libs/glfw
+                            --target install
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    RESULT_VARIABLE COMMAND_RESULT
+                    COMMAND_ECHO STDOUT)
+    if(NOT COMMAND_RESULT STREQUAL "0")
+        message(FATAL_ERROR "Failed to install GLFW.")
+    endif()
 endif()
 
 ########################################################################################################################
 # Configure, build, and install glad.
 ########################################################################################################################
 
-message(" ==============================================================================\n"
-        " Configuring glad, please wait...\n"
-        " ==============================================================================")
-execute_process(COMMAND ${CMAKE_COMMAND}
-                        -B${CMAKE_BINARY_DIR}/libs/glad
-                        -S${CMAKE_SOURCE_DIR}/libs/glad
-                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
-                        -DGLAD_PROFILE=core
-                        -DGLAD_API="gl=4.6" # API type/version pairs, like \"gl=3.2,gles=\", no version means latest
-                        -DGLAD_INSTALL=ON
-                        ${SALT_CMAKE_ARGUMENTS}
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                RESULT_VARIABLE COMMAND_RESULT
-                COMMAND_ECHO STDOUT)
-if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to configure glad.")
-endif()
+if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
+    message(" ==============================================================================\n"
+            " Configuring glad, please wait...\n"
+            " ==============================================================================")
+    execute_process(COMMAND ${CMAKE_COMMAND}
+                            -B${CMAKE_BINARY_DIR}/libs/glad
+                            -S${CMAKE_SOURCE_DIR}/libs/glad
+                            -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
+                            -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
+                            -DGLAD_PROFILE=core
+                            -DGLAD_API="gl=4.6" # API type/version pairs, like "gl=3.2,gles=", no version means latest
+                            -DGLAD_INSTALL=ON
+                            ${SALT_CMAKE_ARGUMENTS}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    RESULT_VARIABLE COMMAND_RESULT
+                    COMMAND_ECHO STDOUT)
+    if(NOT COMMAND_RESULT STREQUAL "0")
+        message(FATAL_ERROR "Failed to configure glad.")
+    endif()
 
-message(" ==============================================================================\n"
-        " Building and installing glad, please wait...\n"
-        " ==============================================================================")
-execute_process(COMMAND ${CMAKE_COMMAND}
-                        --build ${CMAKE_BINARY_DIR}/libs/glad
-                        --target install
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                RESULT_VARIABLE COMMAND_RESULT
-                COMMAND_ECHO STDOUT)
-if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to install glad.")
+    message(" ==============================================================================\n"
+            " Building and installing glad, please wait...\n"
+            " ==============================================================================")
+    execute_process(COMMAND ${CMAKE_COMMAND}
+                            --build ${CMAKE_BINARY_DIR}/libs/glad
+                            --target install
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    RESULT_VARIABLE COMMAND_RESULT
+                    COMMAND_ECHO STDOUT)
+    if(NOT COMMAND_RESULT STREQUAL "0")
+        message(FATAL_ERROR "Failed to install glad.")
+    endif()
 endif()
 
 ########################################################################################################################
@@ -160,6 +175,10 @@ message(" ======================================================================
 file(WRITE "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
 [[cmake_minimum_required(VERSION 3.20)
 project(imgui CXX)
+
+if(MSVC AND NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 add_library(imgui STATIC)
 target_include_directories(imgui PRIVATE "${IMGUI_ROOT}")
@@ -181,7 +200,7 @@ install(TARGETS imgui)
 ]])
 
 # This target is OpenGL-Windows-specific.
-if(SALT_TARGET_OS STREQUAL "Windows")
+if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
     file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
     [[add_library(imgui_opengl_win32 STATIC)
     target_include_directories(imgui_opengl_win32 PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
@@ -198,7 +217,7 @@ if(SALT_TARGET_OS STREQUAL "Windows")
 endif()
 
 # This target is Metal-MacOSX-specific.
-if(SALT_TARGET_OS STREQUAL "MacOSX")
+if(SALT_TARGET_GRAPHICS STREQUAL "Metal" AND SALT_TARGET_OS STREQUAL "MacOSX")
     file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
     [[enable_language(OBJCXX)
 
@@ -225,6 +244,7 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -B${CMAKE_BINARY_DIR}/libs/imgui
                         -S${CMAKE_BINARY_DIR}/generated/libs/imgui
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/imgui
+                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
                         -DIMGUI_ROOT=${CMAKE_SOURCE_DIR}/libs/imgui
                         -DGLFW_ROOT=${CMAKE_SOURCE_DIR}/libs/glfw
                         -DGLAD_ROOT=${CMAKE_SOURCE_DIR}/cmake/modules
