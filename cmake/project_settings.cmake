@@ -321,12 +321,12 @@ if(SALT_ENABLE_LTO)
     # reason. Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
 
     # For LTO to work, we have to pass `-flto` flag to the compiler both at compile...
-    string(APPEND CMAKE_C_FLAGS      " -flto")
-    string(APPEND CMAKE_CXX_FLAGS    " -flto")
+    string(APPEND CMAKE_C_FLAGS   " -flto")
+    string(APPEND CMAKE_CXX_FLAGS " -flto")
 
     # and link time.
-    string(APPEND CMAKE_C_LINKER_FLAGS      " -flto")
-    string(APPEND CMAKE_CXX_LINKER_FLAGS    " -flto")
+    string(APPEND CMAKE_C_LINKER_FLAGS   " -flto")
+    string(APPEND CMAKE_CXX_LINKER_FLAGS " -flto")
 
     if(SALT_TARGET_OS STREQUAL "MacOSX")
         # And the same thing for Obj-C/CXX compiler...
