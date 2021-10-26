@@ -209,13 +209,13 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
     [[add_library(imgui_opengl_win32 STATIC)
     target_include_directories(imgui_opengl_win32 PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
     target_sources(imgui_opengl_win32 PRIVATE
-                "${IMGUI_ROOT}/backends/imgui_impl_glfw.cpp"
-                "${IMGUI_ROOT}/backends/imgui_impl_opengl3.cpp")
+                   "${IMGUI_ROOT}/backends/imgui_impl_glfw.cpp"
+                   "${IMGUI_ROOT}/backends/imgui_impl_opengl3.cpp")
     set(IMGUI_OPENGL_WIN32_PRIVATE_HEADERS
         "${IMGUI_ROOT}/backends/imgui_impl_glfw.h"
         "${IMGUI_ROOT}/backends/imgui_impl_opengl3.h")
     set_target_properties(imgui_opengl_win32 PROPERTIES
-                        PRIVATE_HEADER "${IMGUI_OPENGL_WIN32_PRIVATE_HEADERS}")
+                          PRIVATE_HEADER "${IMGUI_OPENGL_WIN32_PRIVATE_HEADERS}")
     install(TARGETS imgui_opengl_win32)
     ]])
 endif()
@@ -229,13 +229,13 @@ if(SALT_TARGET_GRAPHICS STREQUAL "Metal" AND SALT_TARGET_OS STREQUAL "MacOSX")
     target_include_directories(imgui_metal_macosx PRIVATE "${IMGUI_ROOT}")
     target_compile_options(imgui_metal_macosx PRIVATE -fobjc-arc)
     target_sources(imgui_metal_macosx PRIVATE
-                "${IMGUI_ROOT}/backends/imgui_impl_metal.mm"
-                "${IMGUI_ROOT}/backends/imgui_impl_osx.mm")
+                   "${IMGUI_ROOT}/backends/imgui_impl_metal.mm"
+                   "${IMGUI_ROOT}/backends/imgui_impl_osx.mm")
     set(IMGUI_MACOSX_PRIVATE_HEADERS
         "${IMGUI_ROOT}/backends/imgui_impl_metal.h"
         "${IMGUI_ROOT}/backends/imgui_impl_osx.h")
     set_target_properties(imgui_metal_macosx PROPERTIES
-                        PRIVATE_HEADER "${IMGUI_MACOSX_PRIVATE_HEADERS}")
+                          PRIVATE_HEADER "${IMGUI_MACOSX_PRIVATE_HEADERS}")
     target_link_libraries(imgui_metal_macosx PRIVATE "-framework Metal" "-framework AppKit")
     install(TARGETS imgui_metal_macosx)
     ]])

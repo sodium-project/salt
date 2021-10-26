@@ -12,27 +12,84 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 # Detect and initialize the target platform.
 #-----------------------------------------------------------------------------------------------------------------------
 
+# This function is required to get the correct target architecture because the CMAKE_SYSTEM_PROCESSOR
+# variable does not always guarantee that it will correspond to the target architecture for the build.
+# See: https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_PROCESSOR.html
+function(salt_set_target_architecture output_var)
+    # On MacOSX we use `CMAKE_OSX_ARCHITECTURES` *if* it was set.
+    if(APPLE AND CMAKE_OSX_ARCHITECTURES)
+        list(LENGTH CMAKE_OSX_ARCHITECTURES _ARCH_COUNT)
+        if(_ARCH_COUNT STREQUAL "1")
+            if(CMAKE_OSX_ARCHITECTURES STREQUAL "x86_64")
+                set(_SALT_TARGET_ARCH "x86_64" CACHE STRING "The target architecture." FORCE)
+            else()
+                message(FATAL_ERROR "Invalid target architecture. Salt engine only supports 64-bit architecture.")
+            endif()
+        else()
+            message(FATAL_ERROR "Incorrectly initialized CMAKE_OSX_ARCHITECTURES variable.\n"
+                                "Do not target multiple architectures at once.")
+        endif()
+    else()
+        file(WRITE "${CMAKE_BINARY_DIR}/generated/arch/detect_arch.c"
+        [[#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
+        #   error TARGET_ARCH x86_64
+        #endif
+        #error TARGET_ARCH unsupported
+        ]])
+
+        enable_language(C)
+
+        # Detect the architecture in a rather creative way...
+        # This compiles a small C program which is a series of `#ifdefs` that selects a particular `#error`
+        # preprocessor directive whose message string contains the target architecture. The program will
+        # always fail to compile (both because the file is not a valid C program, and obviously because of the
+        # presence of the `#error` preprocessor directives... but by exploiting the preprocessor in this way,
+        # we can detect the correct target architecture even when cross-compiling, since the program itself
+        # never needs to be run (only the compiler/preprocessor).
+        try_run(
+            run_result_unused
+            compile_result_unused
+            "${CMAKE_BINARY_DIR}"
+            "${CMAKE_BINARY_DIR}/generated/arch/detect_arch.c"
+            COMPILE_OUTPUT_VARIABLE _SALT_TARGET_ARCH
+        )
+        # Parse the architecture name from the compiler output.
+        string(REGEX MATCH "TARGET_ARCH ([a-zA-Z0-9_]+)" _SALT_TARGET_ARCH "${_SALT_TARGET_ARCH}")
+
+        # Get rid of the value marker leaving just the architecture name.
+        string(REPLACE "TARGET_ARCH " "" _SALT_TARGET_ARCH "${_SALT_TARGET_ARCH}")
+
+        if (_SALT_TARGET_ARCH STREQUAL "unsupported")
+            message(FATAL_ERROR "Invalid target architecture. Salt engine only supports 64-bit architecture.")
+        endif()
+    endif()
+
+    set(${output_var} "${_SALT_TARGET_ARCH}" PARENT_SCOPE)
+endfunction(salt_set_target_architecture)
+
 if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         DEFINED CACHE{SALT_TARGET_OS}     AND
         DEFINED CACHE{SALT_TARGET_VENDOR} AND
         DEFINED CACHE{SALT_TARGET_GRAPHICS}))
     if(WIN32)
         if(NOT CMAKE_SYSTEM_VERSION)
-            set(CMAKE_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION} CACHE STRING "The version of the target platform." FORCE)
+            set(CMAKE_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION} CACHE STRING
+                                                                  "The version of the target platform." FORCE)
         endif()
 
         if(NOT CMAKE_SYSTEM_PROCESSOR)
             set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR} CACHE STRING "The target architecture." FORCE)
         endif()
+        # Get the correct target architecture.
+        salt_set_target_architecture(SALT_TARGET_CPU)
 
-        set(SALT_TARGET_CPU      ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "[READONLY] The target CPU."          FORCE)
-        set(SALT_TARGET_OS       Windows                   CACHE STRING "[READONLY] The current platform."    FORCE)
-        set(SALT_TARGET_VENDOR   Microsoft                 CACHE STRING "[READONLY] The target vendor."       FORCE)
-        set(SALT_TARGET_GRAPHICS OpenGL                    CACHE STRING "[READONLY] The target graphics api." FORCE)
+        set(SALT_TARGET_OS       Windows   CACHE STRING "[READONLY] The current platform."    FORCE)
+        set(SALT_TARGET_VENDOR   Microsoft CACHE STRING "[READONLY] The target vendor."       FORCE)
+        set(SALT_TARGET_GRAPHICS OpenGL    CACHE STRING "[READONLY] The target graphics api." FORCE)
     elseif(APPLE)
         if(NOT DEFINED CMAKE_OSX_SYSROOT)
-            message(FATAL_ERROR " The required variable CMAKE_OSX_SYSROOT does not exist in CMake cache.\n"
-                                " CMAKE_OSX_SYSROOT holds the path to the SDK.\n")
+            message(FATAL_ERROR "The required variable CMAKE_OSX_SYSROOT does not exist in CMake cache.\n"
+                                "CMAKE_OSX_SYSROOT holds the path to the SDK.")
         endif()
 
         list(LENGTH CMAKE_OSX_ARCHITECTURES _ARCH_COUNT)
@@ -44,13 +101,12 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
             if(NOT CMAKE_SYSTEM_VERSION)
                 set(CMAKE_SYSTEM_VERSION 11.3 CACHE STRING "The version of the target platform." FORCE)
             endif()
-            if(NOT CMAKE_SYSTEM_PROCESSOR)
-                set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR} CACHE STRING "The target architecture." FORCE)
-            endif()
-            set(SALT_TARGET_CPU      ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "[READONLY] The target CPU."          FORCE)
-            set(SALT_TARGET_OS       MacOSX                    CACHE STRING "[READONLY] The current platform."    FORCE)
-            set(SALT_TARGET_VENDOR   Apple                     CACHE STRING "[READONLY] The target vendor."       FORCE)
-            set(SALT_TARGET_GRAPHICS Metal                     CACHE STRING "[READONLY] The target graphics api." FORCE)
+            # Get the correct target architecture.
+            salt_set_target_architecture(SALT_TARGET_CPU)
+
+            set(SALT_TARGET_OS       MacOSX CACHE STRING "[READONLY] The current platform."    FORCE)
+            set(SALT_TARGET_VENDOR   Apple  CACHE STRING "[READONLY] The target vendor."       FORCE)
+            set(SALT_TARGET_GRAPHICS Metal  CACHE STRING "[READONLY] The target graphics api." FORCE)
         endif()
     endif()
 endif()
@@ -60,7 +116,7 @@ endif()
 #-----------------------------------------------------------------------------------------------------------------------
 
 macro(salt_requires_vendor _ARG_VENDOR)
-    if (NOT SALT_TARGET_VENDOR STREQUAL ${_ARG_VENDOR})
+    if(NOT SALT_TARGET_VENDOR STREQUAL ${_ARG_VENDOR})
         get_filename_component(_TMP_BASENAME ${CMAKE_CURRENT_LIST_DIR} NAME)
         message("The subdirectory '${_TMP_BASENAME}' is ignored because the target OS vendor is set to "
                 "'${SALT_TARGET_VENDOR}'")
@@ -82,29 +138,29 @@ endif()
 # Helper functions.
 #-----------------------------------------------------------------------------------------------------------------------
 
-function(salt_win32_app _NAME)
+function(salt_common_app _NAME)
     if(NOT SALT_TARGET_OS STREQUAL "Windows")
         message("Target '${_NAME}' is ignored because the target OS is set to '${SALT_TARGET_OS}'.")
         return()
     endif()
     cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
-                          _SALT_WIN32_APP
+                          _SALT_COMMON_APP
                           ""                    # options
                           "BUNDLE_NAME"         # one   value keywords
                           "SOURCES;LINK")       # multi value keywords
-    if(NOT _SALT_WIN32_APP_SOURCES)
-        message(FATAL_ERROR " Target '${_NAME}' has no sources.\n"
-                            " Perhaps you have forgotten to provide the SOURCES argument?")
+    if(NOT _SALT_COMMON_APP_SOURCES)
+        message(FATAL_ERROR "Target '${_NAME}' has no sources.\n"
+                            "Perhaps you have forgotten to provide the SOURCES argument?")
     endif()
     add_executable("salt_${_NAME}")
-    target_sources("salt_${_NAME}" PRIVATE "${_SALT_WIN32_APP_SOURCES}")
+    target_sources("salt_${_NAME}" PRIVATE "${_SALT_COMMON_APP_SOURCES}")
     target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
-    if(_SALT_WIN32_APP_LINK)
-        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_WIN32_APP_LINK}")
+    if(_SALT_COMMON_APP_LINK)
+        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_COMMON_APP_LINK}")
     endif()
     install(TARGETS "salt_${_NAME}"
             RUNTIME DESTINATION "salt-${_NAME}")
-endfunction(salt_win32_app)
+endfunction(salt_common_app)
 
 function(salt_macosx_app _NAME)
     if(NOT SALT_TARGET_OS STREQUAL "MacOSX")
@@ -117,8 +173,8 @@ function(salt_macosx_app _NAME)
                           "BUNDLE_NAME"         # one   value keywords
                           "SOURCES;LINK")       # multi value keywords
     if(NOT _SALT_MACOSX_APP_SOURCES)
-        message(FATAL_ERROR " Target '${_NAME}' has no sources.\n"
-                            " Perhaps you have forgotten to provide the SOURCES argument?")
+        message(FATAL_ERROR "Target '${_NAME}' has no sources.\n"
+                            "Perhaps you have forgotten to provide the SOURCES argument?")
     endif()
     if(NOT _SALT_MACOSX_BUNDLE_NAME)
         set(_SALT_MACOSX_BUNDLE_NAME "${_NAME}")
