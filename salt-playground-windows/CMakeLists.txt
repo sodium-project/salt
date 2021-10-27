@@ -6,7 +6,7 @@ set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 salt_common_app(playground
-                SOURCES "main.cpp"
+                SOURCES "playground.cpp"
                 LINK    salt::core
                         glad::glad
                         glfw::glfw

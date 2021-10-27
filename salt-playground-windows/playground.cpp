@@ -11,7 +11,6 @@
 
 #include <salt/core.hpp>
 
-int main() {
-    salt::Engine engine;
-    engine.run();
+salt::Engine salt::create_engine() {
+    return Engine{};
 }
