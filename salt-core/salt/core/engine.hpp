@@ -3,10 +3,9 @@
 namespace salt {
 
 struct [[nodiscard]] Engine final {
+    using Fn = void (*)();
 
-    void run() const noexcept;
+    void run(Fn fn) const noexcept;
 };
-
-extern Engine create_engine();
 
 } // namespace salt

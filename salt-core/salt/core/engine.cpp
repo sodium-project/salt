@@ -2,7 +2,8 @@
 
 namespace salt {
 
-void Engine::run() const noexcept {
+void Engine::run(Fn fn) const noexcept {
+    fn();
     while (true)
         ;
 }

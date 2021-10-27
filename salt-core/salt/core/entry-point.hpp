@@ -4,11 +4,14 @@
 
 namespace salt {
 
-extern Engine create_engine();
+extern void application_main();
 
 } // namespace salt
 
 int main(int argc, char* argv[]) {
-    auto engine = create_engine();
-    engine.run();
+    (void)argc;
+    (void)argv;
+
+    auto engine = salt::Engine{};
+    engine.run(salt::application_main);
 }

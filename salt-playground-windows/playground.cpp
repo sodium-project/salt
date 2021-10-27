@@ -11,6 +11,6 @@
 
 #include <salt/core.hpp>
 
-salt::Engine salt::create_engine() {
-    return Engine{};
+void salt::application_main() {
+    std::printf("Hello from the playground!\n");
 }
