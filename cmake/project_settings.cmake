@@ -33,6 +33,8 @@ function(salt_set_target_architecture output_var)
         file(WRITE "${CMAKE_BINARY_DIR}/generated/arch/detect_arch.c"
         [[#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
         #   error TARGET_ARCH x86_64
+        #if defined(__arm64) || defined(_M_ARM64) || defined(__aarch64__) || defined(__AARCH64EL__)
+        #   error TARGET_ARCH arm64
         #endif
         #error TARGET_ARCH unsupported
         ]])
@@ -363,6 +365,31 @@ endif()
 
 # Possible values of build type for cmake-gui and ccmake.
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Getting LLVM Bitcode.
+#-----------------------------------------------------------------------------------------------------------------------
+
+# The code below changes the CMAKE_<LANG>_FLAGS and CMAKE_<LANG>_LINK_FLAGS variables. It does this for a good reason.
+# Don't do this in normal code. Instead add the necessary compile/linker flags to pangea::project_settings.
+if (APPLE)
+    option(SALT_ENABLE_BITCODE "Enable Bitcode generation." YES)
+
+    if(SALT_ENABLE_BITCODE)
+        string(APPEND CMAKE_C_FLAGS       " -fembed-bitcode")
+        string(APPEND CMAKE_CXX_FLAGS     " -fembed-bitcode")
+        string(APPEND CMAKE_OBJC_FLAGS    " -fembed-bitcode")
+        string(APPEND CMAKE_OBJCXX_FLAGS  " -fembed-bitcode")
+
+        # The flag '-headerpad_max_install_names' should not be used with '-fembed-bitcode'. CMake always adds
+        # '-headerpad_max_install_names' flag. There's no appernt way to disable this flag otherwise.
+        #   See: https://github.com/Kitware/CMake/blob/master/Modules/Platform/Darwin.cmake
+        string(REPLACE "-Wl,-headerpad_max_install_names" "" CMAKE_C_LINK_FLAGS      ${CMAKE_C_LINK_FLAGS})
+        string(REPLACE "-Wl,-headerpad_max_install_names" "" CMAKE_CXX_LINK_FLAGS    ${CMAKE_CXX_LINK_FLAGS})
+        string(REPLACE "-Wl,-headerpad_max_install_names" "" CMAKE_OBJC_LINK_FLAGS   ${CMAKE_C_LINK_FLAGS})
+        string(REPLACE "-Wl,-headerpad_max_install_names" "" CMAKE_OBJCXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS})
+    endif()
+endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Link time optimization.

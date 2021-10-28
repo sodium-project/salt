@@ -15,6 +15,7 @@ add_subdirectory("salt-core")
 # Applications.
 #-----------------------------------------------------------------------------------------------------------------------
 
+add_subdirectory("salt-playground-macos")
 add_subdirectory("salt-playground-windows")
 
 # code: language="CMake" insertSpaces=true tabSize=4
