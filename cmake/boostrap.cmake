@@ -92,6 +92,44 @@ if(NOT COMMAND_RESULT STREQUAL "0")
 endif()
 
 ########################################################################################################################
+# Configure, build, and install fmt.
+########################################################################################################################
+
+message(" ==============================================================================\n"
+        " Configuring fmt, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        -B${CMAKE_BINARY_DIR}/libs/fmt
+                        -S${CMAKE_SOURCE_DIR}/libs/fmt
+                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/fmt
+                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
+                        -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
+                        -DFMT_DOC=OFF
+                        -DFMT_TEST=OFF
+                        -DFMT_DEBUG_POSTFIX:STRING=
+                        ${SALT_CMAKE_ARGUMENTS}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to configure fmt.")
+endif()
+
+message(" ==============================================================================\n"
+        " Building and installing fmt, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        --build ${CMAKE_BINARY_DIR}/libs/fmt
+                        --target install
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to install fmt.")
+endif()
+
+
+########################################################################################################################
 # Configure, build, and install GLFW.
 ########################################################################################################################
 
@@ -104,6 +142,7 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
                             -S${CMAKE_SOURCE_DIR}/libs/glfw
                             -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
                             -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
+                            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
                             -DENKITS_BUILD_EXAMPLES=OFF
                             -DGLFW_BUILD_EXAMPLES=OFF
                             -DGLFW_BUILD_TESTS=OFF

@@ -11,3 +11,6 @@
 	path = libs/glad
 	url = https://github.com/Dav1dde/glad.git
 	branch = master
+[submodule "libs/fmt"]
+	path = libs/fmt
+	url = https://github.com/fmtlib/fmt.git
