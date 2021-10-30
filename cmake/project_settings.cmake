@@ -426,11 +426,11 @@ endif()
 # Enable colored diagnostics.
 #-----------------------------------------------------------------------------------------------------------------------
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?(C|c)?lang$")
     target_compile_options(salt::project_settings INTERFACE -fcolor-diagnostics)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(salt::project_settings INTERFACE -fdiagnostics-color=always)
 endif()
 
@@ -450,84 +450,97 @@ endif()
 # Warnings.
 #-----------------------------------------------------------------------------------------------------------------------
 
-target_compile_options(salt::project_settings INTERFACE
-    # Enable all the warnings about constructions that some users consider questionable, and that are easy to avoid.
-    -Wall
-    # Enable some extra warnings that are not enabled by -Wall.
-    -Wextra
-    # Warn whenever a local variable or type shadows another one.
-    -Wshadow
-    # Warn whenever a class has virtual functions and an accessible non-virtual destructor.
-    -Wnon-virtual-dtor
-    # Warn if old-style (C-style) cast to a non-void type is used within a C++ program.
-    -Wold-style-cast
-    # Warn whenever a pointer is cast such that the required alignment of the target is increased. For example, warn if
-    # a char* is cast to an int* on machines where integers can only be accessed at two- or four-byte boundaries.
-    -Wcast-align
-    # Warn on anything being unused.
-    -Wunused
-    # Warn when a function declaration hides virtual functions from a base class.
-    -Woverloaded-virtual
-    # Warn whenever non-standard C++ is used.
-    -Wpedantic
-    # Warn on implicit conversions that may alter a value. This includes conversions between real and integer,
-    # like abs(x) when x is double.
-    -Wconversion
-    # Warn for implicit conversions that may change the sign of an integer value, like assigning a signed integer
-    # expression to an unsigned integer variable.
-    -Wsign-conversion
-    # Warn if the compiler detects paths that trigger erroneous or undefined behaviour due to dereferencing a null
-    # pointer.
-    -Wnull-dereference
-    # Warn whenever a value of type float is implicitly promoted to double.
-    -Wdouble-promotion
-    # Check calls to printf and scanf, etc., to make sure that the arguments supplied have types appropriate to the
-    # format string.
-    -Wformat=2)
+if(CMAKE_CXX_COMPILER_ID MATCHES "(^(Apple)?(C|c)?lang$)|GNU")
+    target_compile_options(salt::project_settings INTERFACE
+        # Enable all the warnings about constructions that some users consider questionable, and that are easy to avoid.
+        -Wall
+        # Enable some extra warnings that are not enabled by -Wall.
+        -Wextra
+        # Warn whenever a local variable or type shadows another one.
+        -Wshadow
+        # Warn whenever a class has virtual functions and an accessible non-virtual destructor.
+        -Wnon-virtual-dtor
+        # Warn if old-style (C-style) cast to a non-void type is used within a C++ program.
+        -Wold-style-cast
+        # Warn whenever a pointer is cast such that the required alignment of the target is increased. For example, warn if
+        # a char* is cast to an int* on machines where integers can only be accessed at two- or four-byte boundaries.
+        -Wcast-align
+        # Warn on anything being unused.
+        -Wunused
+        # Warn when a function declaration hides virtual functions from a base class.
+        -Woverloaded-virtual
+        # Warn whenever non-standard C++ is used.
+        -Wpedantic
+        # Warn on implicit conversions that may alter a value. This includes conversions between real and integer,
+        # like abs(x) when x is double.
+        -Wconversion
+        # Warn for implicit conversions that may change the sign of an integer value, like assigning a signed integer
+        # expression to an unsigned integer variable.
+        -Wsign-conversion
+        # Warn if the compiler detects paths that trigger erroneous or undefined behaviour due to dereferencing a null
+        # pointer.
+        -Wnull-dereference
+        # Warn whenever a value of type float is implicitly promoted to double.
+        -Wdouble-promotion
+        # Check calls to printf and scanf, etc., to make sure that the arguments supplied have types appropriate to the
+        # format string.
+        -Wformat=2)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # TODO:
+    #   Add compile flags for MSVC.
+endif()
 
 option(SALT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." YES)
 
 if(SALT_WARNINGS_AS_ERRORS)
-    target_compile_options(salt::project_settings INTERFACE
-        # Make all warnings into errors.
-        -Werror)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "(^(Apple)?(C|c)?lang$)|GNU")
+        target_compile_options(salt::project_settings INTERFACE
+            # Make all warnings into errors.
+            -Werror)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        target_compile_options(salt::project_settings INTERFACE
+            # Make all warnings into errors.
+            /WX)
+    endif()
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Sanitizers.
 #-----------------------------------------------------------------------------------------------------------------------
 
-option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
-option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO )
-option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
-option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
+if(CMAKE_CXX_COMPILER_ID MATCHES "(^(Apple)?(C|c)?lang$)|GNU" AND NOT SALT_TARGET_OS STREQUAL "Windows")
+    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
+    option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO )
+    option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
+    option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
 
-if((SALT_ENABLE_SANITIZER_LEAK OR SALT_ENABLE_SANITIZER_ADDRESS) AND SALT_ENABLE_SANITIZER_THREAD)
-    message(WARNING "Thread sanitizer does not work with Address or Leak sanitizer enabled.")
+    if((SALT_ENABLE_SANITIZER_LEAK OR SALT_ENABLE_SANITIZER_ADDRESS) AND SALT_ENABLE_SANITIZER_THREAD)
+        message(WARNING "Thread sanitizer does not work with Address or Leak sanitizer enabled.")
+    endif()
+
+    set(SALT_SANITIZERS "")
+
+    if(SALT_ENABLE_SANITIZER_ADDRESS)
+        list(APPEND SALT_SANITIZERS "address")
+    endif()
+
+    if(SALT_ENABLE_SANITIZER_THREAD)
+        list(APPEND SALT_SANITIZERS "thread")
+    endif()
+
+    if(SALT_ENABLE_SANITIZER_UNDEFINED)
+        list(APPEND SALT_SANITIZERS "undefined")
+    endif()
+
+    if(SALT_ENABLE_SANITIZER_LEAK)
+        list(APPEND SALT_SANITIZERS "leak")
+    endif()
+
+    list(JOIN SALT_SANITIZERS "," SALT_ENABLED_SANITIZERS)
+
+    target_compile_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
+
+    target_link_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
 endif()
-
-set(SALT_SANITIZERS "")
-
-if(SALT_ENABLE_SANITIZER_ADDRESS)
-    list(APPEND SALT_SANITIZERS "address")
-endif()
-
-if(SALT_ENABLE_SANITIZER_THREAD)
-    list(APPEND SALT_SANITIZERS "thread")
-endif()
-
-if(SALT_ENABLE_SANITIZER_UNDEFINED)
-    list(APPEND SALT_SANITIZERS "undefined")
-endif()
-
-if(SALT_ENABLE_SANITIZER_LEAK)
-    list(APPEND SALT_SANITIZERS "leak")
-endif()
-
-list(JOIN SALT_SANITIZERS "," SALT_ENABLED_SANITIZERS)
-
-target_compile_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
-
-target_link_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
 
 # code: language="CMake" insertSpaces=true tabSize=4
