@@ -1,3 +1,4 @@
+//#define _ITERATOR_DEBUG_LEVEL 2
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -20,7 +21,7 @@
 #endif
 
 void salt::application_main() {
-    std::printf("Hello from the playground!\n");
+    (void)salt::debug("{} Catch a random number: {}", "Hello from the playground!", 56);
 
 #ifdef RUN_IMGUI_DEMO
     show_imgui_demo();
