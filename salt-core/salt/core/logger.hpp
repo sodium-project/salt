@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef FMT_HAS_CONSTEVAL
-#    error XXX
-#endif
-
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
@@ -34,7 +30,9 @@ inline constexpr fmt::text_style yellow{fmt::fg(fmt::color::yellow)};
 // consteval is broken in MSVC before VS2022 and Apple clang 13.
 template <typename T>
 concept fmt_string_like = std::convertible_to<T, fmt::format_string<T>>;
+// clang-format on
 #else
+// clang-format off
 template <typename T>
 concept fmt_string_like = std::is_convertible_v<T, std::string_view>;
 // clang-format on
