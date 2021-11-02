@@ -1,6 +1,6 @@
 find_package(imgui REQUIRED)
 
-salt_macosx_app(playground
+salt_macosx_app(playground_macosx
                 SOURCES "playground.mm"
                 LINK    salt::core
                         imgui::imgui
