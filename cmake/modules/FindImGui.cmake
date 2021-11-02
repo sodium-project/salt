@@ -6,7 +6,7 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
     if(SALT_TARGET_OS STREQUAL "Windows")
         target_link_libraries(imgui::imgui
                               INTERFACE "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/imgui.lib"
-                                        "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/imgui_opengl_win32.lib")
+                                        "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/imgui_opengl_win.lib")
     endif()
 elseif(SALT_TARGET_GRAPHICS STREQUAL "Metal")
     if(SALT_TARGET_OS STREQUAL "MacOSX")

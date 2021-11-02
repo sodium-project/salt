@@ -245,17 +245,17 @@ install(TARGETS imgui)
 # This target is OpenGL-Windows-specific.
 if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
     file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
-    [[add_library(imgui_opengl_win32 STATIC)
-    target_include_directories(imgui_opengl_win32 PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
-    target_sources(imgui_opengl_win32 PRIVATE
+    [[add_library(imgui_opengl_win STATIC)
+    target_include_directories(imgui_opengl_win PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
+    target_sources(imgui_opengl_win PRIVATE
                    "${IMGUI_ROOT}/backends/imgui_impl_glfw.cpp"
                    "${IMGUI_ROOT}/backends/imgui_impl_opengl3.cpp")
     set(IMGUI_OPENGL_WIN32_PRIVATE_HEADERS
         "${IMGUI_ROOT}/backends/imgui_impl_glfw.h"
         "${IMGUI_ROOT}/backends/imgui_impl_opengl3.h")
-    set_target_properties(imgui_opengl_win32 PROPERTIES
+    set_target_properties(imgui_opengl_win PROPERTIES
                           PRIVATE_HEADER "${IMGUI_OPENGL_WIN32_PRIVATE_HEADERS}")
-    install(TARGETS imgui_opengl_win32)
+    install(TARGETS imgui_opengl_win)
     ]])
 endif()
 
