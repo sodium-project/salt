@@ -18,3 +18,7 @@
 #    define SALT_DISABLE_WARNING_POP
 #    define SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS
 #endif
+
+#if defined(__APPLE__) && defined(SALT_CLANG) && _LIBCPP_VERSION < 14000
+#define SALT_LIBCXX_HAS_NO_CONCEPTS (1)
+#endif
