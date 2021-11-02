@@ -21,6 +21,6 @@
 #endif
 // clang-format on
 
-#if defined(__APPLE__) && defined(SALT_CLANG) && _LIBCPP_VERSION < 14000
+#if defined(SALT_CLANG) && _LIBCPP_VERSION < 14000
 #    define SALT_STDLIB_HAS_NO_CONCEPTS (1)
 #endif
