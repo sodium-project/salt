@@ -1,5 +1,6 @@
 #pragma once
 
+// clang-format off
 #if defined(SALT_MSVC)
 #    define SALT_DISABLE_WARNING_PUSH     __pragma(warning(push))
 #    define SALT_DISABLE_WARNING_POP      __pragma(warning(pop))
@@ -18,7 +19,8 @@
 #    define SALT_DISABLE_WARNING_POP
 #    define SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS
 #endif
+// clang-format on
 
 #if defined(__APPLE__) && defined(SALT_CLANG) && _LIBCPP_VERSION < 14000
-#define SALT_LIBCXX_HAS_NO_CONCEPTS (1)
+#    define SALT_STDLIB_HAS_NO_CONCEPTS (1)
 #endif
