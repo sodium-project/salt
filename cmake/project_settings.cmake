@@ -367,12 +367,28 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Setting a properly used compiler, including using a different frontend.
+#-----------------------------------------------------------------------------------------------------------------------
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?(C|c)?lang$")
+    target_compile_definitions(salt::project_settings INTERFACE SALT_CLANG)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(salt::project_settings INTERFACE SALT_GNUC)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_definitions(salt::project_settings INTERFACE SALT_MSVC)
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Getting LLVM Bitcode.
 #-----------------------------------------------------------------------------------------------------------------------
 
 # The code below changes the CMAKE_<LANG>_FLAGS and CMAKE_<LANG>_LINK_FLAGS variables. It does this for a good reason.
 # Don't do this in normal code. Instead add the necessary compile/linker flags to pangea::project_settings.
-if (APPLE)
+if (SALT_TARGET_OS STREQUAL "MacOSX")
     option(SALT_ENABLE_BITCODE "Enable Bitcode generation." YES)
 
     if(SALT_ENABLE_BITCODE)
