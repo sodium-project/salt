@@ -6,17 +6,9 @@
 #include <fmt/format.h>
 
 #include <chrono>
-#include <cmath>
-#include <concepts>
 #include <ctime>
 #include <filesystem>
-#include <format>
 #include <string_view>
-#include <type_traits>
-
-#ifdef _MSC_VER
-#    include <windows.h>
-#endif
 
 #include <salt/core/detail/source_location.hpp>
 
@@ -24,16 +16,16 @@ namespace salt {
 
 namespace detail {
 
-inline constexpr fmt::text_style crimson{fmt::fg(fmt::color::crimson)};
-inline constexpr fmt::text_style cyan{fmt::fg(fmt::color::cyan)};
-inline constexpr fmt::text_style green{fmt::fg(fmt::color::dark_sea_green)};
-inline constexpr fmt::text_style red{fmt::fg(fmt::color::red)};
-inline constexpr fmt::text_style blue{fmt::fg(fmt::color::slate_blue)};
-inline constexpr fmt::text_style yellow{fmt::fg(fmt::color::yellow)};
+inline constexpr fmt::text_style crimson = fmt::fg(fmt::color::crimson);
+inline constexpr fmt::text_style cyan    = fmt::fg(fmt::color::cyan);
+inline constexpr fmt::text_style green   = fmt::fg(fmt::color::dark_sea_green);
+inline constexpr fmt::text_style red     = fmt::fg(fmt::color::red);
+inline constexpr fmt::text_style blue    = fmt::fg(fmt::color::slate_blue);
+inline constexpr fmt::text_style yellow  = fmt::fg(fmt::color::yellow);
 
 // clang-format off
 template <typename T>
-concept string_like = std::convertible_to<T, std::string_view>;
+concept string_like = convertible_to<T, std::string_view>;
 // clang-format on
 
 SALT_DISABLE_WARNING_PUSH
@@ -47,27 +39,8 @@ auto as_local(auto const now) noexcept {
 
 SALT_DISABLE_WARNING_POP
 
-std::string time_zone() noexcept {
-#ifdef _MSC_VER
-    TIME_ZONE_INFORMATION tzi;
-    auto const            errcode = GetTimeZoneInformation(&tzi);
-    if (errcode == TIME_ZONE_ID_INVALID) {
-        return {"Failed to get time zone."};
-    }
-
-    auto const bias = static_cast<float>(-tzi.Bias) / 60;
-    if (!std::signbit(bias)) {
-        std::string result{"+"};
-        return result + std::to_string(static_cast<int>(bias));
-    }
-    return std::to_string(static_cast<int>(bias));
-#else
-    return std::to_string(0);
-#endif
-}
-
 std::string to_string(auto const time) {
-    return fmt::format("{:%F %T} GMT{}", *time, time_zone());
+    return fmt::format("{:%F %T}", *time);
 }
 
 std::string to_string(source_location const& source) {

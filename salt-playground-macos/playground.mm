@@ -20,7 +20,12 @@
 #endif
 
 void salt::application_main() {
-    std::printf("Hello from the playground!\n");
+    salt::trace("Hello from the playground!");
+    salt::debug("Hello from the playground!");
+    salt::info("Hello from the playground!");
+    salt::warning("Hello from the playground!");
+    salt::error("Hello from the playground!");
+    salt::critical("Hello from the playground!");
 
 #ifdef RUN_IMGUI_DEMO
     @autoreleasepool {
