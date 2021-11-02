@@ -6,11 +6,17 @@
 #include <fmt/format.h>
 
 #include <chrono>
+#include <cmath>
 #include <concepts>
 #include <ctime>
 #include <filesystem>
+#include <format>
 #include <string_view>
 #include <type_traits>
+
+#ifdef _MSC_VER
+#    include <windows.h>
+#endif
 
 #include <salt/core/detail/source_location.hpp>
 
@@ -25,21 +31,13 @@ inline constexpr fmt::text_style red{fmt::fg(fmt::color::red)};
 inline constexpr fmt::text_style blue{fmt::fg(fmt::color::slate_blue)};
 inline constexpr fmt::text_style yellow{fmt::fg(fmt::color::yellow)};
 
-#if (defined(__cpp_consteval) && (!FMT_MSC_VER || _MSC_FULL_VER >= 193030704))
-// clang-format off
-// consteval is broken in MSVC before VS2022 and Apple clang 13.
-template <typename T>
-concept fmt_string_like = std::convertible_to<T, fmt::format_string<T>>;
-// clang-format on
-#else
 // clang-format off
 template <typename T>
-concept fmt_string_like = std::is_convertible_v<T, std::string_view>;
+concept string_like = std::convertible_to<T, std::string_view>;
 // clang-format on
-#endif
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+SALT_DISABLE_WARNING_PUSH
+SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS
 
 auto as_local(auto const now) noexcept {
     using std::chrono::system_clock;
@@ -47,10 +45,29 @@ auto as_local(auto const now) noexcept {
     return std::localtime(&time);
 }
 
-#pragma clang diagnostic pop
+SALT_DISABLE_WARNING_POP
+
+std::string time_zone() noexcept {
+#ifdef _MSC_VER
+    TIME_ZONE_INFORMATION tzi;
+    auto const            errcode = GetTimeZoneInformation(&tzi);
+    if (errcode == TIME_ZONE_ID_INVALID) {
+        return {"Failed to get time zone."};
+    }
+
+    auto const bias = static_cast<float>(-tzi.Bias) / 60;
+    if (!std::signbit(bias)) {
+        std::string result{"+"};
+        return result + std::to_string(static_cast<int>(bias));
+    }
+    return std::to_string(static_cast<int>(bias));
+#else
+    return std::to_string(0);
+#endif
+}
 
 std::string to_string(auto const time) {
-    return fmt::format("{:%F %T}", *time);
+    return fmt::format("{:%F %T} GMT{}", *time, time_zone());
 }
 
 std::string to_string(source_location const& source) {
@@ -60,7 +77,20 @@ std::string to_string(source_location const& source) {
 
 } // namespace detail
 
-template <detail::fmt_string_like String, typename... Args> struct [[nodiscard]] debug final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] trace final {
+
+    trace(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+        using std::chrono::system_clock;
+        // clang-format off
+        fmt::print(detail::blue, "{} [TRACE] {} {}\n",
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
+                   fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
+        // clang-format on
+    }
+};
+
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] debug final {
 
     debug(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -73,6 +103,65 @@ template <detail::fmt_string_like String, typename... Args> struct [[nodiscard]]
     }
 };
 
-template <detail::fmt_string_like String, typename... Args> debug(String, Args&&...) -> debug<String, Args...>;
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] info final {
+
+    info(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+        using std::chrono::system_clock;
+        // clang-format off
+        fmt::print(detail::green, "{} [INFO] {} {}\n",
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
+                   fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
+        // clang-format on
+    }
+};
+
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] warning final {
+
+    warning(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+        using std::chrono::system_clock;
+        // clang-format off
+        fmt::print(detail::yellow, "{} [WARNING] {} {}\n",
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
+                   fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
+        // clang-format on
+    }
+};
+
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] error final {
+
+    error(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+        using std::chrono::system_clock;
+        // clang-format off
+        fmt::print(detail::red, "{} [ERROR] {} {}\n",
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
+                   fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
+        // clang-format on
+    }
+};
+
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] critical final {
+
+    critical(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+        using std::chrono::system_clock;
+        // clang-format off
+        fmt::print(detail::crimson, "{} [CRITICAL] {} {}\n",
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
+                   fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
+        // clang-format on
+    }
+};
+
+// clang-format off
+template <detail::string_like String, typename... Args> trace   (String, Args&&...) -> trace   <String, Args...>;
+template <detail::string_like String, typename... Args> debug   (String, Args&&...) -> debug   <String, Args...>;
+template <detail::string_like String, typename... Args> info    (String, Args&&...) -> info    <String, Args...>;
+template <detail::string_like String, typename... Args> warning (String, Args&&...) -> warning <String, Args...>;
+template <detail::string_like String, typename... Args> error   (String, Args&&...) -> error   <String, Args...>;
+template <detail::string_like String, typename... Args> critical(String, Args&&...) -> critical<String, Args...>;
+// clang-format on
 
 } // namespace salt

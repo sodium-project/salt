@@ -37,6 +37,7 @@ const char* function_name_;
 
 struct [[nodiscard]] Source_location final {
 
+    // consteval is broken in MSVC before VS2022 and (Apple)Clang 13.
     static constexpr Source_location current(std::uint_least32_t line          = __builtin_LINE(),
                                              std::uint_least32_t column        = __builtin_COLUMN(),
                                              char const*         file_name     = __builtin_FILE(),
