@@ -21,6 +21,42 @@
 #endif
 // clang-format on
 
-#if defined(SALT_CLANG) && _LIBCPP_VERSION < 14000
-#    define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#if defined(SALT_CLANG)
+#    if _LIBCPP_VERSION < 14000
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    elif defined(__cpp_lib_concepts) && __cpp_lib_concepts < 202002L
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    elif _MSVC_STL_UPDATE < 202104L
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    endif
+#elif defined(SALT_GNUC)
+#    if _LIBCPP_VERSION < 14000
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    elif defined(__cpp_lib_concepts) && __cpp_lib_concepts < 202002L
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    endif
+#elif defined(SALT_MSVC)
+#    if _MSVC_STL_UPDATE < 202104L
+#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
+#    endif
+#endif
+
+#if defined(SALT_CLANG)
+#    if _LIBCPP_VERSION < 15000
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    elif defined(__cpp_lib_source_location) && __cpp_lib_source_location < 201907L
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    elif _MSVC_STL_UPDATE < 202110L
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    endif
+#elif defined(SALT_GNUC)
+#    if _LIBCPP_VERSION < 15000
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    elif defined(__cpp_lib_source_location) && __cpp_lib_source_location < 201907L
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    endif
+#elif defined(SALT_MSVC)
+#    if _MSVC_STL_UPDATE < 202110L
+#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
+#    endif
 #endif

@@ -2,42 +2,19 @@
 
 #include <cstdint>
 
-#if !defined(__cpp_consteval)
+#if !defined(SALT_STDLIB_HAS_NO_SOURCE_LOCATION)
+#    include <source_location>
+#endif
 
 namespace salt::detail {
 
-/*
-
-source_location synopsis
-
-namespace std {
-
-struct source_location
-{
-// source_location construction
-static consteval source_location current() noexcept;
-constexpr source_location() noexcept;
-
-// source_location field access
-constexpr uint_least32_t line() const noexcept;
-constexpr uint_least32_t column() const noexcept;
-constexpr const char* file_name() const noexcept;
-constexpr const char* function_name() const noexcept;
-
-private:
-uint_least32_t line_;
-uint_least32_t column_;
-const char* file_name_;
-const char* function_name_;
-};
-
-} // namespace std
-
-*/
+#if defined(SALT_STDLIB_HAS_NO_SOURCE_LOCATION)
 
 struct [[nodiscard]] Source_location final {
 
-    // consteval is broken in MSVC before VS2022 and (Apple)Clang 13.
+    // NOTE(Andrii):
+    //  This method should be defined as `consteval`, but since `consteval` didn't work in MSVC prior to VS2022
+    //  and (Apple)Clang 13, let's stay with `constexpr`.
     static constexpr Source_location current(std::uint_least32_t line          = __builtin_LINE(),
                                              std::uint_least32_t column        = __builtin_COLUMN(),
                                              char const*         file_name     = __builtin_FILE(),
@@ -77,14 +54,12 @@ private:
     char const*         function_name_{""};
 };
 
-} // namespace salt::detail
-
-#else
-#    include <source_location>
 #endif
 
+} // namespace salt::detail
+
 namespace salt {
-#if !defined(__cpp_consteval)
+#if defined(SALT_STDLIB_HAS_NO_SOURCE_LOCATION)
 using source_location = detail::Source_location;
 #else
 using source_location = std::source_location;
