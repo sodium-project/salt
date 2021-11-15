@@ -1,5 +1,18 @@
 #pragma once
 
+// For compatibility with existing code that compiles with MSVC, clang defines the _MSC_VER and _MSC_FULL_VER macros.
+#if defined(SALT_CLANG) && defined(_MSC_VER)
+#    define SALT_MSVC_FULL_VER (_MSC_FULL_VER)
+#elif defined(SALT_CLANG) && defined(__clang__)
+#    define SALT_CLANG_FULL_VER (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
+#elif defined(SALT_GNUC) && defined(__GNUC__)
+#    define SALT_GCC_FULL_VER (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#elif defined(SALT_MSVC) && defined(_MSC_VER)
+#    define SALT_MSVC_FULL_VER (_MSC_FULL_VER)
+#else
+#    error "Compiler not supported."
+#endif
+
 // clang-format off
 #if defined(SALT_MSVC)
 #    define SALT_DISABLE_WARNING_PUSH     __pragma(warning(push))
@@ -21,42 +34,32 @@
 #endif
 // clang-format on
 
-#if defined(SALT_CLANG)
-#    if _LIBCPP_VERSION < 14000
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    elif defined(__cpp_lib_concepts) && __cpp_lib_concepts < 202002L
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    elif _MSVC_STL_UPDATE < 202104L
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    endif
-#elif defined(SALT_GNUC)
-#    if _LIBCPP_VERSION < 14000
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    elif defined(__cpp_lib_concepts) && __cpp_lib_concepts < 202002L
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    endif
-#elif defined(SALT_MSVC)
-#    if _MSVC_STL_UPDATE < 202104L
-#        define SALT_STDLIB_HAS_NO_CONCEPTS (1)
-#    endif
+#if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
+#    define SALT_HAS_NO_CONCEPTS (1)
+#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
+#    define SALT_HAS_NO_CONCEPTS (1)
+#elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 192930136
+#    define SALT_HAS_NO_CONCEPTS (1)
 #endif
 
-#if defined(SALT_CLANG)
-#    if _LIBCPP_VERSION < 15000
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    elif defined(__cpp_lib_source_location) && __cpp_lib_source_location < 201907L
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    elif _MSVC_STL_UPDATE < 202110L
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    endif
-#elif defined(SALT_GNUC)
-#    if _LIBCPP_VERSION < 15000
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    elif defined(__cpp_lib_source_location) && __cpp_lib_source_location < 201907L
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    endif
-#elif defined(SALT_MSVC)
-#    if _MSVC_STL_UPDATE < 202110L
-#        define SALT_STDLIB_HAS_NO_SOURCE_LOCATION (1)
-#    endif
+#if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
+#    define SALT_HAS_NO_CONSTEVAL (1)
+#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
+#    define SALT_HAS_NO_CONSTEVAL (1)
+#elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 193030704
+#    define SALT_HAS_NO_CONSTEVAL (1)
+#endif
+
+#if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
+#    define SALT_HAS_NO_SOURCE_LOCATION (1)
+#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
+#    define SALT_HAS_NO_SOURCE_LOCATION (1)
+#elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 193030704
+#    define SALT_HAS_NO_SOURCE_LOCATION (1)
+#endif
+
+#if defined(SALT_HAS_NO_CONSTEVAL)
+#    define SALT_CONSTEVAL constexpr
+#else
+#    define SALT_CONSTEVAL consteval
 #endif
