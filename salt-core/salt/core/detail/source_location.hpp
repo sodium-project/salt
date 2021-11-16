@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#if !defined(SALT_STDLIB_HAS_NO_SOURCE_LOCATION)
+#if !defined(SALT_HAS_NO_SOURCE_LOCATION)
 #    include <source_location>
 #endif
 

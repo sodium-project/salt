@@ -71,7 +71,7 @@
 
 -(void)loadView
 {
-    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, 800, 600)];
+    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, 1280, 720)];
 }
 
 -(void)viewDidLoad
@@ -167,7 +167,7 @@
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         static_cast<double>(1000.0f / ImGui::GetIO().Framerate),
-                        static_cast<double>(ImGui::GetIO().Framerate));
+                        static_cast<double>(ImGui::GetIO().Framerate) / 1000.0);
         ImGui::End();
     }
 
