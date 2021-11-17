@@ -11,6 +11,7 @@
 #include <cstdio>
 
 #include <salt/core.hpp>
+#include <salt/foundation.hpp>
 
 // NOTE(Andrii):
 //  Get rid of this hack in the future.

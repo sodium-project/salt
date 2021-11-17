@@ -3,8 +3,9 @@ if(TARGET Catch2::Catch2)
 endif()
 add_library(Catch2::Catch2 INTERFACE IMPORTED)
 if(SALT_TARGET_OS STREQUAL "Windows")
-    target_link_libraries(Catch2::Catch2
-                          INTERFACE "${CMAKE_BINARY_DIR}/output/libs/Catch2/lib/Catch2Maind.lib")
+    # TODO: check why the library is not being built under Windows
+    #target_link_libraries(Catch2::Catch2
+    #                      INTERFACE "${CMAKE_BINARY_DIR}/output/libs/Catch2/lib/Catch2Maind.lib")
 elseif(SALT_TARGET_OS STREQUAL "MacOSX")
     target_link_libraries(Catch2::Catch2
                           INTERFACE "${CMAKE_BINARY_DIR}/output/libs/Catch2/lib/libCatch2WithMain.a")
