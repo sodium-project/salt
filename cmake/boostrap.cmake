@@ -59,7 +59,6 @@ endif()
 ########################################################################################################################
 # Configure, build, and install Catch2.
 ########################################################################################################################
-
 message(" ==============================================================================\n"
         " Configuring Catch2, please wait...\n"
         " ==============================================================================")
@@ -67,6 +66,8 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -B${CMAKE_BINARY_DIR}/libs/Catch2
                         -S${CMAKE_SOURCE_DIR}/libs/Catch2
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/Catch2
+                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
+                        -DCATCH_BUILD_STATIC_LIBRARY=ON
                         -DCATCH_BUILD_TESTING=OFF
                         -DCATCH_INSTALL_DOCS=OFF
                         -DCATCH_INSTALL_HELPERS=OFF
