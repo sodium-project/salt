@@ -90,7 +90,7 @@ int show_imgui_demo() {
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         static_cast<double>(1000.0f / ImGui::GetIO().Framerate),
-                        static_cast<double>(ImGui::GetIO().Framerate));
+                        static_cast<double>(ImGui::GetIO().Framerate) / 1000.0);
             ImGui::End();
         }
 
