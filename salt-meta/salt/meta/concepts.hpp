@@ -1,5 +1,7 @@
 #pragma once
 
+#include <salt/foundation/config.hpp>
+
 #if defined(SALT_HAS_NO_CONCEPTS)
 #    include <type_traits>
 #else

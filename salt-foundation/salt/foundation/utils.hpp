@@ -6,7 +6,6 @@
 
 #include <fmt/format.h>
 
-#include <salt/core/config.hpp>
 #include <salt/foundation/detail/source_location.hpp>
 
 namespace salt {

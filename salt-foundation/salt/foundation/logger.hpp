@@ -6,8 +6,8 @@
 
 #include <string_view>
 
-#include <salt/core/meta.hpp>
 #include <salt/foundation/utils.hpp>
+#include <salt/meta.hpp>
 
 namespace salt {
 
