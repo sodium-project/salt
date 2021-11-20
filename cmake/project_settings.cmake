@@ -365,6 +365,7 @@ endif()
 
 # Possible values of build type for cmake-gui and ccmake.
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+string(TOUPPER ${CMAKE_BUILD_TYPE} SALT_BUILD_TYPE)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Setting a properly used compiler, including using a different frontend.
@@ -383,11 +384,27 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Setting the correct CMAKE_<LANG>_FLAGS_<BUILD_TYPE> variables for the Clang-Windows bundle.
+#-----------------------------------------------------------------------------------------------------------------------
+
+# The code below changes the CMAKE_<LANG>_FLAGS_<BUILD_TYPE> variables. It does this for a good reason.
+# Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
+if(SALT_TARGET_OS STREQUAL "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "(C|c)lang")
+    if(SALT_BUILD_TYPE STREQUAL "DEBUG")
+        string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
+        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
+    else()
+        string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_MT -Xclang --dependent-lib=msvcrt")
+        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_MT -Xclang --dependent-lib=msvcrt")
+    endif()
+endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Getting LLVM Bitcode.
 #-----------------------------------------------------------------------------------------------------------------------
 
 # The code below changes the CMAKE_<LANG>_FLAGS and CMAKE_<LANG>_LINK_FLAGS variables. It does this for a good reason.
-# Don't do this in normal code. Instead add the necessary compile/linker flags to pangea::project_settings.
+# Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
 if (SALT_TARGET_OS STREQUAL "MacOSX")
     option(SALT_ENABLE_BITCODE "Enable Bitcode generation." YES)
 
@@ -516,7 +533,8 @@ if(SALT_WARNINGS_AS_ERRORS)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(salt::project_settings INTERFACE
             # Make all warnings into errors.
-            /WX)
+            #/WX
+            )
     endif()
 endif()
 

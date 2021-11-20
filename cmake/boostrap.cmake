@@ -25,6 +25,7 @@ endif()
 ########################################################################################################################
 
 set(SALT_CMAKE_ARGUMENTS
+    -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
     -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
@@ -39,6 +40,9 @@ set(SALT_CMAKE_ARGUMENTS
 
     -DCMAKE_C_LINKER_FLAGS=${CMAKE_C_LINKER_FLAGS}
     -DCMAKE_CXX_LINKER_FLAGS=${CMAKE_CXX_LINKER_FLAGS}
+
+    -DCMAKE_C_FLAGS_${SALT_BUILD_TYPE}=${CMAKE_C_FLAGS_${SALT_BUILD_TYPE}}
+    -DCMAKE_CXX_FLAGS_${SALT_BUILD_TYPE}=${CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE}}
 )
 
 if(SALT_TARGET_OS STREQUAL "MacOSX")
@@ -65,33 +69,10 @@ message(" ======================================================================
         " ==============================================================================")
 file(WRITE "${CMAKE_BINARY_DIR}/generated/libs/Catch2/CMakeLists.txt.patch"
 [[diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9765aa04..ca8f0320 100644
+index 9765aa04..4da70f83 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -39,6 +39,22 @@ set(SELF_TEST_DIR ${CATCH_DIR}/projects/SelfTest)
- set(BENCHMARK_DIR ${CATCH_DIR}/projects/Benchmark)
- set(HEADER_DIR ${CATCH_DIR}/include)
- 
-+if(MSVC AND NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
-+    set(CMAKE_CXX_FLAGS "/EHsc")
-+    set(MSVC_COMPILER_FLAGS
-+            CMAKE_CXX_FLAGS
-+            CMAKE_CXX_FLAGS_DEBUG
-+            CMAKE_CXX_FLAGS_RELEASE
-+            CMAKE_C_FLAGS
-+            CMAKE_C_FLAGS_DEBUG
-+            CMAKE_C_FLAGS_RELEASE
-+            )
-+    foreach(MSVC_COMPILER_FLAG ${MSVC_COMPILER_FLAGS})
-+        string(REPLACE "/MD"  "/MT"  ${MSVC_COMPILER_FLAG} "${${MSVC_COMPILER_FLAG}}")
-+        string(REPLACE "/MDd" "/MTd" ${MSVC_COMPILER_FLAG} "${${MSVC_COMPILER_FLAG}}")
-+    endforeach()
-+endif()
-+
- if(USE_WMAIN)
-     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:wmainCRTStartup")
- endif()
-@@ -110,6 +126,7 @@ if (CATCH_BUILD_STATIC_LIBRARY)
+@@ -110,6 +110,7 @@ if (CATCH_BUILD_STATIC_LIBRARY)
    add_library(Catch2WithMain ${CMAKE_CURRENT_LIST_DIR}/src/catch_with_main.cpp)
    target_link_libraries(Catch2WithMain PUBLIC Catch2)
    add_library(Catch2::Catch2WithMain ALIAS Catch2WithMain)
@@ -115,7 +96,6 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -B${CMAKE_BINARY_DIR}/libs/Catch2
                         -S${CMAKE_SOURCE_DIR}/libs/Catch2
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/Catch2
-                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
                         -DCATCH_BUILD_STATIC_LIBRARY=ON
                         -DCATCH_BUILD_TESTING=OFF
                         -DCATCH_INSTALL_DOCS=OFF
@@ -152,7 +132,7 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -B${CMAKE_BINARY_DIR}/libs/fmt
                         -S${CMAKE_SOURCE_DIR}/libs/fmt
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/fmt
-                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
+                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
                         -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
                         -DFMT_DOC=OFF
                         -DFMT_TEST=OFF
@@ -191,8 +171,6 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
                             -B${CMAKE_BINARY_DIR}/libs/glfw
                             -S${CMAKE_SOURCE_DIR}/libs/glfw
                             -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
-                            -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
-                            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
                             -DENKITS_BUILD_EXAMPLES=OFF
                             -DGLFW_BUILD_EXAMPLES=OFF
                             -DGLFW_BUILD_TESTS=OFF
@@ -232,7 +210,6 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
                             -B${CMAKE_BINARY_DIR}/libs/glad
                             -S${CMAKE_SOURCE_DIR}/libs/glad
                             -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
-                            -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
                             -DGLAD_PROFILE=core
                             -DGLAD_API="gl=4.6" # API type/version pairs, like "gl=3.2,gles=", no version means latest
                             -DGLAD_INSTALL=ON
@@ -268,10 +245,6 @@ message(" ======================================================================
 file(WRITE "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
 [[cmake_minimum_required(VERSION 3.20)
 project(imgui CXX)
-
-if(MSVC AND NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
 
 add_library(imgui STATIC)
 target_include_directories(imgui PRIVATE "${IMGUI_ROOT}")
@@ -337,10 +310,8 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -B${CMAKE_BINARY_DIR}/libs/imgui
                         -S${CMAKE_BINARY_DIR}/generated/libs/imgui
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/imgui
-                        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF # Workaround for [LNK4217] warning
                         -DIMGUI_ROOT=${CMAKE_SOURCE_DIR}/libs/imgui
                         -DGLFW_ROOT=${CMAKE_SOURCE_DIR}/libs/glfw
-                        -DGLAD_ROOT=${CMAKE_SOURCE_DIR}/cmake/modules
                         ${SALT_CMAKE_ARGUMENTS}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
