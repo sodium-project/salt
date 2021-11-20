@@ -59,6 +59,55 @@ endif()
 ########################################################################################################################
 # Configure, build, and install Catch2.
 ########################################################################################################################
+
+message(" ==============================================================================\n"
+        " Patching Catch2, please wait...\n"
+        " ==============================================================================")
+file(WRITE "${CMAKE_BINARY_DIR}/generated/libs/Catch2/CMakeLists.txt.patch"
+[[diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9765aa04..ca8f0320 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -39,6 +39,22 @@ set(SELF_TEST_DIR ${CATCH_DIR}/projects/SelfTest)
+ set(BENCHMARK_DIR ${CATCH_DIR}/projects/Benchmark)
+ set(HEADER_DIR ${CATCH_DIR}/include)
+ 
++if(MSVC AND NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
++    set(CMAKE_CXX_FLAGS "/EHsc")
++    set(MSVC_COMPILER_FLAGS
++            CMAKE_CXX_FLAGS
++            CMAKE_CXX_FLAGS_DEBUG
++            CMAKE_CXX_FLAGS_RELEASE
++            CMAKE_C_FLAGS
++            CMAKE_C_FLAGS_DEBUG
++            CMAKE_C_FLAGS_RELEASE
++            )
++    foreach(MSVC_COMPILER_FLAG ${MSVC_COMPILER_FLAGS})
++        string(REPLACE "/MD"  "/MT"  ${MSVC_COMPILER_FLAG} "${${MSVC_COMPILER_FLAG}}")
++        string(REPLACE "/MDd" "/MTd" ${MSVC_COMPILER_FLAG} "${${MSVC_COMPILER_FLAG}}")
++    endforeach()
++endif()
++
+ if(USE_WMAIN)
+     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:wmainCRTStartup")
+ endif()
+@@ -110,6 +126,7 @@ if (CATCH_BUILD_STATIC_LIBRARY)
+   add_library(Catch2WithMain ${CMAKE_CURRENT_LIST_DIR}/src/catch_with_main.cpp)
+   target_link_libraries(Catch2WithMain PUBLIC Catch2)
+   add_library(Catch2::Catch2WithMain ALIAS Catch2WithMain)
++  target_compile_definitions(Catch2WithMain PRIVATE CATCH_CONFIG_CONSOLE_WIDTH=300)
+ 
+   # Make the build reproducible on versions of g++ and clang that supports -ffile-prefix-map
+   if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 8) OR
+]])
+execute_process(COMMAND ${GIT_EXECUTABLE} apply "${CMAKE_BINARY_DIR}/generated/libs/Catch2/CMakeLists.txt.patch"
+                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/libs/Catch2"
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(" Cannot patch Catch2/CMakeLists.txt. Perhaps the patch has been already applied?")
+endif()
+
 message(" ==============================================================================\n"
         " Configuring Catch2, please wait...\n"
         " ==============================================================================")

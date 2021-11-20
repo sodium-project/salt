@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN
-#define CATCH_CONFIG_CONSOLE_WIDTH 300
 #include <catch2/catch.hpp>
 
 #include <salt/foundation.hpp>
@@ -53,7 +51,7 @@ TEST_CASE("salt::foundation::utils::to_string", "[salt-foundation]") {
     }
 
     SECTION("it produces a source location as std::string") {
-        auto const expected_location = std::string{"utils-test.cpp:____C_A_T_C_H____T_E_S_T____3:57"};
+        auto const expected_location = std::string{"utils-test.cpp:____C_A_T_C_H____T_E_S_T____3:55"};
         auto const location          = salt::to_string(salt::source_location::current());
         REQUIRE(location == expected_location);
     }
