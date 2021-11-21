@@ -9,6 +9,7 @@ include("cmake/boostrap.cmake")
 # Libraries.
 #-----------------------------------------------------------------------------------------------------------------------
 
+add_subdirectory("salt-config")
 add_subdirectory("salt-core")
 add_subdirectory("salt-foundation")
 add_subdirectory("salt-meta")

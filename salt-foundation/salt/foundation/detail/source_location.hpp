@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include <salt/config.hpp>
+
 #if !defined(SALT_HAS_NO_SOURCE_LOCATION)
 #    include <source_location>
 #endif

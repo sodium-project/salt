@@ -2,14 +2,13 @@
 
 #include <filesystem>
 
-#include <salt/foundation/config.hpp>
 #include <salt/foundation/detail/source_location.hpp>
 
 TEST_CASE("salt::foundation::utils::source_location", "[salt-foundation]") {
     SECTION("it produces a information about the source code, such as file names, line numbers, and function names") {
         using std::filesystem::path;
 
-        auto const expected_source_location_line          = 17;
+        auto const expected_source_location_line          = 16;
         auto const expected_source_location_column        = 52;
         auto const expected_source_location_file_name     = std::string{"source_location-test.cpp"};
         auto const expected_source_location_function_name = std::string{"____C_A_T_C_H____T_E_S_T____0"};
