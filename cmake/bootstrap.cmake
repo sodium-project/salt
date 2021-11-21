@@ -316,6 +316,6 @@ endif()
 # Update CMakeCache.txt
 ########################################################################################################################
 
-set(SALT_BOOTSTRAP_DONE TRUE CACHE BOOL "Whether the boostrapping has been done." FORCE)
+set(SALT_BOOTSTRAP_DONE TRUE CACHE BOOL "Whether the bootstrapping has been done." FORCE)
 
 # code: language='CMake' insertSpaces=true tabSize=4

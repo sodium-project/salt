@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(salt CXX)
 
 include("cmake/project_settings.cmake")
-include("cmake/boostrap.cmake")
+include("cmake/bootstrap.cmake")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Libraries.
