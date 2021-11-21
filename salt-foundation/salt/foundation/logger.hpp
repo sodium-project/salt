@@ -20,14 +20,14 @@ inline constexpr fmt::text_style red     = fmt::fg(fmt::color::red);
 inline constexpr fmt::text_style blue    = fmt::fg(fmt::color::slate_blue);
 inline constexpr fmt::text_style yellow  = fmt::fg(fmt::color::yellow);
 
-} // namespace detail
-
 // clang-format off
 template <typename T>
 concept string_like = convertible_to<T, std::string_view>;
 // clang-format on
 
-template <string_like String, typename... Args> struct [[maybe_unused]] trace final {
+} // namespace detail
+
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] trace final {
 
     trace(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -40,7 +40,7 @@ template <string_like String, typename... Args> struct [[maybe_unused]] trace fi
     }
 };
 
-template <string_like String, typename... Args> struct [[maybe_unused]] debug final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] debug final {
 
     debug(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -53,7 +53,7 @@ template <string_like String, typename... Args> struct [[maybe_unused]] debug fi
     }
 };
 
-template <string_like String, typename... Args> struct [[maybe_unused]] info final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] info final {
 
     info(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -66,7 +66,7 @@ template <string_like String, typename... Args> struct [[maybe_unused]] info fin
     }
 };
 
-template <string_like String, typename... Args> struct [[maybe_unused]] warning final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] warning final {
 
     warning(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -79,7 +79,7 @@ template <string_like String, typename... Args> struct [[maybe_unused]] warning 
     }
 };
 
-template <string_like String, typename... Args> struct [[maybe_unused]] error final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] error final {
 
     error(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -92,7 +92,7 @@ template <string_like String, typename... Args> struct [[maybe_unused]] error fi
     }
 };
 
-template <string_like String, typename... Args> struct [[maybe_unused]] critical final {
+template <detail::string_like String, typename... Args> struct [[maybe_unused]] critical final {
 
     critical(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
@@ -106,12 +106,12 @@ template <string_like String, typename... Args> struct [[maybe_unused]] critical
 };
 
 // clang-format off
-template <string_like String, typename... Args> trace   (String, Args&&...) -> trace   <String, Args...>;
-template <string_like String, typename... Args> debug   (String, Args&&...) -> debug   <String, Args...>;
-template <string_like String, typename... Args> info    (String, Args&&...) -> info    <String, Args...>;
-template <string_like String, typename... Args> warning (String, Args&&...) -> warning <String, Args...>;
-template <string_like String, typename... Args> error   (String, Args&&...) -> error   <String, Args...>;
-template <string_like String, typename... Args> critical(String, Args&&...) -> critical<String, Args...>;
+template <detail::string_like String, typename... Args> trace   (String, Args&&...) -> trace   <String, Args...>;
+template <detail::string_like String, typename... Args> debug   (String, Args&&...) -> debug   <String, Args...>;
+template <detail::string_like String, typename... Args> info    (String, Args&&...) -> info    <String, Args...>;
+template <detail::string_like String, typename... Args> warning (String, Args&&...) -> warning <String, Args...>;
+template <detail::string_like String, typename... Args> error   (String, Args&&...) -> error   <String, Args...>;
+template <detail::string_like String, typename... Args> critical(String, Args&&...) -> critical<String, Args...>;
 // clang-format on
 
 } // namespace salt
