@@ -5,22 +5,12 @@
 #    define SALT_MSVC_FULL_VER (_MSC_FULL_VER)
 #elif defined(SALT_CLANG) && defined(__clang__)
 #    define SALT_CLANG_FULL_VER (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
-#elif defined(SALT_GNUC) && defined(__GNUC__)
-#    define SALT_GCC_FULL_VER (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#elif defined(SALT_MSVC) && defined(_MSC_VER)
-#    define SALT_MSVC_FULL_VER (_MSC_FULL_VER)
 #else
 #    error "Compiler not supported."
 #endif
 
 // clang-format off
-#if defined(SALT_MSVC)
-#    define SALT_DISABLE_WARNING_PUSH     __pragma(warning(push))
-#    define SALT_DISABLE_WARNING_POP      __pragma(warning(pop))
-#    define SALT_DISABLE_WARNING(warning) __pragma(warning(disable : warning))
-// warnings you want to deactivate...
-#    define SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS SALT_DISABLE_WARNING(4996)
-#elif defined(SALT_CLANG) || defined(SALT_GNUC)
+#if defined(SALT_CLANG)
 #    define _SALT_PRAGMA(X)               _Pragma(#X)
 #    define SALT_DISABLE_WARNING_PUSH     _SALT_PRAGMA(GCC diagnostic push)
 #    define SALT_DISABLE_WARNING_POP      _SALT_PRAGMA(GCC diagnostic pop)
@@ -36,23 +26,17 @@
 
 #if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
 #    define SALT_HAS_NO_CONCEPTS (1)
-#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
-#    define SALT_HAS_NO_CONCEPTS (1)
 #elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 192930136
 #    define SALT_HAS_NO_CONCEPTS (1)
 #endif
 
 #if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
 #    define SALT_HAS_NO_CONSTEVAL (1)
-#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
-#    define SALT_HAS_NO_CONSTEVAL (1)
 #elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 193030704
 #    define SALT_HAS_NO_CONSTEVAL (1)
 #endif
 
 #if defined(SALT_CLANG_FULL_VER) && SALT_CLANG_FULL_VER < 140000
-#    define SALT_HAS_NO_SOURCE_LOCATION (1)
-#elif defined(SALT_GCC_FULL_VER) && SALT_GCC_FULL_VER < 100200
 #    define SALT_HAS_NO_SOURCE_LOCATION (1)
 #elif defined(SALT_MSVC_FULL_VER) && SALT_MSVC_FULL_VER < 193030704
 #    define SALT_HAS_NO_SOURCE_LOCATION (1)
