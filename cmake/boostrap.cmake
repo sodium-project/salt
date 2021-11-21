@@ -64,30 +64,7 @@ endif()
 # Configure, build, and install Catch2.
 ########################################################################################################################
 
-message(" ==============================================================================\n"
-        " Patching Catch2, please wait...\n"
-        " ==============================================================================")
-file(WRITE "${CMAKE_BINARY_DIR}/generated/libs/Catch2/CMakeLists.txt.patch"
-[[diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9765aa04..4da70f83 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -110,6 +110,7 @@ if (CATCH_BUILD_STATIC_LIBRARY)
-   add_library(Catch2WithMain ${CMAKE_CURRENT_LIST_DIR}/src/catch_with_main.cpp)
-   target_link_libraries(Catch2WithMain PUBLIC Catch2)
-   add_library(Catch2::Catch2WithMain ALIAS Catch2WithMain)
-+  target_compile_definitions(Catch2WithMain PRIVATE CATCH_CONFIG_CONSOLE_WIDTH=300)
- 
-   # Make the build reproducible on versions of g++ and clang that supports -ffile-prefix-map
-   if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 8) OR
-]])
-execute_process(COMMAND ${GIT_EXECUTABLE} apply "${CMAKE_BINARY_DIR}/generated/libs/Catch2/CMakeLists.txt.patch"
-                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/libs/Catch2"
-                RESULT_VARIABLE COMMAND_RESULT
-                COMMAND_ECHO STDOUT)
-if(NOT COMMAND_RESULT STREQUAL "0")
-    message(" Cannot patch Catch2/CMakeLists.txt. Perhaps the patch has been already applied?")
-endif()
+string(CONCAT SALT_CATCH2_CONFIG_CONSOLE_WIDTH "${CMAKE_CXX_FLAGS} -DCATCH_CONFIG_CONSOLE_WIDTH=300")
 
 message(" ==============================================================================\n"
         " Configuring Catch2, please wait...\n"
@@ -101,6 +78,7 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -DCATCH_INSTALL_DOCS=OFF
                         -DCATCH_INSTALL_HELPERS=OFF
                         ${SALT_CMAKE_ARGUMENTS}
+                        -DCMAKE_CXX_FLAGS=${SALT_CATCH2_CONFIG_CONSOLE_WIDTH}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
                 COMMAND_ECHO STDOUT)
@@ -163,76 +141,72 @@ endif()
 # Configure, build, and install GLFW.
 ########################################################################################################################
 
-if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
-    message(" ==============================================================================\n"
-            " Configuring GLFW, please wait...\n"
-            " ==============================================================================")
-    execute_process(COMMAND ${CMAKE_COMMAND}
-                            -B${CMAKE_BINARY_DIR}/libs/glfw
-                            -S${CMAKE_SOURCE_DIR}/libs/glfw
-                            -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
-                            -DENKITS_BUILD_EXAMPLES=OFF
-                            -DGLFW_BUILD_EXAMPLES=OFF
-                            -DGLFW_BUILD_TESTS=OFF
-                            -DGLFW_BUILD_DOCS=OFF
-                            -DGLFW_BUILD_INSTALL=OFF
-                            ${SALT_CMAKE_ARGUMENTS}
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                    RESULT_VARIABLE COMMAND_RESULT
-                    COMMAND_ECHO STDOUT)
-    if(NOT COMMAND_RESULT STREQUAL "0")
-        message(FATAL_ERROR "Failed to configure GLFW.")
-    endif()
+message(" ==============================================================================\n"
+        " Configuring GLFW, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        -B${CMAKE_BINARY_DIR}/libs/glfw
+                        -S${CMAKE_SOURCE_DIR}/libs/glfw
+                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glfw
+                        -DENKITS_BUILD_EXAMPLES=OFF
+                        -DGLFW_BUILD_EXAMPLES=OFF
+                        -DGLFW_BUILD_TESTS=OFF
+                        -DGLFW_BUILD_DOCS=OFF
+                        -DGLFW_BUILD_INSTALL=OFF
+                        ${SALT_CMAKE_ARGUMENTS}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to configure GLFW.")
+endif()
 
-    message(" ==============================================================================\n"
-            " Building and installing GLFW, please wait...\n"
-            " ==============================================================================")
-    execute_process(COMMAND ${CMAKE_COMMAND}
-                            --build ${CMAKE_BINARY_DIR}/libs/glfw
-                            --target install
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                    RESULT_VARIABLE COMMAND_RESULT
-                    COMMAND_ECHO STDOUT)
-    if(NOT COMMAND_RESULT STREQUAL "0")
-        message(FATAL_ERROR "Failed to install GLFW.")
-    endif()
+message(" ==============================================================================\n"
+        " Building and installing GLFW, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        --build ${CMAKE_BINARY_DIR}/libs/glfw
+                        --target install
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to install GLFW.")
 endif()
 
 ########################################################################################################################
 # Configure, build, and install glad.
 ########################################################################################################################
 
-if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
-    message(" ==============================================================================\n"
-            " Configuring glad, please wait...\n"
-            " ==============================================================================")
-    execute_process(COMMAND ${CMAKE_COMMAND}
-                            -B${CMAKE_BINARY_DIR}/libs/glad
-                            -S${CMAKE_SOURCE_DIR}/libs/glad
-                            -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
-                            -DGLAD_PROFILE=core
-                            -DGLAD_API="gl=4.6" # API type/version pairs, like "gl=3.2,gles=", no version means latest
-                            -DGLAD_INSTALL=ON
-                            ${SALT_CMAKE_ARGUMENTS}
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                    RESULT_VARIABLE COMMAND_RESULT
-                    COMMAND_ECHO STDOUT)
-    if(NOT COMMAND_RESULT STREQUAL "0")
-        message(FATAL_ERROR "Failed to configure glad.")
-    endif()
+message(" ==============================================================================\n"
+        " Configuring glad, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        -B${CMAKE_BINARY_DIR}/libs/glad
+                        -S${CMAKE_SOURCE_DIR}/libs/glad
+                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
+                        -DGLAD_PROFILE=core
+                        -DGLAD_API="gl=4.6" # API type/version pairs, like "gl=3.2,gles=", no version means latest
+                        -DGLAD_INSTALL=ON
+                        ${SALT_CMAKE_ARGUMENTS}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to configure glad.")
+endif()
 
-    message(" ==============================================================================\n"
-            " Building and installing glad, please wait...\n"
-            " ==============================================================================")
-    execute_process(COMMAND ${CMAKE_COMMAND}
-                            --build ${CMAKE_BINARY_DIR}/libs/glad
-                            --target install
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                    RESULT_VARIABLE COMMAND_RESULT
-                    COMMAND_ECHO STDOUT)
-    if(NOT COMMAND_RESULT STREQUAL "0")
-        message(FATAL_ERROR "Failed to install glad.")
-    endif()
+message(" ==============================================================================\n"
+        " Building and installing glad, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        --build ${CMAKE_BINARY_DIR}/libs/glad
+                        --target install
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to install glad.")
 endif()
 
 ########################################################################################################################
@@ -266,9 +240,9 @@ install(TARGETS imgui)
 ]])
 
 # This target is OpenGL-Windows-specific.
-if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
-    file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
-    [[add_library(imgui_opengl_win STATIC)
+file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
+[[if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
+    add_library(imgui_opengl_win STATIC)
     target_include_directories(imgui_opengl_win PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
     target_sources(imgui_opengl_win PRIVATE
                    "${IMGUI_ROOT}/backends/imgui_impl_glfw.cpp"
@@ -279,13 +253,13 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL" AND SALT_TARGET_OS STREQUAL "Windows")
     set_target_properties(imgui_opengl_win PROPERTIES
                           PRIVATE_HEADER "${IMGUI_OPENGL_WIN32_PRIVATE_HEADERS}")
     install(TARGETS imgui_opengl_win)
-    ]])
 endif()
+]])
 
 # This target is Metal-MacOSX-specific.
-if(SALT_TARGET_GRAPHICS STREQUAL "Metal" AND SALT_TARGET_OS STREQUAL "MacOSX")
-    file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
-    [[enable_language(OBJCXX)
+file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
+[[if(SALT_TARGET_GRAPHICS STREQUAL "Metal" AND SALT_TARGET_OS STREQUAL "MacOSX")
+    enable_language(OBJCXX)
 
     add_library(imgui_metal_macosx STATIC)
     target_include_directories(imgui_metal_macosx PRIVATE "${IMGUI_ROOT}")
@@ -300,8 +274,8 @@ if(SALT_TARGET_GRAPHICS STREQUAL "Metal" AND SALT_TARGET_OS STREQUAL "MacOSX")
                           PRIVATE_HEADER "${IMGUI_MACOSX_PRIVATE_HEADERS}")
     target_link_libraries(imgui_metal_macosx PRIVATE "-framework Metal" "-framework AppKit")
     install(TARGETS imgui_metal_macosx)
-    ]])
 endif()
+]])
 
 message(" ==============================================================================\n"
         " Configuring Dear ImGui, please wait...\n"
@@ -312,6 +286,8 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/imgui
                         -DIMGUI_ROOT=${CMAKE_SOURCE_DIR}/libs/imgui
                         -DGLFW_ROOT=${CMAKE_SOURCE_DIR}/libs/glfw
+                        -DSALT_TARGET_GRAPHICS=${SALT_TARGET_GRAPHICS}
+                        -DSALT_TARGET_OS=${SALT_TARGET_OS}
                         ${SALT_CMAKE_ARGUMENTS}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
