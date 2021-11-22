@@ -79,6 +79,7 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] error final {
 
+    [[noreturn]]
     error(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
@@ -87,6 +88,7 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
                    to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
+        std::abort();
     }
 };
 
