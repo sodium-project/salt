@@ -14,7 +14,7 @@ struct [[nodiscard]] Command_line_args final {
 struct [[nodiscard]] Engine final {
     using Fn = void (*)();
 
-    Engine(Command_line_args args) noexcept;
+    Engine(Command_line_args args = Command_line_args{}) noexcept;
 
     void run(Fn fn) const noexcept;
 };
