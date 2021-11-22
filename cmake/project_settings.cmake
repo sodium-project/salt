@@ -382,12 +382,15 @@ endif()
 # The code below changes the CMAKE_<LANG>_FLAGS_<BUILD_TYPE> variables. It does this for a good reason.
 # Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
 if(SALT_TARGET_OS STREQUAL "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "(C|c)lang")
+    set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
     if(SALT_BUILD_TYPE STREQUAL "DEBUG")
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
-        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
+        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")        
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     else()
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_MT -Xclang --dependent-lib=msvcrt")
-        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_MT -Xclang --dependent-lib=msvcrt")
+        string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_MT -Xclang --dependent-lib=msvcrt")        
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
     endif()
 endif()
 
