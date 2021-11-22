@@ -1,12 +1,10 @@
 #pragma once
+#include <string_view>
 
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
-#include <string_view>
-
-#include <salt/foundation/utils.hpp>
 #include <salt/meta.hpp>
 
 namespace salt {

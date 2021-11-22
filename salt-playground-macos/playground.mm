@@ -4,11 +4,11 @@
 #import <MetalKit/MetalKit.h>
 
 #include <imgui.h>
-#include <imgui_impl_osx.h>
 #include <imgui_impl_metal.h>
+#include <imgui_impl_osx.h>
 
 #include <cstdio>
-
+#include <salt/config.hpp>
 #include <salt/core.hpp>
 #include <salt/foundation.hpp>
 
@@ -21,12 +21,8 @@
 #endif
 
 void salt::application_main() {
-    salt::trace("Hello from the playground!");
-    salt::debug("Hello from the playground!");
-    salt::info("Hello from the playground!");
-    salt::warning("Hello from the playground!");
-    salt::error("Hello from the playground!");
-    salt::critical("Hello from the playground!");
+    // test assertion
+    SALT_ASSERT(2 < 1);
 
 #ifdef RUN_IMGUI_DEMO
     @autoreleasepool {

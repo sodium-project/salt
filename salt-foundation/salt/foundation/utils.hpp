@@ -13,7 +13,7 @@ namespace salt {
 SALT_DISABLE_WARNING_PUSH
 SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS
 
-auto as_local(auto const now) noexcept {
+inline auto as_local(auto const now) noexcept {
     using std::chrono::system_clock;
     auto const time = system_clock::to_time_t(now);
     return std::localtime(&time);
@@ -21,11 +21,11 @@ auto as_local(auto const now) noexcept {
 
 SALT_DISABLE_WARNING_POP
 
-std::string to_string(auto const time) {
+inline std::string to_string(auto const time) {
     return fmt::format("{:%F %T}", *time);
 }
 
-std::string to_string(source_location const& source) {
+inline std::string to_string(source_location const& source) {
     using std::filesystem::path;
     return fmt::format("{}:{}:{}", path(source.file_name()).filename().string(), source.function_name(), source.line());
 }
