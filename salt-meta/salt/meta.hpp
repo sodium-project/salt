@@ -1,3 +1,3 @@
 #pragma once
 
-#include <salt/meta/concepts.hpp>
+#include <salt/meta/convertible_to.hpp>
