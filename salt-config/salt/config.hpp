@@ -1,6 +1,6 @@
 #pragma once
 
-#include <salt/config/primitives.hpp>
+#include <salt/config/macro.hpp>
 
 #include <salt/config/assert.hpp>
 #include <salt/config/compiler_support.hpp>
