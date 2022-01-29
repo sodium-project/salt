@@ -5,6 +5,10 @@
 
 namespace salt {
 
+static void framebuffer_size_callback(::GLFWwindow* const, int const width, int const height) {
+    ::glViewport(0, 0, width, height);
+}
+
 Win64_window::Win64_window(Size const& size) : title_{"Win64 window"}, size_{size}, position_{} {
     debug("Initializing Win64 window");
 
@@ -14,6 +18,10 @@ Win64_window::Win64_window(Size const& size) : title_{"Win64 window"}, size_{siz
         error("Failed to initialize GLFW, error message: '{}'", error_message);
     }
 
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    ::glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.c_str(), nullptr, nullptr);
     if (!window_) {
         ::glfwGetError(&error_message);
@@ -22,7 +30,14 @@ Win64_window::Win64_window(Size const& size) : title_{"Win64 window"}, size_{siz
         trace("Window created");
     }
     ::glfwMakeContextCurrent(window_);
+    ::glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
+
     ::glfwSetWindowUserPointer(window_, static_cast<void*>(&dispatcher_));
+
+    // glad: load all OpenGL function pointers
+    if (!::gladLoadGLLoader(reinterpret_cast<::GLADloadproc>(::glfwGetProcAddress))) {
+        trace("Failed to initialize GLAD");
+    }
 
     trace("Window size => width:{}, height:{}", size_.width, size_.height);
 
@@ -74,6 +89,10 @@ Win64_window::Win64_window(Size const& size, Position const& position)
         error("Failed to initialize GLFW, error message: '{}'", error_message);
     }
 
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    ::glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.c_str(), nullptr, nullptr);
     if (!window_) {
         ::glfwGetError(&error_message);
@@ -83,8 +102,14 @@ Win64_window::Win64_window(Size const& size, Position const& position)
     }
     ::glfwSetWindowPos(window_, position_.x, position_.y);
     ::glfwMakeContextCurrent(window_);
+    ::glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
 
     ::glfwSetWindowUserPointer(window_, static_cast<void*>(&dispatcher_));
+
+    // glad: load all OpenGL function pointers
+    if (!::gladLoadGLLoader(reinterpret_cast<::GLADloadproc>(::glfwGetProcAddress))) {
+        trace("Failed to initialize GLAD");
+    }
 
     trace("Window size => width:{}, height:{}", size_.width, size_.height);
     trace("Window position => x:{}, y:{}", position_.x, position_.y);

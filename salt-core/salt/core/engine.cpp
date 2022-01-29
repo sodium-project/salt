@@ -16,7 +16,7 @@ Engine::Engine(Command_line_args args) noexcept
         // clang-format off
         : platform_window_{std::in_place_type<Win64_window>,
                            Size{.width = 1280, .height = 720},
-                           Position{.x = 100, .y = 100}}
+                           Position{.x = 500, .y = 500}}
         // clang-format on 
 {
     (void)args;
@@ -27,8 +27,8 @@ void Engine::run(Fn fn) const noexcept {
 
     auto& window = std::get<Win64_window>(platform_window_);
     while (window.alive()) {
-        auto size = window.size();
-        (void)size;
+        ::glClearColor(1.0, 0.0, 1.0, 1.0);
+        ::glClear(GL_COLOR_BUFFER_BIT);
         window.update();
     }
 }
