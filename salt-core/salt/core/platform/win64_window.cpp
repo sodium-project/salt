@@ -22,8 +22,46 @@ Win64_window::Win64_window(Size const& size) : title_{"Win64 window"}, size_{siz
         trace("Window created");
     }
     ::glfwMakeContextCurrent(window_);
+    ::glfwSetWindowUserPointer(window_, static_cast<void*>(&dispatcher_));
 
     trace("Window size => width:{}, height:{}", size_.width, size_.height);
+
+    // Set GLFW callbacks
+    ::glfwSetWindowCloseCallback(window_, [](::GLFWwindow* const window) {
+        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+        dispatcher.dispatch(Window_close_event{});
+    });
+
+    ::glfwSetWindowSizeCallback(window_, [](::GLFWwindow* const window, int const width, int const height) {
+        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+        dispatcher.dispatch(Window_resize_event{.size = {std::size_t(width), std::size_t(height)}});
+    });
+
+    // clang-format off
+    ::glfwSetKeyCallback(window_, [](::GLFWwindow* const window, int const key, int const scancode, int const action,
+                                     int const mods) {
+        (void)scancode;
+        (void)mods;
+        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+
+        switch (action) {
+            break; case GLFW_PRESS  : dispatcher.dispatch(Key_pressed_event{.key = key});
+            break; case GLFW_RELEASE: dispatcher.dispatch(Key_released_event{.key = key});
+            break; case GLFW_REPEAT : dispatcher.dispatch(Key_pressed_event{.key = key});
+        }
+    });
+
+    ::glfwSetMouseButtonCallback(window_, [](::GLFWwindow* const window, int const button, int const action,
+                                             int const mods) {
+        (void)mods;
+        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+
+        switch (action) {
+            break; case GLFW_PRESS  : dispatcher.dispatch(Mouse_pressed_event{.button = button});
+            break; case GLFW_RELEASE: dispatcher.dispatch(Mouse_released_event{.button = button});
+        }
+    });
+    // clang-format on
 }
 
 Win64_window::Win64_window(Size const& size, Position const& position)
