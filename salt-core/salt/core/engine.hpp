@@ -1,11 +1,12 @@
 #pragma once
 
 #include <string_view>
-#include <variant>
 
 // TODO:
 //  add macro checks
-#include <salt/core/platform/win64_window.hpp>
+#include <salt/core/window.hpp>
+
+#include <salt/platform.hpp>
 
 namespace salt {
 
@@ -23,7 +24,7 @@ struct [[nodiscard]] Engine final {
 
     void run(Fn fn) const noexcept;
 
-    std::variant<std::monostate, Win64_window> platform_window_;
+    Window<Glfw_window> window_;
 };
 
 } // namespace salt

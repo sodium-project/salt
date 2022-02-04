@@ -5,23 +5,19 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-#include <memory>
-#include <string>
+#include <string_view>
 
 #include <salt/events.hpp>
 
 namespace salt {
 
-struct [[nodiscard]] Win64_window final {
+struct [[nodiscard]] Glfw_window final {
 
-    Win64_window(Size const& size);
-    Win64_window(Size const& size, Position const& position);
+    Glfw_window(Size const& size, Position const& position = Position{}) noexcept;
 
-    ~Win64_window();
+    ~Glfw_window();
 
     Size size() const noexcept;
-
-    Point position() const noexcept;
 
     void update() const noexcept;
 
@@ -30,9 +26,9 @@ struct [[nodiscard]] Win64_window final {
 private:
     ::GLFWwindow* window_;
 
-    std::string title_;
-    Size        size_;
-    Position    position_;
+    std::string_view title_;
+    Size             size_;
+    Position         position_;
 
     Event_dispatcher dispatcher_;
 };

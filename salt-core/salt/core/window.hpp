@@ -1,44 +1,58 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <type_traits>
+#include <variant>
 
-#include <string>
+#include <salt/math.hpp>
 
 namespace salt {
 
-template <typename Platform_window> struct [[nodiscard]] Window {
+// clang-format off
+template <typename Window>
+concept is_window = requires(Window window) {
+    requires std::is_class_v<Window>;
+    requires std::is_nothrow_constructible_v<Window, Size>
+          && std::is_nothrow_destructible_v<Window>;
+    { window.size()   } -> std::same_as<Size>;
+    { window.update() } -> std::same_as<void>;
+    { window.alive()  } -> std::same_as<bool>;
+};
+// clang-format on
 
-    using derived_type = Platform_window;
+template <is_window... Implementations> struct [[nodiscard]] Window final {
 
-    Window(std::string title, Size const& size) : title_{std::move(title)}, position_{}, size_{size} {}
+    constexpr Window() noexcept = default;
 
-    Window(std::string title, Point const& position, Size const& size)
-            : title_{std::move(title)}, position_{position}, size_{size} {}
+    template <typename T, typename... Args>
+    constexpr explicit Window(std::in_place_type_t<T>, Args&&... args) noexcept
+            : window_impls_(std::in_place_type<T>, std::forward<Args>(args)...) {}
 
-    Size size() const noexcept {
-        return size_;
+    constexpr Size size() const noexcept {
+        return std::visit(
+                [](auto& window_impl) -> Size {
+                    return window_impl.size();
+                },
+                window_impls_);
     }
 
-    Point position() const noexcept {
-        return position_;
+    constexpr void update() const noexcept {
+        std::visit(
+                [](auto& window_impl) {
+                    window_impl.update();
+                },
+                window_impls_);
     }
 
-    void on_update() const noexcept {
-        self().on_update();
+    constexpr bool alive() const noexcept {
+        return std::visit(
+                [](auto& window_impl) -> bool {
+                    return window_impl.alive();
+                },
+                window_impls_);
     }
 
 private:
-    // windowable auto& self() noexcept {
-    //     return *static_cast<derived_type*>(this);
-    // }
-
-    // windowable auto const& self() const noexcept {
-    //     return *static_cast<derived_type const*>(this);
-    // }
-
-    std::string title_;
-    Point       position_;
-    Size        size_;
+    std::variant<Implementations...> window_impls_;
 };
 
 } // namespace salt
