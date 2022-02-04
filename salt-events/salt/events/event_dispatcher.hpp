@@ -9,7 +9,7 @@
 namespace salt {
 
 // clang-format off
-struct [[nodiscard]] Event_dispatcher final : State_machine<Event_dispatcher, SALT_REGISTERED_STATES> {
+struct [[nodiscard]] Event_dispatcher final : registered_states::apply<State_machine, Event_dispatcher> {
     template<typename State, typename Event>
     auto on_event(State&, Event&&) const noexcept { return std::nullopt; }
 

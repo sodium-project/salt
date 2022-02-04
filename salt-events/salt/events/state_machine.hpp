@@ -10,17 +10,17 @@ template <typename Dispatcher, typename State, typename... States> struct [[nodi
     using states_t     = std::variant<std::monostate, State, States...>;
     using opt_states_t = std::optional<states_t>;
 
-    template <typename T> constexpr inline bool holds_state() const noexcept {
+    template <typename T> constexpr bool holds_state() const noexcept {
         return std::holds_alternative<T>(states_);
     }
 
-    template <typename Event> constexpr inline void dispatch(Event&& event) const noexcept {
+    template <typename Event> constexpr void dispatch(Event&& event) const noexcept {
         using namespace std;
         using namespace detail;
 
         // clang-format off
         Dispatcher const& dispatcher = static_cast<Dispatcher const&>(*this);
-        auto const&       new_states = visit(
+        auto const        new_states = visit(
             [&](auto& state) -> opt_states_t { return dispatcher.on_event(state, forward<Event>(event)); }
         , states_);
         // clang-format on

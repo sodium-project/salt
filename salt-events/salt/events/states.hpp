@@ -2,6 +2,7 @@
 
 #include <salt/config.hpp>
 #include <salt/math.hpp>
+#include <salt/meta.hpp>
 
 namespace salt {
 
@@ -24,13 +25,12 @@ struct [[nodiscard]] Mouse_pressed_event final { std::int32_t button; };
 struct [[nodiscard]] Mouse_released_state final { std::int32_t button; };
 struct [[nodiscard]] Mouse_released_event final { std::int32_t button; };
 
-#define SALT_REGISTERED_STATES                                                                                         \
-                        Window_close_state,                                                                            \
-                        Window_resize_state,                                                                           \
-                        Key_pressed_state,                                                                             \
-                        Key_released_state,                                                                            \
-                        Mouse_pressed_state,                                                                           \
-                        Mouse_released_state
+using registered_states = parameter_pack<Window_close_state,
+                                         Window_resize_state,
+                                         Key_pressed_state,
+                                         Key_released_state,
+                                         Mouse_pressed_state,
+                                         Mouse_released_state>;
 // clang-format on
 
 } // namespace salt
