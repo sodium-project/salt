@@ -1,4 +1,4 @@
-#include <salt/core/engine.hpp>
+#include <salt/core/application.hpp>
 
 #include <salt/config.hpp>
 #include <salt/utils.hpp>
@@ -12,16 +12,18 @@ std::string_view Command_line_args::operator[](std::size_t const i) const noexce
     return vector[i];
 }
 
-Engine::Engine(Command_line_args args) noexcept
-        : window_{std::in_place_type<Glfw_window>, Size{.width = 1280, .height = 720}, Position{.x = 500, .y = 500}} {
+Application::Application(Command_line_args args) noexcept
+        : window_{make_window(Size{.width = 1280, .height = 720}, Position{.x = 500, .y = 500})}, imgui_overlay_{} {
     (void)args;
+    imgui_overlay_.attach(window_);
 }
 
-void Engine::run(Fn fn) const noexcept {
+void Application::run(Fn fn) const noexcept {
     fn();
 
     while (window_.alive()) {
         window_.update();
+        imgui_overlay_.render();
     }
 }
 

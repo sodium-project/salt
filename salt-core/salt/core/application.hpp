@@ -17,14 +17,16 @@ struct [[nodiscard]] Command_line_args final {
     std::string_view operator[](std::size_t const i) const noexcept;
 };
 
-struct [[nodiscard]] Engine final {
+struct [[nodiscard]] Application final {
     using Fn = void (*)();
 
-    Engine(Command_line_args args = Command_line_args{}) noexcept;
+    Application(Command_line_args args = Command_line_args{}) noexcept;
 
     void run(Fn fn) const noexcept;
 
-    Window<Glfw_window> window_;
+private:
+    Platform_window window_;
+    Imgui_overlay   imgui_overlay_;
 };
 
 } // namespace salt
