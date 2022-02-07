@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include <salt/events.hpp>
+#include <salt/meta.hpp>
 
 namespace salt {
 
@@ -31,6 +32,16 @@ private:
     Position         position_;
 
     Event_dispatcher dispatcher_;
+
+    friend struct Glfw_opengl_imgui_overlay;
 };
+
+// TODO:
+//  Add a macro check for the window implementation we need.
+using Platform_window = Glfw_window;
+
+inline windowable auto make_window(Size const size, Position const position) noexcept {
+    return Glfw_window{size, position};
+}
 
 } // namespace salt

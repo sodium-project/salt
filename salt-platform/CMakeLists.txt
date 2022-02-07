@@ -4,11 +4,11 @@ find_package(imgui REQUIRED)
 
 salt_static_library(platform
                     COMMON_SOURCE "salt/platform/glfw_window.cpp"
-                                  "salt/platform/macos_window.cpp"
-                    PUBLIC_LINK   glad::glad
+                                  "salt/platform/glfw_opengl_imgui_overlay.cpp"
+                    PRIVATE_LINK  glad::glad
                                   glfw::glfw
                                   imgui::imgui
-                                  salt::events
+                    PUBLIC_LINK   salt::events
                                   salt::utils)
 
 # code: language="CMake" insertSpaces=true tabSize=4
