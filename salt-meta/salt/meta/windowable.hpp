@@ -1,9 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
-//#include <salt/math.hpp>
-
 namespace salt {
 
 struct Size;
@@ -19,5 +15,7 @@ concept windowable = requires(Window window) {
     { window.alive()  } -> std::same_as<bool>;
 };
 // clang-format on
+
+template <windowable Window> using is_windowable = Window;
 
 } // namespace salt

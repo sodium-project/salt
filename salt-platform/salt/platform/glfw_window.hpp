@@ -1,19 +1,17 @@
 #pragma once
 
-// clang-format off
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-// clang-format on
-
 #include <string_view>
 
 #include <salt/events.hpp>
 #include <salt/meta.hpp>
 
+using GLFWwindow = struct GLFWwindow;
+
 namespace salt {
 
 struct [[nodiscard]] Glfw_window final {
 
+    Glfw_window() noexcept;
     Glfw_window(Size const& size, Position const& position = Position{}) noexcept;
 
     ~Glfw_window();
@@ -38,10 +36,6 @@ private:
 
 // TODO:
 //  Add a macro check for the window implementation we need.
-using Platform_window = Glfw_window;
-
-inline windowable auto make_window(Size const size, Position const position) noexcept {
-    return Glfw_window{size, position};
-}
+using Platform_window = is_windowable<Glfw_window>;
 
 } // namespace salt

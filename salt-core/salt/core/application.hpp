@@ -2,10 +2,6 @@
 
 #include <string_view>
 
-// TODO:
-//  add macro checks
-#include <salt/core/window.hpp>
-
 #include <salt/platform.hpp>
 
 namespace salt {

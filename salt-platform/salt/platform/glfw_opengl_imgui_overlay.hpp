@@ -18,6 +18,6 @@ struct [[nodiscard]] Glfw_opengl_imgui_overlay final {
 
 // TODO:
 //  Add a macro check for the window implementation we need.
-using Imgui_overlay = Glfw_opengl_imgui_overlay;
+using Imgui_overlay = is_overliable<Platform_window, Glfw_opengl_imgui_overlay>;
 
 } // namespace salt

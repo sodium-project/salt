@@ -316,6 +316,39 @@ if(NOT COMMAND_RESULT STREQUAL "0")
     message(FATAL_ERROR "Failed to install Dear ImGui.")
 endif()
 
+
+########################################################################################################################
+# Configure, build, and install entt.
+########################################################################################################################
+
+message(" ==============================================================================\n"
+        " Configuring entt, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        -B${CMAKE_BINARY_DIR}/libs/entt
+                        -S${CMAKE_SOURCE_DIR}/libs/entt
+                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/entt
+                        ${SALT_CMAKE_ARGUMENTS}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to configure entt.")
+endif()
+
+message(" ==============================================================================\n"
+        " Building and installing entt, please wait...\n"
+        " ==============================================================================")
+execute_process(COMMAND ${CMAKE_COMMAND}
+                        --build ${CMAKE_BINARY_DIR}/libs/entt
+                        --target install
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                RESULT_VARIABLE COMMAND_RESULT
+                COMMAND_ECHO STDOUT)
+if(NOT COMMAND_RESULT STREQUAL "0")
+    message(FATAL_ERROR "Failed to install entt.")
+endif()
+
 ########################################################################################################################
 # Update CMakeCache.txt
 ########################################################################################################################

@@ -1,5 +1,10 @@
 #include <salt/platform/glfw_window.hpp>
 
+// clang-format off
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+// clang-format on
+
 #include <salt/config.hpp>
 #include <salt/utils.hpp>
 
@@ -8,6 +13,8 @@ namespace salt {
 static void framebuffer_size_callback(::GLFWwindow* const, int const width, int const height) {
     ::glViewport(0, 0, width, height);
 }
+
+Glfw_window::Glfw_window() noexcept : Glfw_window(Size{.width = 1280, .height = 720}) {}
 
 Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
         : window_{nullptr}, title_{"Win64 window"}, size_{size}, position_{position}, dispatcher_{} {
