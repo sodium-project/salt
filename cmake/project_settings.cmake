@@ -1,3 +1,18 @@
+# include(CTest)
+# include(CheckLanguage)
+
+# check_language(OBJC)
+# if(CMAKE_OBJC_COMPILER)
+#     enable_language(OBJC)
+#     string(APPEND CMAKE_OBJC_FLAGS " -fobjc-arc -std=gnu11")
+# endif()
+
+# check_language(OBJCXX)
+# if(CMAKE_OBJCXX_COMPILER)
+#     enable_language(OBJCXX)
+#     string(APPEND CMAKE_OBJCXX_FLAGS " -fobjc-arc -std=gnu++2a")
+# endif()
+
 add_library(salt::project_settings INTERFACE IMPORTED)
 
 target_compile_features(salt::project_settings INTERFACE cxx_std_20)
@@ -196,18 +211,18 @@ endfunction(salt_macosx_app)
 
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
 # it unless you know what you are doing.
-macro(_salt_unit_tests _ARG_NAME _TESTS_SOURCE _ARG_TEST_LINK)
-    if(_TESTS_SOURCE)
+macro(_salt_unit_tests _ARG_NAME _TESTS_SOURCE)
+    if(NOT "${_TESTS_SOURCE}" STREQUAL "")
         find_package(Catch2 REQUIRED)
         set(_TESTS "salt_${_ARG_NAME}_tests")
         add_executable("${_TESTS}")
         target_sources("${_TESTS}" PRIVATE "${_TESTS_SOURCE}")
         target_link_libraries("${_TESTS}"
                               PRIVATE Catch2::Catch2
-                                      "salt::${_ARG_NAME}"
-                                      "${_ARG_TEST_LINK}")
+                                      "salt::${_ARG_NAME}")
         install(TARGETS "${_TESTS}"
                 RUNTIME DESTINATION "salt-${_ARG_NAME}/bin")
+        add_test(NAME "${_ARG_NAME}" COMMAND "${_TESTS}")
     endif()
 endmacro(_salt_unit_tests)
 
@@ -219,140 +234,127 @@ macro(_salt_install_headers _ARG_NAME)
             FILES_MATCHING PATTERN "*.hpp")
 endmacro(_salt_install_headers)
 
-# salt_static_library(<name>
-#                     [<DEBUG>]
-#                     [<MACOSX_SOURCE>    <item>...]
-#                     [<MACOSX_TEST>      <item>...]
-#                     [<COMMON_SOURCE>    <item>...]
-#                     [<COMMON_TEST>      <item>...]
-#                     [<PUBLIC_LINK>      <item>...]
-#                     [<PRIVATE_LINK>     <item>...]
-#                     [<TEST_LINK>        <item>...])
-#
-# Build and install a static library and its unit tests.
-#
-# The `DEBUG` option causes the function to print a debug message. You don't have to use this option
-# unless you're trying to debug the funciton itself.
-#
-# The `MACOSX_SOURCE` option specifies a list of source files which are specific to MacOSX.
-# The `MACOSX_TEST` option specifies a list of unit tests which are specific to MacOSX.
-#
-# The `COMMON_SOURCE` option specifies a list of platform-independent source files.
-# The `COMMON_TEST` option specifies a list of platform-independent unit tests.
-#
-# The `PUBLIC_LINK` option specifies a list of libraries and targets which are link dependencies of the
-# library. They are made part of its link interface.
-#
-# The `PRIVATE_LINK` option specifies a list of libraries and targets which are link dependencies of the
-# library. They are not made part of its link interface.
-#
-# The `TEST_LINK` option specifies a list of libraries and targets which are link dependencies of the
-# unit tests.
-function(salt_static_library _ARG_NAME)
-    set(_MULTI_VALUE_KEYWORDS
-        MACOSX_SOURCE       # MacOSX-specific source code
-        MACOSX_TEST         # MacOSX-specific unit tests
-        COMMON_SOURCE       # common source code
-        COMMON_TEST         # common unit tests
-        PUBLIC_LINK         # public link libraries
-        PRIVATE_LINK        # private link libraries
-        TEST_LINK)          # tests-specific link libraries
-    cmake_parse_arguments(PARSE_ARGV 1                  # start at the 1st argument
-                          _ARG                          # variable prefix
-                          "DEBUG"                       # options
-                          ""                            # one value keywords
-                          "${_MULTI_VALUE_KEYWORDS}")   # multi value kewywords
-    if(_ARG_DEBUG)
-        message(" (DEBUG) salt_static_library:\n"
-                " NAME:             [${_ARG_NAME}]\n"
-                " DEBUG:            [${_ARG_DEBUG}]\n"
-                " MACOSX_SOURCE:    [${_ARG_MACOSX_SOURCE}]\n"
-                " MACOSX_TEST:      [${_ARG_MACOSX_TEST}]\n"
-                " COMMON_SOURCE:    [${_ARG_COMMON_SOURCE}]\n"
-                " COMMON_TEST:      [${_ARG_COMMON_TEST}]\n"
-                " PUBLIC_LINK:      [${_ARG_PUBLIC_LINK}]\n"
-                " PRIVATE_LINK:     [${_ARG_PRIVATE_LINK}]\n"
-                " TEST_LINK:        [${_ARG_TEST_LINK}]")
-    endif()
-    set(_TARGET_SOURCE "${_ARG_COMMON_SOURCE}")
-    set(_TESTS_SOURCE  "${_ARG_COMMON_TEST}")
-    if(SALT_TARGET_VENDOR STREQUAL "Apple")
-        if(SALT_TARGET_OS STREQUAL "MacOSX")
-            list(APPEND _TARGET_SOURCE "${_ARG_MACOSX_SOURCE}")
-            list(APPEND _TESTS_SOURCE  "${_ARG_MACOSX_TEST}")
+# salt_metal_library(<name>
+#       TARGET <target>
+#       SOURCE <source>...)
+function(salt_metal_library _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1    # start at the 1st argument
+                          _ARG            # variable prefix
+                          ""              # options
+                          "TARGET"        # one   value keywords
+                          "SOURCE")       # multi value keywords
+    if (SALT_TARGET_VENDOR STREQUAL "Apple")
+        if(NOT _ARG_TARGET)
+            message(FATAL_ERROR "The required argument TARGET is missing.")
         endif()
+
+        get_target_property(_TARGET "${_ARG_TARGET}" ALIASED_TARGET)
+
+        add_custom_command(TARGET "${_TARGET}" POST_BUILD
+
+                           COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT} metal
+                                -o ${CMAKE_CURRENT_BINARY_DIR}/${_ARG_NAME}.air
+                                -c ${_ARG_SOURCE}
+
+                           COMMAND xcrun -sdk ${CMAKE_OSX_SYSROOT} metallib
+                                   ${CMAKE_CURRENT_BINARY_DIR}/${_ARG_NAME}.air
+                                -o ${CMAKE_CURRENT_BINARY_DIR}/${_ARG_NAME}.metallib
+
+                           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
+endfunction(salt_metal_library)
+
+# salt_static_library(<name>
+#     <WINDOWS|APPLE|MACOSX|COMMON>
+#          <SOURCE|TEST|LINK> items...
+#         [<SOURCE|TEST|LINK> items...]...
+#     [<WINDOWS|APPLE|MACOSX|COMMON>
+#          <SOURCE|TEST|LINK> items...
+#         [<SOURCE|TEST|LINK> items...]...]...)
+function(_salt_static_library _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
+                          _ARG                  # variable prefix
+                          ""                    # options
+                          ""                    # one   value keywords
+                          "SOURCE;TEST;LINK")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
     add_library("${_TARGET}" STATIC)
     add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
     target_include_directories("${_TARGET}" PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
     target_link_libraries("${_TARGET}"
                           PUBLIC  salt::project_settings
-                                  "${_ARG_PUBLIC_LINK}"
-                          PRIVATE "${_ARG_PRIVATE_LINK}")
-    target_sources("${_TARGET}" PRIVATE "${_TARGET_SOURCE}")
+                                  "${_ARG_LINK}")
+    target_sources("${_TARGET}" PRIVATE "${_ARG_SOURCE}")
     install(TARGETS "${_TARGET}"
             ARCHIVE DESTINATION "salt-${_ARG_NAME}/lib")
     _salt_install_headers("${_ARG_NAME}")
-    _salt_unit_tests("${_ARG_NAME}" "${_TESTS_SOURCE}" "${_ARG_TEST_LINK}")
+    _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
+endfunction(_salt_static_library)
+
+function(salt_static_library _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
+                          _ARG                             # variable prefix
+                          ""                               # options
+                          ""                               # one   value keywords
+                          "WINDOWS;APPLE;MACOSX;COMMON")   # multi value keywords
+    if (SALT_TARGET_OS STREQUAL "MacOSX")
+        if (_ARG_APPLE OR _ARG_MACOSX OR _ARG_COMMON)
+            _salt_static_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on macOS X.")
+        endif()
+    elseif(SALT_TARGET_OS STREQUAL "Windows")
+        if (_ARG_WINDOWS OR _ARG_COMMON)
+            _salt_static_library(${_ARG_NAME} ${_ARG_WINDOWS} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
+        endif()
+    endif()
 endfunction(salt_static_library)
 
 # salt_interface_library(<name>
-#                        [<DEBUG>]
-#                        [<MACOSX_TEST>      <item>...]
-#                        [<COMMON_TEST>      <item>...]
-#                        [<PUBLIC_LINK>      <item>...]
-#                        [<TEST_LINK>        <item>...])
-#
-# Build and install an interface (aka header-only) library and its unit tests.
-#
-# The `DEBUG` option causes the function to print a debug message. You don't have to use this option
-# unless you're trying to debug the funciton itself.
-#
-# The `MACOSX_TEST` option specifies a list of unit tests which are specific to MacOSX.
-#
-# The `COMMON_TEST` option specifies a list of platform-independent unit tests.
-#
-# The `PUBLIC_LINK` option specifies a list of libraries and targets which are link dependencies of the
-# library. They are made part of its link interface.
-#
-# The `TEST_LINK` option specifies a list of libraries and targets which are link dependencies of the
-# unit tests.
-function(salt_interface_library _ARG_NAME)
-    set(_MULTI_VALUE_KEYWORDS
-        MACOSX_TEST         # MacOSX-specific unit tests
-        COMMON_TEST         # common unit tests
-        PUBLIC_LINK         # public link libraries
-        TEST_LINK)          # tests-specific link libraries
-    cmake_parse_arguments(PARSE_ARGV 1                  # start at the 1st argument
-                          _ARG                          # variable prefix
-                          "DEBUG"                       # options
-                          ""                            # one value keywords
-                          "${_MULTI_VALUE_KEYWORDS}")   # multi value kewywords
-    if(_ARG_DEBUG)
-        message(" (DEBUG) salt_static_library:\n"
-                " NAME:             [${_ARG_NAME}]\n"
-                " DEBUG:            [${_ARG_DEBUG}]\n"
-                " MACOSX_TEST:      [${_ARG_MACOSX_TEST}]\n"
-                " COMMON_TEST:      [${_ARG_COMMON_TEST}]\n"
-                " PUBLIC_LINK:      [${_ARG_PUBLIC_LINK}]\n"
-                " TEST_LINK:        [${_ARG_TEST_LINK}]")
-    endif()
-    set(_TESTS_SOURCE  "${_ARG_COMMON_TEST}")
-    if(SALT_TARGET_VENDOR STREQUAL "Apple")
-        if(SALT_TARGET_OS STREQUAL "MacOSX")
-            list(APPEND _TESTS_SOURCE  "${_ARG_MACOSX_TEST}")
-        endif()
-    endif()
+#     <WINDOWS|APPLE|MACOSX|COMMON>
+#          <TEST|LINK> items...
+#         [<TEST|LINK> items...]...
+#     [<WINDOWS|APPLE|MACOSX|COMMON>
+#          <TEST|LINK> items...
+#         [<TEST|LINK> items...]...]...)
+function(_salt_interface_library _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1   # start at the 1st argument
+                          _ARG           # variable prefix
+                          ""             # options
+                          ""             # one   value keywords
+                          "TEST;LINK")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
     add_library("${_TARGET}" INTERFACE)
     add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
     target_include_directories("${_TARGET}" INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
     target_link_libraries("${_TARGET}"
                           INTERFACE salt::project_settings
-                                    "${_ARG_PUBLIC_LINK}")
+                                    "${_ARG_LINK}")
     _salt_install_headers("${_ARG_NAME}")
-    _salt_unit_tests("${_ARG_NAME}" "${_TESTS_SOURCE}" "${_ARG_TEST_LINK}")
+    _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
+endfunction(_salt_interface_library)
+
+function(salt_interface_library _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
+                          _ARG                             # variable prefix
+                          ""                               # options
+                          ""                               # one   value keywords
+                          "WINDOWS;APPLE;MACOSX;COMMON")   # multi value keywords
+    if (SALT_TARGET_OS STREQUAL "MacOSX")
+        if (DEFINED _ARG_APPLE OR DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
+            _salt_interface_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on macOS X.")
+        endif()
+    elseif(SALT_TARGET_OS STREQUAL "Windows")
+        if (DEFINED _ARG_WINDOWS OR DEFINED _ARG_COMMON)
+            _salt_interface_library(${_ARG_NAME} ${_ARG_WINDOWS} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
+        endif()
+    endif()
 endfunction(salt_interface_library)
 
 #-----------------------------------------------------------------------------------------------------------------------
