@@ -80,8 +80,8 @@ void Glfw_opengl_imgui_overlay::render() const noexcept {
     ImGui::SetNextWindowViewport(viewport->ID);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-                    ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
     // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
@@ -92,8 +92,9 @@ void Glfw_opengl_imgui_overlay::render() const noexcept {
     // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
     // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
     // all active windows docked into it will lose their parent and become undocked.
-    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+    // We cannot preserve the docking relationship between an active window and an inactive docking,
+    // otherwise any change of dockspace/settings would lead to windows being stuck in limbo and
+    // never being visible.
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
     ImGui::Begin("DockSpace Demo", &open, window_flags);
     ImGui::PopStyleVar();
@@ -109,15 +110,17 @@ void Glfw_opengl_imgui_overlay::render() const noexcept {
 
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("Options")) {
-            // Disabling fullscreen would allow the window to be moved to the front of other windows,
-            // which we can't undo at the moment without finer window depth/z control.
+            // Disabling fullscreen would allow the window to be moved to the front of other
+            // windows, which we can't undo at the moment without finer window depth/z control.
             ImGui::MenuItem("Fullscreen", NULL, &fullscreen);
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)) {
+            if (ImGui::MenuItem("Flag: NoSplit", "",
+                                (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0)) {
                 dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
             }
-            if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)) {
+            if (ImGui::MenuItem("Flag: NoResize", "",
+                                (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0)) {
                 dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
             }
             ImGui::EndMenu();
@@ -137,7 +140,8 @@ void Glfw_opengl_imgui_overlay::render() const noexcept {
     ImGui::Begin("Output");
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(106, 90, 205, 255));
     std::string text = "Some text!";
-    ImGui::InputTextMultiline("##text1", &text, ImGui::GetWindowSize(), ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputTextMultiline("##text1", &text, ImGui::GetWindowSize(),
+                              ImGuiInputTextFlags_ReadOnly);
     ImGui::PopStyleColor();
     ImGui::End();
     ImGui::PopStyleVar();
