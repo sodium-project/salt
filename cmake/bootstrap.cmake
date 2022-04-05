@@ -233,14 +233,16 @@ target_sources(imgui PRIVATE
                "${IMGUI_ROOT}/imgui_tables.cpp"
                "${IMGUI_ROOT}/imgui_widgets.cpp"
                "${IMGUI_ROOT}/misc/cpp/imgui_stdlib.cpp")
+set(IMGUI_PUBLIC_HEADERS
+    "${IMGUI_ROOT}/imgui.h"
+    "${IMGUI_ROOT}/misc/cpp/imgui_stdlib.h")
 set(IMGUI_PRIVATE_HEADERS
     "${IMGUI_ROOT}/imconfig.h"
     "${IMGUI_ROOT}/imstb_rectpack.h"
     "${IMGUI_ROOT}/imstb_textedit.h"
     "${IMGUI_ROOT}/imstb_truetype.h")
 set_target_properties(imgui PROPERTIES
-                      PUBLIC_HEADER  "${IMGUI_ROOT}/imgui.h"
-                      PUBLIC_HEADER  "${IMGUI_ROOT}/misc/cpp/imgui_stdlib.h"
+                      PUBLIC_HEADER  "${IMGUI_PUBLIC_HEADERS}"
                       PRIVATE_HEADER "${IMGUI_PRIVATE_HEADERS}")
 install(TARGETS imgui)
 ]])
