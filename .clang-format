@@ -1,8 +1,8 @@
+
 ---
-Language:                                       Cpp
 BasedOnStyle:                                   LLVM
 AccessModifierOffset:                           -4
-ColumnLimit:                                    120
+ColumnLimit:                                    100
 ConstructorInitializerIndentWidth:              8
 ContinuationIndentWidth:                        8
 IndentPPDirectives:                             AfterHash
@@ -22,12 +22,9 @@ AllowShortIfStatementsOnASingleLine:            Never
 AllowShortLambdasOnASingleLine:                 Empty
 AllowShortLoopsOnASingleLine:                   false
 BreakConstructorInitializers:                   BeforeColon
+FixNamespaceComments:                           true
+---
+Language:                                       Cpp
 ---
 Language:                                       ObjC
-BasedOnStyle:                                   LLVM
-ColumnLimit:                                    120
-IndentWidth:                                    4
-PointerAlignment:                               Left
-IndentPPDirectives:                             AfterHash
-AlignConsecutiveAssignments:                    Consecutive
 ObjCSpaceBeforeProtocolList:                    false
