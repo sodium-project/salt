@@ -14,12 +14,14 @@ TEST_CASE("salt::utils::as_local", "[salt-utils]") {
         auto const expected_local_time = std::localtime(&as_time_t);
 
         auto const local_time = salt::as_local(current_time);
-        REQUIRE(local_time->tm_year == expected_local_time->tm_year);
-        REQUIRE(local_time->tm_mon == expected_local_time->tm_mon);
-        REQUIRE(local_time->tm_mday == expected_local_time->tm_mday);
-        REQUIRE(local_time->tm_hour == expected_local_time->tm_hour);
-        REQUIRE(local_time->tm_min == expected_local_time->tm_min);
+        // clang-format off
+        REQUIRE(local_time->tm_year  == expected_local_time->tm_year);
+        REQUIRE(local_time->tm_mon   == expected_local_time->tm_mon);
+        REQUIRE(local_time->tm_mday  == expected_local_time->tm_mday);
+        REQUIRE(local_time->tm_hour  == expected_local_time->tm_hour);
+        REQUIRE(local_time->tm_min   == expected_local_time->tm_min);
         REQUIRE(local_time->tm_isdst == expected_local_time->tm_isdst);
+        // clang-format on
 
         SALT_DISABLE_WARNING_POP
     }
