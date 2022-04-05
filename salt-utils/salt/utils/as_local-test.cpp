@@ -2,7 +2,7 @@
 
 #include <salt/utils.hpp>
 
-TEST_CASE("salt::utils::as_local", "[salt-utils]") {
+TEST_CASE("salt::as_local", "[salt-utils/as_local.hpp]") {
     SECTION("it produces a time as local") {
         using std::chrono::system_clock;
 

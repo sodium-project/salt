@@ -5,6 +5,8 @@ salt_interface_library(utils
         TEST
             "salt/utils/as_local-test.cpp"
             "salt/utils/to_string-test.cpp"
+            "salt/utils/uninitialized_storage-test.cpp"
+            "salt/utils/static_storage-test.cpp"
             "salt/utils/detail/source_location-test.cpp"
         LINK
             fmt::fmt

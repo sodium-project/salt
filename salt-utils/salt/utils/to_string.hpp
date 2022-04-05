@@ -1,5 +1,4 @@
 #pragma once
-
 #include <filesystem>
 
 #include <fmt/format.h>
@@ -14,7 +13,8 @@ inline std::string to_string(auto const time) {
 
 inline std::string to_string(source_location const& source) {
     using std::filesystem::path;
-    return fmt::format("{}:{}:{}", path(source.file_name()).filename().string(), source.function_name(), source.line());
+    return fmt::format("{}:{}:{}", path(source.file_name()).filename().string(),
+                       source.function_name(), source.line());
 }
 
 } // namespace salt

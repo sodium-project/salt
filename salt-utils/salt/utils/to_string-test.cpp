@@ -2,7 +2,7 @@
 
 #include <salt/utils.hpp>
 
-TEST_CASE("salt::utils::to_string", "[salt-utils]") {
+TEST_CASE("salt::to_string", "[salt-utils/to_string.hpp]") {
     SECTION("it converts time to std::string") {
         using std::chrono::system_clock;
 
