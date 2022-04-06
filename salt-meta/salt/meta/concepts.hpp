@@ -21,6 +21,11 @@ concept aligned_as_pow2 = requires {
     requires is_pow2(alignof(T));
 };
 
+// clang-format off
+template <typename T>
+concept storable = (std::movable<T> || std::copyable<T>) && std::destructible<T>;
+// clang-format on
+
 struct Size;
 
 // clang-format off
