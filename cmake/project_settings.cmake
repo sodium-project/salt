@@ -1,17 +1,17 @@
-# include(CTest)
-# include(CheckLanguage)
+include(CTest)
+include(CheckLanguage)
 
-# check_language(OBJC)
-# if(CMAKE_OBJC_COMPILER)
-#     enable_language(OBJC)
-#     string(APPEND CMAKE_OBJC_FLAGS " -fobjc-arc -std=gnu11")
-# endif()
+check_language(OBJC)
+if(CMAKE_OBJC_COMPILER)
+    enable_language(OBJC)
+    string(APPEND CMAKE_OBJC_FLAGS " -fobjc-arc -std=gnu11")
+endif()
 
-# check_language(OBJCXX)
-# if(CMAKE_OBJCXX_COMPILER)
-#     enable_language(OBJCXX)
-#     string(APPEND CMAKE_OBJCXX_FLAGS " -fobjc-arc -std=gnu++2a")
-# endif()
+check_language(OBJCXX)
+if(CMAKE_OBJCXX_COMPILER)
+    enable_language(OBJCXX)
+    string(APPEND CMAKE_OBJCXX_FLAGS " -fobjc-arc -std=gnu++2a")
+endif()
 
 add_library(salt::project_settings INTERFACE IMPORTED)
 
@@ -37,6 +37,8 @@ function(salt_set_target_architecture output_var)
         if(_ARCH_COUNT STREQUAL "1")
             if(CMAKE_OSX_ARCHITECTURES STREQUAL "x86_64")
                 set(_SALT_TARGET_ARCH "x86_64" CACHE STRING "The target architecture." FORCE)
+            elseif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+                set(_SALT_TARGET_ARCH "arm64" CACHE STRING "The target architecture." FORCE)
             else()
                 message(FATAL_ERROR "Invalid target architecture. Salt engine only supports 64-bit architecture.")
             endif()
@@ -90,8 +92,7 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         DEFINED CACHE{SALT_TARGET_GRAPHICS}))
     if(WIN32)
         if(NOT CMAKE_SYSTEM_VERSION)
-            set(CMAKE_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION} CACHE STRING
-                                                                  "The version of the target platform." FORCE)
+            set(CMAKE_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION} CACHE STRING "The version of the target platform." FORCE)
         endif()
 
         if(NOT CMAKE_SYSTEM_PROCESSOR)
@@ -100,8 +101,8 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         # Get the correct target architecture.
         salt_set_target_architecture(SALT_TARGET_CPU)
 
-        set(SALT_TARGET_OS       Windows   CACHE STRING "[READONLY] The current platform."    FORCE)
         set(SALT_TARGET_VENDOR   Microsoft CACHE STRING "[READONLY] The target vendor."       FORCE)
+        set(SALT_TARGET_OS       Windows   CACHE STRING "[READONLY] The current platform."    FORCE)
         set(SALT_TARGET_GRAPHICS OpenGL    CACHE STRING "[READONLY] The target graphics api." FORCE)
     elseif(APPLE)
         if(NOT DEFINED CMAKE_OSX_SYSROOT)
@@ -121,8 +122,8 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
             # Get the correct target architecture.
             salt_set_target_architecture(SALT_TARGET_CPU)
 
-            set(SALT_TARGET_OS       MacOSX CACHE STRING "[READONLY] The current platform."    FORCE)
             set(SALT_TARGET_VENDOR   Apple  CACHE STRING "[READONLY] The target vendor."       FORCE)
+            set(SALT_TARGET_OS       MacOSX CACHE STRING "[READONLY] The current platform."    FORCE)
             set(SALT_TARGET_GRAPHICS Metal  CACHE STRING "[READONLY] The target graphics api." FORCE)
         endif()
     endif()
