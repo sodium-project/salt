@@ -1,13 +1,13 @@
 #pragma once
 
 // clang-format off
-#define _SALT_JOIN(a, b) a##b
-#define  SALT_JOIN(a, b) _SALT_JOIN(a, b)
+#define _SALT_JOIN(A, B) A##B
+#define  SALT_JOIN(A, B) _SALT_JOIN(A, B)
 
-#define SALT_UNIQUE_NAME(base) SALT_JOIN(base, __COUNTER__)
+#define SALT_UNIQUE_NAME(BASE) SALT_JOIN(BASE, __COUNTER__)
 
-#define _SALT_TO_STRING(x) #x
-#define  SALT_TO_STRING(x) _SALT_TO_STRING(x)
+#define _SALT_TO_STRING(X) #X
+#define  SALT_TO_STRING(X) _SALT_TO_STRING(X)
 
 #define SALT_EVAL(...) __VA_ARGS__
 #define SALT_HEAD(X, ...) X
