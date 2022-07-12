@@ -2,9 +2,9 @@
 
 #include <filesystem>
 
-#include <salt/utils/detail/source_location.hpp>
+#include <salt/foundation/detail/source_location.hpp>
 
-TEST_CASE("salt::utils::source_location", "[salt-utils]") {
+TEST_CASE("salt::source_location", "[salt-foundation/source_location.hpp]") {
     SECTION("it produces a information about the source code, such as file names, line numbers, "
             "and function names") {
         using std::filesystem::path;

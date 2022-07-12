@@ -6,7 +6,7 @@
 // clang-format on
 
 #include <salt/config.hpp>
-#include <salt/utils.hpp>
+#include <salt/foundation.hpp>
 
 namespace salt {
 
@@ -17,7 +17,8 @@ static void framebuffer_size_callback(::GLFWwindow* const, int const width, int 
 Glfw_window::Glfw_window() noexcept : Glfw_window(Size{.width = 1280, .height = 720}) {}
 
 Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
-        : window_{nullptr}, title_{"Win64 window"}, size_{size}, position_{position}, dispatcher_{} {
+        : window_{nullptr}, title_{"Win64 window"}, size_{size}, position_{position},
+          dispatcher_{} {
     debug("Initializing Win64 window");
 
     char const* error_message = nullptr;
@@ -32,7 +33,8 @@ Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
     ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     ::glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.data(), nullptr, nullptr);
+    window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.data(), nullptr,
+                                 nullptr);
     if (!window_) {
         ::glfwGetError(&error_message);
         error("Failed to create Window, error message: '{}'", error_message);
@@ -55,12 +57,15 @@ Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
 
     // Set GLFW callbacks
     ::glfwSetWindowCloseCallback(window_, [](::GLFWwindow* const window) {
-        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+        auto const& dispatcher =
+                *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
         dispatcher.dispatch(Window_close_event{});
     });
 
-    ::glfwSetWindowSizeCallback(window_, [](::GLFWwindow* const window, int const width, int const height) {
-        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+    ::glfwSetWindowSizeCallback(window_, [](::GLFWwindow* const window, int const width,
+                                            int const height) {
+        auto const& dispatcher =
+                *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
         dispatcher.dispatch(Window_resize_event{.size = {std::size_t(width), std::size_t(height)}});
     });
 

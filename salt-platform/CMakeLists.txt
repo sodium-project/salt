@@ -12,6 +12,6 @@ salt_static_library(platform
             glfw::glfw
             imgui::imgui
             salt::events
-            salt::utils)
+            salt::foundation)
 
 # code: language="CMake" insertSpaces=true tabSize=4

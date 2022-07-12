@@ -1,8 +1,10 @@
 #include <catch2/catch.hpp>
 
-#include <salt/utils.hpp>
+#include <salt/foundation.hpp>
 
-TEST_CASE("salt::to_string", "[salt-utils/to_string.hpp]") {
+using namespace salt::detail;
+
+TEST_CASE("salt::to_string", "[salt-foundation/to_string.hpp]") {
     SECTION("it converts time to std::string") {
         using std::chrono::system_clock;
 
@@ -21,15 +23,15 @@ TEST_CASE("salt::to_string", "[salt-utils/to_string.hpp]") {
         auto const local_time   = std::localtime(&time);
         auto const expected_out = std::string{"2021-11-18 01:16:00"};
 
-        auto const out = salt::to_string(local_time);
+        auto const out = to_string(local_time);
         REQUIRE(out == expected_out);
 
         SALT_DISABLE_WARNING_POP
     }
 
     SECTION("it produces a source location as std::string") {
-        auto const expected_location = std::string{"to_string-test.cpp:C_A_T_C_H_T_E_S_T_0:32"};
-        auto const location          = salt::to_string(salt::source_location::current());
+        auto const expected_location = std::string{"to_string-test.cpp:C_A_T_C_H_T_E_S_T_0:34"};
+        auto const location          = to_string(salt::source_location::current());
         REQUIRE(location == expected_location);
     }
 }

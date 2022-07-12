@@ -1,12 +1,12 @@
 #include <catch2/catch.hpp>
 
-#include <salt/utils.hpp>
+#include <salt/foundation.hpp>
 
 struct [[nodiscard]] Dummy final {
     int* pointer = nullptr;
 };
 
-TEST_CASE("salt::Uninitialized_storage", "[salt-utils/uninitialized_storage.hpp]") {
+TEST_CASE("salt::Uninitialized_storage", "[salt-foundation/uninitialized_storage.hpp]") {
     SECTION("it can be constructed from fundamental type") {
         auto storage = salt::Uninitialized_storage_for<int>{};
         storage.construct<int>(2022);

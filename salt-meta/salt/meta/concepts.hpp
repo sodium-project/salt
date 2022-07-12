@@ -26,6 +26,27 @@ template <typename T>
 concept storable = (std::movable<T> || std::copyable<T>) && std::destructible<T>;
 // clang-format on
 
+template <typename Container>
+concept has_reserve = requires(Container c) {
+    c.reserve(std::declval<typename Container::size_type>());
+};
+
+template <typename Container>
+concept has_capacity = requires(Container c) {
+    c.capacity();
+};
+
+template <typename Container>
+concept has_shrink_to_fit = requires(Container c) {
+    c.shrink_to_fit();
+};
+
+template <typename Container>
+concept has_data = requires(Container c0, const Container c1) {
+    c0.data();
+    c1.data();
+};
+
 struct Size;
 
 // clang-format off

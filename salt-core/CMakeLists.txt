@@ -1,6 +1,9 @@
 find_package(entt REQUIRED)
 
 salt_static_library(core
+    WINDOWS
+        SOURCE
+            "salt/core/platform/glfw_window_v2.cpp"
     COMMON
         SOURCE
             "salt/core/application.cpp"
