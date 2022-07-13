@@ -5,8 +5,8 @@ SALT_DISABLE_WARNING_MICROSOFT_TEMPLATE
 #define SALT_SLOT_MAP_TEMPLATE                                                                     \
     template <typename T,                                                                          \
               std::unsigned_integral KeyType,                                                      \
-              template <typename> typename ValueContainer,                                         \
-              template <typename> typename KeyContainer>                                           \
+              template <typename...> typename ValueContainer,                                      \
+              template <typename...> typename KeyContainer>                                        \
     requires slot_map_requires<T, KeyType, ValueContainer, KeyContainer>
 // clang-format on
 #define SALT_SLOT_MAP Slot_map<T, KeyType, ValueContainer, KeyContainer>

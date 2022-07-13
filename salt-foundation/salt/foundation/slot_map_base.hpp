@@ -1,8 +1,8 @@
 #pragma once
 
-#include <salt/foundation/zip_iterator.hpp>
 #include <salt/meta.hpp>
 
+#include <salt/foundation/zip_iterator.hpp>
 
 namespace salt {
 
@@ -64,8 +64,8 @@ concept has_data = has_data<typename SlotMap::value_container>;
 template<
     typename T,
     typename I,
-    template <typename> typename ValueContainer,
-    template <typename> typename KeyContainer
+    template <typename...> typename ValueContainer,
+    template <typename...> typename KeyContainer
 >
 concept slot_map_requires =
     std::unsigned_integral<I>               and
@@ -80,8 +80,8 @@ concept slot_map_requires =
 template<
     typename T,
     std::unsigned_integral I,
-    template <typename> typename ValueContainer,
-    template <typename> typename KeyContainer
+    template <typename...> typename ValueContainer,
+    template <typename...> typename KeyContainer
 > requires slot_map_requires<T, I, ValueContainer, KeyContainer>
 // clang-format on
 struct [[nodiscard]] Slot_map_base {

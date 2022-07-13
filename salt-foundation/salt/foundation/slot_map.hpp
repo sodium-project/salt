@@ -35,8 +35,8 @@ namespace salt {
 template<
     typename T,
     std::unsigned_integral KeyType,
-    template <typename> typename ValueContainer,
-    template <typename> typename KeyContainer = ValueContainer
+    template <typename...> typename ValueContainer = std::vector,
+    template <typename...> typename KeyContainer   = ValueContainer
 > requires slot_map_requires<T, KeyType, ValueContainer, KeyContainer>
 // clang-format on
 class [[nodiscard]] Slot_map : public Slot_map_base<T, KeyType, ValueContainer, KeyContainer> {
@@ -120,6 +120,7 @@ public:
     constexpr void     erase(key_type key) noexcept {
             erase_impl(index(key));
     }
+
     constexpr value_type pop(key_type key) noexcept;
     constexpr void       swap(Slot_map& other) noexcept;
 
