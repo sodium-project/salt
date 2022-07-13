@@ -4,6 +4,8 @@
 #include <memory>
 #include <utility>
 
+#include <salt/foundation.hpp>
+
 namespace salt {
 
 namespace detail {
@@ -113,7 +115,7 @@ struct [[nodiscard]] Event_queue final {
         std::get<std::vector<T>>(*internal_queue_).emplace_back(T(std::forward<Args>(args)...));
     }
 
-    template <dispatchable T> requires(detail::contains_v<T, Events...>) // rename T -> Event
+    template <dispatchable T> requires(detail::contains_v<T, Events...>)
     auto begin() const noexcept {
         return std::get<std::vector<T>>(*internal_queue_).begin();
     }
@@ -142,66 +144,54 @@ struct [[nodiscard]] Event_queue final {
 private:
     std::unique_ptr<internal_event_queues> internal_queue_;
 };
+// clang-format on
 
+// clang-format off
 template <dispatchable... Events> requires(detail::are_distinct_v<Events...>)
 struct [[nodiscard]] Event_bus final {
     template <dispatchable T> using event_callback      = std::function<void(T&)>;
-    template <dispatchable T> using event_callback_list = std::vector<event_callback<T>>;
-
-    template <dispatchable T> requires(detail::contains_v<T, Events...>) // rename T -> Event
-    void attach_back(event_callback<T> callback) noexcept {
-        std::get<event_callback_list<T>>(event_callback_list_).push_back(callback);
-    }
-
-    template <typename Tuple, typename Callback>
-    void attach_back_all(Callback callback) noexcept {
-        attach_back_all_impl(Tuple{}, callback);
-    }
+    template <dispatchable T> using event_callback_list = Slot_map<event_callback<T>, std::size_t>;
 
     template <dispatchable T> requires(detail::contains_v<T, Events...>)
-    void attach_front(event_callback<T> callback) noexcept {
-        auto& callback_list = std::get<event_callback_list<T>>(event_callback_list_);
-        callback_list.insert(callback_list.begin(), callback);
+    auto attach(event_callback<T> callback) noexcept {
+        auto& callback_list = std::get<event_callback_list<T>>(event_callbacks_);
+        return callback_list.insert(callback);
     }
 
-    template <dispatchable T> requires(detail::contains_v<T, Events...>)
-    void detach(event_callback<T> callback) const noexcept {
-        auto& callback_list = std::get<event_callback_list<T>>(event_callback_list_);
-        auto  callback_it   = std::find(callback_list.begin(), callback_list.end(), callback);
-
-        if (callback_it != callback_list.end())
-            callback_list.erase(callback_it);
-    }
-
-    template <dispatchable T, typename... Args> requires(detail::contains_v<T, Events...>)
-    void dispatch(Args&&... args) const noexcept {
-        T e{typename T::undelying_type{std::forward<Args>(args)...}};
-        for (auto& callback : std::get<event_callback_list<T>>(event_callback_list_)) {
-            if (e.alive()) callback(e);
+    template <dispatchable T, std::unsigned_integral I> requires(detail::contains_v<T, Events...>)
+    void detach(Key<I> event_callback_key) noexcept {
+        auto& callback_list = std::get<event_callback_list<T>>(event_callbacks_);
+        if (auto it = callback_list.find(event_callback_key); it != callback_list.end()) {
+            [[maybe_unused]] auto _ = callback_list.erase(it);
         }
     }
 
-    template <dispatchable T> void dispatch(T& e) const noexcept {
+    template <dispatchable T, typename... Args> requires(detail::contains_v<T, Events...>)
+    void dispatch(Args&&... args) noexcept {
+        T e{typename T::undelying_type{std::forward<Args>(args)...}};
+        for (auto [_, event_callback] : std::get<event_callback_list<T>>(event_callbacks_)) {
+            if (e.alive()) event_callback(e);
+        }
+    }
+
+    template <dispatchable T> void dispatch(T& e) noexcept {
         if constexpr (detail::contains_v<T, Events...>) {
-            for (auto& callback : std::get<event_callback_list<T>>(event_callback_list_)) {
-                if (e.alive()) callback(e);
+            for (auto [_, event_callback] : std::get<event_callback_list<T>>(event_callbacks_)) {
+                if (e.alive()) event_callback(e);
             }
         }
     }
 
-    template <dispatchable... Ts> void dispatch(Event_queue<Ts...>& e_queue) const noexcept {
+    template <dispatchable... Ts> void dispatch(Event_queue<Ts...>& e_queue) noexcept {
         ((std::for_each(e_queue.template begin<Ts>(), e_queue.template end<Ts>(),
-                        [=](Ts& e) { dispatch(e); })),
+                        [&](Ts& e) {
+                            dispatch(e);
+                        })),
          ...);
     }
 
 private:
-    template <dispatchable... Ts, typename Callback> requires(detail::contains_v<Ts..., Events...>)
-    void attach_back_all_impl(std::tuple<Ts...>, Callback callback) noexcept {
-        (std::get<event_callback_list<Ts>>(event_callback_list_).push_back(callback), ...);
-    }
-
-    std::tuple<event_callback_list<Events>...> event_callback_list_;
+    std::tuple<event_callback_list<Events>...> event_callbacks_;
 };
 // clang-format on
 
@@ -218,14 +208,16 @@ template <dispatchable... Ts> Event_queue<Ts...> to_queue(Event_type_list<Ts...>
 
 } // namespace detail
 
-template <typename T>
-requires(detail::is_specialization_v<T, Event_type_list>) auto make_event_bus() noexcept {
+// clang-format off
+template <typename T> requires(detail::is_specialization_v<T, Event_type_list>)
+auto make_event_bus() noexcept {
     return decltype(detail::to_bus(std::declval<T>()))();
 }
 
-template <typename T>
-requires(detail::is_specialization_v<T, Event_type_list>) auto make_event_queue() noexcept {
+template <typename T> requires(detail::is_specialization_v<T, Event_type_list>)
+auto make_event_queue() noexcept {
     return decltype(detail::to_queue(std::declval<T>()))();
 }
+// clang-format on
 
 } // namespace salt
