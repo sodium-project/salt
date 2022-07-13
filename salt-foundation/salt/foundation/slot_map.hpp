@@ -50,12 +50,12 @@ class [[nodiscard]] Slot_map : public Slot_map_base<T, KeyType, ValueContainer, 
     using base::values_;
     using typename base::index_type;
 
-    static_assert(cxx20::borrowed_range<const_key_view>);
-    static_assert(cxx20::borrowed_range<const_value_view>);
-    static_assert(cxx20::borrowed_range<value_view>);
-    static_assert(cxx20::random_access_range<const_key_view>);
-    static_assert(cxx20::random_access_range<const_value_view>);
-    static_assert(cxx20::random_access_range<value_view>);
+    static_assert(cxx20::ranges::borrowed_range<const_key_view>);
+    static_assert(cxx20::ranges::borrowed_range<const_value_view>);
+    static_assert(cxx20::ranges::borrowed_range<value_view>);
+    static_assert(cxx20::ranges::random_access_range<const_key_view>);
+    static_assert(cxx20::ranges::random_access_range<const_value_view>);
+    static_assert(cxx20::ranges::random_access_range<value_view>);
 
     using const_key_iterator   = std::ranges::iterator_t<const_key_view>;
     using const_value_iterator = std::ranges::iterator_t<const_value_view>;
@@ -90,7 +90,7 @@ public:
 
     constexpr bool      empty() const noexcept { return begin() == end(); }
     constexpr size_type size () const noexcept {
-        return static_cast<size_type>(cxx20::distance(begin(), end()));
+        return static_cast<size_type>(cxx20::ranges::distance(begin(), end()));
     }
 
     static constexpr size_type max_size() noexcept { return free_idx_null - index_type{1}; }

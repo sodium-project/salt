@@ -5,9 +5,7 @@
 namespace salt::detail {
 
 #if SALT_TARGET_WINDOWS
-
-using std::assume_aligned
-
+using std::assume_aligned;
 // Since Apple put a big willie on the implementation of features from C++20, I have to implement
 // everything instead of them. What could be better than that?
 #elif SALT_TARGET_MACOSX && SALT_CLANG_FULL_VER <= 130106
@@ -19,8 +17,7 @@ template <std::size_t N, typename T> [[nodiscard]] constexpr T* assume_aligned(T
 }
 #endif
 
-template <typename To, typename From>
-auto aligned_cast(From const& x) noexcept {
+template <typename To, typename From> auto aligned_cast(From const& x) noexcept {
     return assume_aligned<alignof(salt::remove_all_pointers_t<To>)>(
 #if __cplusplus < 202002L
             std::launder(reinterpret_cast<To>(x))

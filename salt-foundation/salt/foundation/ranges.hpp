@@ -2,15 +2,13 @@
 
 #include <salt/meta.hpp>
 
-namespace salt::cxx20 {
+namespace salt::cxx20::ranges {
 
 #if SALT_TARGET_WINDOWS
-
 using std::ranges::borrowed_range;
 using std::ranges::distance;
+using std::ranges::is_permutation;
 using std::ranges::random_access_range;
-using std::ranges::is_permutation
-
 // Since Apple put a big willie on the implementation of features from C++20, I have to implement
 // everything instead of them. What could be better than that?
 #elif SALT_TARGET_MACOSX && SALT_CLANG_FULL_VER <= 130106
@@ -206,4 +204,4 @@ constexpr bool is_permutation(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}
 }
 #endif
 
-} // namespace salt::cxx20
+} // namespace salt::cxx20::ranges
