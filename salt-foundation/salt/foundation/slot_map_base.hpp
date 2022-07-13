@@ -1,7 +1,6 @@
 #pragma once
 
-#include <salt/meta.hpp>
-
+#include <salt/foundation/ranges.hpp>
 #include <salt/foundation/zip_iterator.hpp>
 
 namespace salt {
@@ -16,7 +15,7 @@ template <typename Container, typename Friend> struct Container_view : private C
     constexpr auto cend  () const noexcept { return end();   }
 
     constexpr bool empty () const noexcept { return begin() == end(); }
-    constexpr auto size  () const noexcept { return std::ranges::distance(begin(), end()); }
+    constexpr auto size  () const noexcept { return cxx20::distance(begin(), end()); }
     // clang-format on
 
     constexpr decltype(auto) operator[](typename Container::size_type idx) noexcept {

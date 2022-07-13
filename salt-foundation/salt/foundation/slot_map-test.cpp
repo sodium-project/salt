@@ -13,7 +13,7 @@ template <> struct StringMaker<Slot_map<int>> {
         std::string result;
         for (auto [key, value] : map) {
             result += "{idx: ";
-            result += std::to_string(std::bit_cast<std::size_t>(key));
+            result += std::to_string(key.idx);
             result += ", value: ";
             result += std::to_string(value);
             result += "}, ";
@@ -400,7 +400,7 @@ TEST_CASE("salt::Slot_map", "[salt-utils/slot_map.hpp]") {
         for (auto v : values) {
             keys.push_back(map.insert(v));
         }
-        REQUIRE(std::ranges::is_permutation(map.keys(), keys));
-        REQUIRE(std::ranges::is_permutation(map.values(), values));
+        REQUIRE(salt::cxx20::is_permutation(map.keys(), keys));
+        REQUIRE(salt::cxx20::is_permutation(map.values(), values));
     }
 }

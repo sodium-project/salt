@@ -12,6 +12,10 @@ namespace salt::detail {
 using Window_guts = salt::Static_storage<struct GLFW_window, 32, 8>;
 }
 #    endif
+#else
+namespace salt::detail {
+using Window_guts = std::unique_ptr<struct Metal_window>;
+}
 #endif
 
 namespace salt {

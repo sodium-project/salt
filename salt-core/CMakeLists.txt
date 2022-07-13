@@ -4,6 +4,9 @@ salt_static_library(core
     WINDOWS
         SOURCE
             "salt/core/platform/glfw_window_v2.cpp"
+    MACOSX
+        SOURCE
+            "salt/core/platform/metal_window_v2.cpp"
     COMMON
         SOURCE
             "salt/core/application.cpp"
