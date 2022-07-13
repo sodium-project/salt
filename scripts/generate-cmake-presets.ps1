@@ -52,12 +52,18 @@ function generate_cmake_presets($os, $arch, $graphics) {
     return $presets
 }
 
-Add-Content -Path "../CMakePresets.json" -Value @"
+$cmake_presets = "../CMakePresets.json"
+
+if (Test-Path $cmake_presets) {
+    Remove-Item $cmake_presets
+}
+
+Add-Content -Path $cmake_presets -Value @"
 {
     "version": 3,
     "configurePresets": [
-        $(generate_cmake_presets "windows" "x86_64" "OpenGL")
-        $(generate_cmake_presets "windows" "x86_64" "DirectX")
+$(generate_cmake_presets "windows" "x86_64" "OpenGL")
+$(generate_cmake_presets "windows" "x86_64" "DirectX")
         {
             "name":        "base",
             "description": "For more information: http://aka.ms/cmakepresetsvs",
