@@ -55,21 +55,21 @@ struct [[nodiscard]] Zip_iterator final {
         return temp;
     }
 
-    constexpr bool operator==(const Zip_iterator& other) const noexcept {
+    constexpr bool operator==(Zip_iterator const& other) const noexcept {
         bool const is_equal_first  = first_ == other.first_;
         bool const is_equal_second = second_ == other.second_;
         SALT_ASSERT(is_equal_first == is_equal_second);
         return is_equal_first;
     }
 
-    constexpr std::weak_ordering operator<=>(const Zip_iterator& other) const noexcept {
+    constexpr std::weak_ordering operator<=>(Zip_iterator const& other) const noexcept {
         auto const order_first  = std::weak_order(first_, other.first_);
         auto const order_second = std::weak_order(second_, other.second_);
         SALT_ASSERT(order_first == order_second);
         return order_first;
     }
 
-    constexpr difference_type operator-(const Zip_iterator& other) const noexcept {
+    constexpr difference_type operator-(Zip_iterator const& other) const noexcept {
         auto const distance_first  = first_ - other.first_;
         auto const distance_second = second_ - other.second_;
         SALT_ASSERT(distance_first == distance_second);
