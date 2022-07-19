@@ -32,13 +32,18 @@ apple_min_os_version() {
 # generate_apple_cmake_presets generates a portion of cmake-variants.yaml for the given SDK and architectures.
 generate_apple_cmake_presets() {
     SDK=$1
-    shift
-    for ARCH in $*; do
+    GRAPHICS=$2
+
+    if [ "${GRAPHICS}" == "Metal" ]; then
+        DESCRIPTION="This configuration is temporarily unsupported."
+    fi
+
+    for ARCH in "${@:3}"; do
 cat <<EOF
         {
-            "name":         "${SDK}-${ARCH}-debug",
-            "displayName":  "${SDK}-${ARCH}-debug",
-            "description":  "",
+            "name":         "${SDK}-${ARCH}-$(tr '[:upper:]' '[:lower:]'<<<${GRAPHICS})-debug",
+            "displayName":  "${SDK}-${ARCH}-$(tr '[:upper:]' '[:lower:]'<<<${GRAPHICS})-debug",
+            "description":  "${DESCRIPTION}",
             "inherits":     "base",
             "architecture": {
                 "value":    "${ARCH}",
@@ -53,13 +58,14 @@ cat <<EOF
                 "CMAKE_OBJC_COMPILER":          "$(xcrun --sdk ${SDK} --find clang   2>/dev/null)",
                 "CMAKE_OSX_ARCHITECTURES":      "${ARCH}",
                 "CMAKE_OSX_DEPLOYMENT_TARGET":  "$(apple_min_os_version ${SDK})",
-                "CMAKE_OSX_SYSROOT":            "$(xcrun --sdk ${SDK} --show-sdk-path 2>/dev/null)"
+                "CMAKE_OSX_SYSROOT":            "$(xcrun --sdk ${SDK} --show-sdk-path 2>/dev/null)",
+                "SALT_GRAPHICS":                "${GRAPHICS}"
             }
         },
         {
-            "name":         "${SDK}-${ARCH}-release",
-            "displayName":  "${SDK}-${ARCH}-release",
-            "description":  "",
+            "name":         "${SDK}-${ARCH}-$(tr '[:upper:]' '[:lower:]'<<<${GRAPHICS})-release",
+            "displayName":  "${SDK}-${ARCH}-$(tr '[:upper:]' '[:lower:]'<<<${GRAPHICS})-release",
+            "description":  "${DESCRIPTION}",
             "inherits":     "base",
             "architecture": {
                 "value":    "${ARCH}",
@@ -74,7 +80,8 @@ cat <<EOF
                 "CMAKE_OBJC_COMPILER":          "$(xcrun --sdk ${SDK} --find clang   2>/dev/null)",
                 "CMAKE_OSX_ARCHITECTURES":      "${ARCH}",
                 "CMAKE_OSX_DEPLOYMENT_TARGET":  "$(apple_min_os_version ${SDK})",
-                "CMAKE_OSX_SYSROOT":            "$(xcrun --sdk ${SDK} --show-sdk-path 2>/dev/null)"
+                "CMAKE_OSX_SYSROOT":            "$(xcrun --sdk ${SDK} --show-sdk-path 2>/dev/null)",
+                "SALT_GRAPHICS":                "${GRAPHICS}"
             }
         },
 EOF
@@ -87,9 +94,8 @@ cat <<EOF >${PROJECT_ROOT}/CMakePresets.json
 {
     "version": 3,
     "configurePresets": [
-$(generate_apple_cmake_presets     macosx          arm64       x86_64                      )
-$(generate_apple_cmake_presets     iphoneos        arm64                                   )
-$(generate_apple_cmake_presets     iphonesimulator arm64       x86_64                      )
+$(generate_apple_cmake_presets macosx OpenGL arm64 x86_64)
+$(generate_apple_cmake_presets macosx Metal  arm64 x86_64)
         {
             "name":         "base",
             "description":  "For more information: http://aka.ms/cmakepresetsvs",
