@@ -47,6 +47,9 @@ concept has_data = requires(Container c0, const Container c1) {
     c1.data();
 };
 
+template <typename... Ts>
+concept distinct = are_distinct_v<Ts...>;
+
 struct Size;
 
 // clang-format off
