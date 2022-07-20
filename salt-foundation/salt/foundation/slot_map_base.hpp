@@ -1,7 +1,7 @@
 #pragma once
 
-#include <salt/foundation/ranges.hpp>
 #include <salt/foundation/zip_iterator.hpp>
+#include <salt/meta.hpp>
 
 namespace salt {
 
