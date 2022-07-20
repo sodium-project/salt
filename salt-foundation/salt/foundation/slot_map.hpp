@@ -14,15 +14,26 @@ namespace salt {
 #ifdef CLANG_ERROR_OUT_OF_LINE_DEFINITION
 #    define REQUIRES_HAS_RESERVE(SLOT_MAP)                                                         \
         requires detail::has_reserve<SLOT_MAP> {                                                   \
-            reserve_impl(size);                                                                    \
+            values_.reserve(size);                                                                 \
+            indices_.reserve(size);                                                                \
+            keys_.reserve(size);                                                                   \
         }
 #    define REQUIRES_HAS_CAPACITY(SLOT_MAP)                                                        \
         requires detail::has_capacity<SLOT_MAP> {                                                  \
-            return capacity_impl();                                                                \
+            auto capacity = max_size();                                                            \
+            if (auto value_capacity = values_.capacity(); value_capacity < capacity)               \
+                capacity = value_capacity;                                                         \
+            if (auto idx_capacity = indices_.capacity(); idx_capacity < capacity)                  \
+                capacity = idx_capacity;                                                           \
+            if (auto key_capacity = keys_.capacity(); key_capacity < capacity)                     \
+                capacity = key_capacity;                                                           \
+            return capacity;                                                                       \
         }
 #    define REQUIRES_HAS_SHRINK_TO_FIT(SLOT_MAP)                                                   \
         requires detail::has_shrink_to_fit<SLOT_MAP> {                                             \
-            shrink_to_fit_impl();                                                                  \
+            values_.shrink_to_fit();                                                               \
+            indices_.shrink_to_fit();                                                              \
+            keys_.shrink_to_fit();                                                                 \
         }
 #else
 #    define REQUIRES_HAS_RESERVE(SLOT_MAP)       requires detail::has_reserve<SLOT_MAP>
@@ -32,9 +43,9 @@ namespace salt {
 
 /// @see https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0661r0.pdf
 // clang-format off
-template<
+template <
     typename T,
-    std::unsigned_integral KeyType,
+    std::unsigned_integral KeyType                 = unsigned,
     template <typename...> typename ValueContainer = std::vector,
     template <typename...> typename KeyContainer   = ValueContainer
 > requires slot_map_requires<T, KeyType, ValueContainer, KeyContainer>
@@ -50,12 +61,12 @@ class [[nodiscard]] Slot_map : public Slot_map_base<T, KeyType, ValueContainer, 
     using base::values_;
     using typename base::index_type;
 
-    static_assert(cxx20::ranges::borrowed_range<const_key_view>);
-    static_assert(cxx20::ranges::borrowed_range<const_value_view>);
-    static_assert(cxx20::ranges::borrowed_range<value_view>);
-    static_assert(cxx20::ranges::random_access_range<const_key_view>);
-    static_assert(cxx20::ranges::random_access_range<const_value_view>);
-    static_assert(cxx20::ranges::random_access_range<value_view>);
+    static_assert(std::ranges::borrowed_range<const_key_view>);
+    static_assert(std::ranges::borrowed_range<const_value_view>);
+    static_assert(std::ranges::borrowed_range<value_view>);
+    static_assert(std::ranges::random_access_range<const_key_view>);
+    static_assert(std::ranges::random_access_range<const_value_view>);
+    static_assert(std::ranges::random_access_range<value_view>);
 
     using const_key_iterator   = std::ranges::iterator_t<const_key_view>;
     using const_value_iterator = std::ranges::iterator_t<const_value_view>;
@@ -90,7 +101,7 @@ public:
 
     constexpr bool      empty() const noexcept { return begin() == end(); }
     constexpr size_type size () const noexcept {
-        return static_cast<size_type>(cxx20::ranges::distance(begin(), end()));
+        return static_cast<size_type>(std::ranges::distance(begin(), end()));
     }
 
     static constexpr size_type max_size() noexcept { return free_idx_null - index_type{1}; }
@@ -167,12 +178,6 @@ private:
 
     constexpr void erase_impl(index_type value_idx) noexcept;
     constexpr void erase_index_and_key(index_type value_idx) noexcept;
-
-#ifdef CLANG_ERROR_OUT_OF_LINE_DEFINITION
-    constexpr void      reserve_impl(size_type size);
-    constexpr void      shrink_to_fit_impl();
-    constexpr size_type capacity_impl() const noexcept;
-#endif
 };
 
 #include <salt/foundation/slot_map.inl>

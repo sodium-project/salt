@@ -12,10 +12,10 @@ template <typename Container, typename Friend> struct Container_view : private C
 
     // clang-format off
     constexpr auto cbegin() const noexcept { return begin(); }
-    constexpr auto cend  () const noexcept { return end();   }
+    constexpr auto cend  () const noexcept { return end  (); }
 
-    constexpr bool empty () const noexcept { return begin() == end(); }
-    constexpr auto size  () const noexcept { return cxx20::ranges::distance(begin(), end()); }
+    constexpr bool empty () const noexcept { return begin() == end();                      }
+    constexpr auto size  () const noexcept { return std::ranges::distance(begin(), end()); }
     // clang-format on
 
     constexpr decltype(auto) operator[](typename Container::size_type idx) noexcept {
@@ -27,8 +27,9 @@ template <typename Container, typename Friend> struct Container_view : private C
 };
 
 template <std::unsigned_integral I> struct Key final {
-    using idx_type = I;
-    idx_type       idx;
+    using index_type = I;
+
+    index_type     idx;
     constexpr auto operator<=>(Key const&) const noexcept = default;
 };
 
@@ -72,11 +73,11 @@ concept slot_map_requires =
     std::is_nothrow_move_assignable_v<T>    and
 
     requires(ValueContainer<T> c) { { std::ranges::swap(c, c) } noexcept; } and
-    requires(KeyContainer<I>   c) { { std::ranges::swap(c, c) } noexcept; };
+    requires(KeyContainer  <I> c) { { std::ranges::swap(c, c) } noexcept; };
 // clang-format on
 
 // clang-format off
-template<
+template <
     typename T,
     std::unsigned_integral I,
     template <typename...> typename ValueContainer,
@@ -86,7 +87,7 @@ template<
 struct [[nodiscard]] Slot_map_base {
 protected:
     using key_type   = Key<I>;
-    using index_type = typename key_type::idx_type;
+    using index_type = typename key_type::index_type;
 
     using value_container = ValueContainer<T>;
     using index_container = KeyContainer<index_type>;
