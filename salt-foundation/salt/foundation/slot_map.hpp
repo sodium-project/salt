@@ -135,15 +135,15 @@ public:
     constexpr value_type pop(key_type key) noexcept;
     constexpr void       swap(Slot_map& other) noexcept;
 
-    constexpr const_iterator access(key_type key) const noexcept {
-        return std::ranges::next(begin(), index(key));
-    }
     constexpr iterator access(key_type key) noexcept {
         return std::ranges::next(begin(), index(key));
     };
+    constexpr const_iterator access(key_type key) const noexcept {
+        return std::ranges::next(begin(), index(key));
+    }
 
-    constexpr const_iterator find(key_type key) const noexcept;
     constexpr iterator       find(key_type key) noexcept;
+    constexpr const_iterator find(key_type key) const noexcept;
 
     constexpr T& operator[](key_type key) noexcept {
         return values_[index(key)];

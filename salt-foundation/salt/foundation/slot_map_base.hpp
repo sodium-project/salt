@@ -105,7 +105,7 @@ protected:
     key_container   keys_;
 
 public:
-    constexpr const key_view& keys() const noexcept {
+    constexpr key_view const& keys() const noexcept {
         return static_cast<key_view const&>(keys_);
     }
 
