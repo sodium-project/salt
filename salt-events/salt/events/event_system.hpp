@@ -70,53 +70,60 @@ struct [[nodiscard]] Event_queue final {
     using event_types  = std::tuple<Events...>;
     using event_queues = std::tuple<std::vector<Events>...>;
 
-    Event_queue() noexcept : queue_{std::make_unique<event_queues>()} {}
+    Event_queue() noexcept = default;
     ~Event_queue() = default;
-    Event_queue(Event_queue&& other) noexcept : queue_{std::move(other.queue_)} {}
+    Event_queue(Event_queue&& other) noexcept : queues_{std::move(other.queues_)} {}
     Event_queue& operator=(Event_queue&& other) noexcept {
         if (this != &other) {
-            queue_ = std::move(other.queue_);
-            other.queue_.reset();
+            queues_ = std::move(other.queues_);
         }
         return *this;
     }
 
-    Event_queue(const Event_queue& other) noexcept            = delete;
-    Event_queue& operator=(const Event_queue& other) noexcept = delete;
+    Event_queue(Event_queue const& other) noexcept            = delete;
+    Event_queue& operator=(Event_queue const& other) noexcept = delete;
 
     template <dispatchable T, typename... Args> requires(contains_v<T, Events...>)
-    void push_back(Args&&... args) const noexcept {
-        std::get<std::vector<T>>(*queue_).emplace_back(T(std::forward<Args>(args)...));
+    void push_back(Args&&... args) noexcept {
+        std::get<std::vector<T>>(queues_).emplace_back(T(std::forward<Args>(args)...));
     }
 
+    template <dispatchable T> requires(contains_v<T, Events...>)
+    auto begin() noexcept {
+        return std::get<std::vector<T>>(queues_).begin();
+    }
     template <dispatchable T> requires(contains_v<T, Events...>)
     auto begin() const noexcept {
-        return std::get<std::vector<T>>(*queue_).begin();
+        return std::get<std::vector<T>>(queues_).begin();
     }
 
     template <dispatchable T> requires(contains_v<T, Events...>)
+    auto end() noexcept {
+        return std::get<std::vector<T>>(queues_).end();
+    }
+    template <dispatchable T> requires(contains_v<T, Events...>)
     auto end() const noexcept {
-        return std::get<std::vector<T>>(*queue_).end();
+        return std::get<std::vector<T>>(queues_).end();
     }
 
     bool empty() const noexcept {
         bool empty = true;
-        ((empty &= std::get<std::vector<Events>>(*queue_).empty()), ...);
+        ((empty &= std::get<std::vector<Events>>(queues_).empty()), ...);
         return empty;
     }
 
-    void clear() const noexcept {
-        ((std::get<std::vector<Events>>(*queue_).clear()), ...);
+    void clear() noexcept {
+        ((std::get<std::vector<Events>>(queues_).clear()), ...);
     }
 
     std::size_t size() const noexcept {
         std::size_t size = 0;
-        ((size += std::get<std::vector<Events>>(*queue_).size()), ...);
+        ((size += std::get<std::vector<Events>>(queues_).size()), ...);
         return size;
     }
 
 private:
-    std::unique_ptr<event_queues> queue_;
+    event_queues queues_;
 };
 // clang-format on
 
@@ -128,8 +135,7 @@ struct [[nodiscard]] Event_bus final {
 
     template <dispatchable T> requires(contains_v<T, Events...>)
     auto attach(event_callback<T> callback) noexcept {
-        auto& callback_list = std::get<event_callback_list<T>>(lists_);
-        return callback_list.insert(callback);
+        return std::get<event_callback_list<T>>(lists_).insert(callback);
     }
 
     template <dispatchable T, std::unsigned_integral I> requires(contains_v<T, Events...>)
@@ -144,14 +150,18 @@ struct [[nodiscard]] Event_bus final {
     void dispatch(Args&&... args) noexcept {
         T event{typename T::underlying_type{std::forward<Args>(args)...}};
         for (auto [_, callback] : std::get<event_callback_list<T>>(lists_)) {
-            if (event.alive()) callback(event);
+            if (event.alive()) {
+                callback(event);
+            }
         }
     }
 
     template <dispatchable T> void dispatch(T& event) noexcept {
         if constexpr (contains_v<T, Events...>) {
             for (auto [_, callback] : std::get<event_callback_list<T>>(lists_)) {
-                if (event.alive()) callback(event);
+                if (event.alive()) {
+                    callback(event);
+                }
             }
         }
     }

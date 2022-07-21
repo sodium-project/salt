@@ -66,40 +66,71 @@ TEST_CASE("salt::Event_bus", "[salt-events/event_system.hpp]") {
 
 TEST_CASE("salt::Event_queue", "[salt-events/event_system.hpp]") {
     using namespace salt;
+    SECTION("test attach") {
+        Event_bus<Event<A>> bus;
+        int                 a     = 0;
+        int                 b     = 0;
+        int                 count = 0;
 
-    Event_bus<Event<A>> bus;
-    int                 a     = 0;
-    int                 b     = 0;
-    int                 count = 0;
+        Event_queue<Event<A>, Event<B>> queue;
+        bus.attach<Event<A>>([&](Event<A>& e) {
+            count++;
+            a = e->a;
+            b = e->b;
+            e.consume();
+            REQUIRE(a == 1);
+            REQUIRE(b == 2);
+        });
 
-    Event_queue<Event<A>, Event<B>> queue;
-    bus.attach<Event<A>>([&](Event<A>& e) {
-        count++;
-        a = e->a;
-        b = e->b;
-        e.consume();
+        bus.attach<Event<A>>([&](Event<A>&) {
+            count++;
+            REQUIRE_FALSE(true); // always false checking if event consuming is working right
+        });
+
+        queue.push_back<Event<A>>(1, 2);
+
+        REQUIRE(queue.size() == 1);
+        REQUIRE_FALSE(queue.empty());
+
+        bus.dispatch(queue);
+        REQUIRE(queue.size() == 1);
+
+        bus.dispatch(queue);
+        REQUIRE(count == 1);
         REQUIRE(a == 1);
-        REQUIRE(b == 2);
-    });
 
-    bus.attach<Event<A>>([&](Event<A>&) {
-        count++;
-        REQUIRE_FALSE(true); // always false checking if event consuming is working right
-    });
+        queue.clear();
+        REQUIRE(queue.size() == 0);
+        REQUIRE(queue.empty());
+    }
 
-    queue.push_back<Event<A>>(1, 2);
+    SECTION("test move") {
+        Event_queue<Event<A>> q1;
 
-    REQUIRE(queue.size() == 1);
-    REQUIRE_FALSE(queue.empty());
+        q1.push_back<Event<A>>(1, 2);
+        REQUIRE(q1.size() == 1);
+        REQUIRE_FALSE(q1.empty());
 
-    bus.dispatch(queue);
-    REQUIRE(queue.size() == 1);
+        Event_queue<Event<A>> q2{std::move(q1)};
+        REQUIRE(q2.size() == 1);
+        REQUIRE_FALSE(q2.empty());
 
-    bus.dispatch(queue);
-    REQUIRE(count == 1);
-    REQUIRE(a == 1);
+        Event_queue<Event<A>> q3;
+        q3 = std::move(q2);
+        REQUIRE(q3.size() == 1);
+        REQUIRE_FALSE(q3.empty());
 
-    queue.clear();
-    REQUIRE(queue.size() == 0);
-    REQUIRE(queue.empty());
+        Event_bus<Event<A>> bus;
+        int                 count = 0;
+        bus.attach<Event<A>>([&](Event<A>&) {
+            count++;
+        });
+
+        bus.dispatch(q3);
+        REQUIRE(count == 1);
+
+        q3.clear();
+        REQUIRE(q3.size() == 0);
+        REQUIRE(q3.empty());
+    }
 }
