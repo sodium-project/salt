@@ -48,7 +48,7 @@ template <
     std::unsigned_integral KeyType                 = unsigned,
     template <typename...> typename ValueContainer = std::vector,
     template <typename...> typename KeyContainer   = ValueContainer
-> requires slot_map_requires<T, KeyType, ValueContainer, KeyContainer>
+> requires slottable<T, KeyType, ValueContainer, KeyContainer>
 // clang-format on
 class [[nodiscard]] Slot_map : public Slot_map_base<T, KeyType, ValueContainer, KeyContainer> {
     using base             = Slot_map_base<T, KeyType, ValueContainer, KeyContainer>;

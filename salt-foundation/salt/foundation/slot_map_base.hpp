@@ -58,16 +58,18 @@ concept has_shrink_to_fit =
 
 template <typename SlotMap>
 concept has_data = has_data<typename SlotMap::value_container>;
+// clang-format on
 
 } // namespace detail
 
-template<
+// clang-format off
+template <
     typename T,
     typename I,
     template <typename...> typename ValueContainer,
     template <typename...> typename KeyContainer
 >
-concept slot_map_requires =
+concept slottable =
     std::unsigned_integral<I>               and
     std::is_nothrow_move_constructible_v<T> and
     std::is_nothrow_move_assignable_v<T>    and
@@ -82,7 +84,7 @@ template <
     std::unsigned_integral I,
     template <typename...> typename ValueContainer,
     template <typename...> typename KeyContainer
-> requires slot_map_requires<T, I, ValueContainer, KeyContainer>
+> requires slottable<T, I, ValueContainer, KeyContainer>
 // clang-format on
 struct [[nodiscard]] Slot_map_base {
 protected:
