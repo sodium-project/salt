@@ -32,8 +32,8 @@ concept has_reserve = requires(Container c) {
 };
 
 template <typename Container>
-concept has_capacity = requires(Container c) {
-    c.capacity();
+concept has_capacity = requires(Container const c) {
+    requires noexcept(c.capacity());
 };
 
 template <typename Container>
@@ -42,13 +42,10 @@ concept has_shrink_to_fit = requires(Container c) {
 };
 
 template <typename Container>
-concept has_data = requires(Container c0, const Container c1) {
-    c0.data();
-    c1.data();
+concept has_data = requires(Container c0, Container const c1) {
+    requires noexcept(c0.data());
+    requires noexcept(c1.data());
 };
-
-template <typename... Ts>
-concept distinct = are_distinct_v<Ts...>;
 
 struct Size;
 
