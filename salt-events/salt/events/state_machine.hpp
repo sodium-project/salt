@@ -8,28 +8,26 @@ namespace salt {
 
 template <typename Dispatcher, typename State, typename... States>
 struct [[nodiscard]] State_machine {
-    using states_t = std::variant<std::monostate, State, States...>;
+    using states_variant = std::variant<std::monostate, State, States...>;
 
     template <typename T> constexpr bool holds_state() const noexcept {
-        return std::holds_alternative<T>(states_);
+        return std::holds_alternative<T>(state_);
     }
 
     template <typename Event> constexpr void dispatch(Event&& event) const noexcept {
-        using namespace detail;
-
         auto const& dispatcher = static_cast<Dispatcher const&>(*this);
-        auto const  new_states = std::visit(
-                [&](auto& state) -> std::optional<states_t> {
+        auto const  new_state  = std::visit(
+                [&](auto& state) -> std::optional<states_variant> {
                     return dispatcher.on_event(state, std::forward<Event>(event));
                 },
-                states_);
+                state_);
 
-        if (new_states)
-            states_ = *std::move(new_states);
+        if (new_state)
+            state_ = *std::move(new_state);
     }
 
 private:
-    mutable states_t states_;
+    mutable states_variant state_;
 };
 
 } // namespace salt
