@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <salt/core/window.hpp>
+#include <salt/core/overlay.hpp>
 
 namespace salt {
 
@@ -21,9 +21,8 @@ struct [[nodiscard]] Application final {
     void run(Fn fn) const noexcept;
 
 private:
-    Window window_;
-    // Platform_window window_;
-    // Imgui_overlay   imgui_overlay_;
+    Platform_window window_;
+    Imgui_overlay   imgui_overlay_;
 };
 
 } // namespace salt
