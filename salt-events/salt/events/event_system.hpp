@@ -37,45 +37,45 @@ template <typename T> static inline Event_id event_id() noexcept {
 
 } // namespace detail
 
-template <typename EventType> struct [[nodiscard]] Event final {
-    using underlying_type = EventType;
-
-    Event(EventType&& event) noexcept : event_{std::move(event)} {}
+template <typename T> struct [[nodiscard]] Event final {
+    using data_type = T;
 
     template <typename... Args>
-    Event(Args&&... args) noexcept : event_{EventType{std::forward<Args>(args)...}} {}
+    Event(Args&&... args) noexcept : event_{T{std::forward<Args>(args)...}} {}
+    Event(T&& event) noexcept : event_{std::move(event)} {}
 
     // clang-format off
     void consume()       noexcept { consumed_ = true;  }
     bool alive  () const noexcept { return !consumed_; }
 
-    EventType* operator->()       noexcept { return &event_; }
-    EventType* operator->() const noexcept { return &event_; }
-    
-    EventType& operator* ()       noexcept { return  event_; }
-    EventType& operator* () const noexcept { return  event_; }
+    T* operator->() noexcept { return &event_; }
+    T& operator* () noexcept { return  event_; }
+
+    T const* operator->() const noexcept { return &event_; }
+    T const& operator* () const noexcept { return  event_; }
     // clang-format on
 
 private:
-    bool      consumed_ = false;
-    EventType event_;
+    bool consumed_ = false;
+    T    event_;
 };
 
 template <typename T>
 concept dispatchable = is_specialization_v<T, Event>;
 
 // clang-format off
-template <dispatchable... Events> requires(are_distinct_v<Events...>)
+template <dispatchable... Events> requires distinct<Events...>
 struct [[nodiscard]] Event_queue final {
-    using event_types  = std::tuple<Events...>;
-    using event_queues = std::tuple<std::vector<Events>...>;
+    template <dispatchable Event>
+    using event_queue = std::vector<Event>;
+    using event_types = std::tuple<Events...>;
 
     Event_queue() noexcept = default;
     ~Event_queue() = default;
-    Event_queue(Event_queue&& other) noexcept : queues_{std::move(other.queues_)} {}
+    Event_queue(Event_queue&& other) noexcept : events_{std::move(other.events_)} {}
     Event_queue& operator=(Event_queue&& other) noexcept {
         if (this != &other) {
-            queues_ = std::move(other.queues_);
+            events_ = std::move(other.events_);
         }
         return *this;
     }
@@ -83,82 +83,80 @@ struct [[nodiscard]] Event_queue final {
     Event_queue(Event_queue const& other) noexcept            = delete;
     Event_queue& operator=(Event_queue const& other) noexcept = delete;
 
-    template <dispatchable T, typename... Args> requires(contains_v<T, Events...>)
+    template <dispatchable Event, typename... Args> requires contains<Event, Events...>
     void push_back(Args&&... args) noexcept {
-        std::get<std::vector<T>>(queues_).emplace_back(T(std::forward<Args>(args)...));
+        std::get<event_queue<Event>>(events_).emplace_back(Event{std::forward<Args>(args)...});
     }
 
-    template <dispatchable T> requires(contains_v<T, Events...>)
+    template <dispatchable Event> requires contains<Event, Events...>
     auto begin() noexcept {
-        return std::get<std::vector<T>>(queues_).begin();
+        return std::get<event_queue<Event>>(events_).begin();
     }
-    template <dispatchable T> requires(contains_v<T, Events...>)
+    template <dispatchable Event> requires contains<Event, Events...>
     auto begin() const noexcept {
-        return std::get<std::vector<T>>(queues_).begin();
+        return std::get<event_queue<Event>>(events_).begin();
     }
 
-    template <dispatchable T> requires(contains_v<T, Events...>)
+    template <dispatchable Event> requires contains<Event, Events...>
     auto end() noexcept {
-        return std::get<std::vector<T>>(queues_).end();
+        return std::get<event_queue<Event>>(events_).end();
     }
-    template <dispatchable T> requires(contains_v<T, Events...>)
+    template <dispatchable Event> requires contains<Event, Events...>
     auto end() const noexcept {
-        return std::get<std::vector<T>>(queues_).end();
+        return std::get<event_queue<Event>>(events_).end();
     }
 
     bool empty() const noexcept {
         bool empty = true;
-        ((empty &= std::get<std::vector<Events>>(queues_).empty()), ...);
+        ((empty &= std::get<std::vector<Events>>(events_).empty()), ...);
         return empty;
     }
 
     void clear() noexcept {
-        ((std::get<std::vector<Events>>(queues_).clear()), ...);
+        ((std::get<std::vector<Events>>(events_).clear()), ...);
     }
 
     std::size_t size() const noexcept {
         std::size_t size = 0;
-        ((size += std::get<std::vector<Events>>(queues_).size()), ...);
+        ((size += std::get<std::vector<Events>>(events_).size()), ...);
         return size;
     }
 
 private:
-    event_queues queues_;
+    std::tuple<event_queue<Events>...> events_;
 };
 // clang-format on
 
 // clang-format off
-template <dispatchable... Events> requires(are_distinct_v<Events...>)
+template <dispatchable... Events> requires distinct<Events...>
 struct [[nodiscard]] Event_bus final {
-    template <dispatchable T> using event_callback      = std::function<void(T&)>;
-    template <dispatchable T> using event_callback_list = Slot_map<event_callback<T>>;
+    template <typename Event> using callback      = std::function<void(Event&)>;
+    template <typename Event> using callback_list = Slot_map<callback<Event>>;
+    template <typename Event> using callback_id   = typename callback_list<Event>::key_type;
 
-    template <dispatchable T> requires(contains_v<T, Events...>)
-    auto attach(event_callback<T> callback) noexcept {
-        return std::get<event_callback_list<T>>(lists_).insert(callback);
+    template <dispatchable Event> requires contains<Event, Events...>
+    auto attach(callback<Event> callback) noexcept {
+        return std::get<callback_list<Event>>(callbacks_).insert(std::move(callback));
     }
 
-    template <dispatchable T, std::unsigned_integral I> requires(contains_v<T, Events...>)
-    void detach(Key<I> key) noexcept {
-        auto& callback_list = std::get<event_callback_list<T>>(lists_);
-        if (auto callback = callback_list.find(key); callback != callback_list.end()) {
-            [[maybe_unused]] auto _ = callback_list.erase(callback);
-        }
+    template <dispatchable Event> requires contains<Event, Events...>
+    void detach(callback_id<Event> id) noexcept {
+        std::get<callback_list<Event>>(callbacks_).erase(id);
     }
 
-    template <dispatchable T, typename... Args> requires(contains_v<T, Events...>)
+    template <dispatchable Event, typename... Args> requires contains<Event, Events...>
     void dispatch(Args&&... args) noexcept {
-        T event{typename T::underlying_type{std::forward<Args>(args)...}};
-        for (auto [_, callback] : std::get<event_callback_list<T>>(lists_)) {
+        Event event{std::forward<Args>(args)...};
+        for (auto const& [_, callback] : std::get<callback_list<Event>>(callbacks_)) {
             if (event.alive()) {
                 callback(event);
             }
         }
     }
 
-    template <dispatchable T> void dispatch(T& event) noexcept {
-        if constexpr (contains_v<T, Events...>) {
-            for (auto [_, callback] : std::get<event_callback_list<T>>(lists_)) {
+    template <dispatchable Event> void dispatch(Event& event) noexcept {
+        if constexpr (contains<Event, Events...>) {
+            for (auto const& [_, callback] : std::get<callback_list<Event>>(callbacks_)) {
                 if (event.alive()) {
                     callback(event);
                 }
@@ -175,7 +173,7 @@ struct [[nodiscard]] Event_bus final {
     }
 
 private:
-    std::tuple<event_callback_list<Events>...> lists_;
+    std::tuple<callback_list<Events>...> callbacks_;
 };
 // clang-format on
 
