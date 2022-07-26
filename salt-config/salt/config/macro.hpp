@@ -38,6 +38,12 @@ public:                                                                         
                                                                                                    \
     ~NAME();                                                                                       \
                                                                                                    \
+    NAME(NAME const&) noexcept;                                                                    \
+    NAME(NAME &&)     noexcept;                                                                    \
+                                                                                                   \
+    NAME& operator=(NAME const&) noexcept;                                                         \
+    NAME& operator=(NAME &&)     noexcept;                                                         \
+                                                                                                   \
     detail::NAME##_guts const& guts() const noexcept {                                             \
         return guts_;                                                                              \
     }
@@ -45,6 +51,10 @@ public:                                                                         
 #define SALT_DEFINE_OPAQUE_TYPE(NAME)                                                              \
     namespace salt {                                                                               \
     NAME::NAME(detail::NAME##_guts guts) noexcept : guts_{std::move(guts)} {}                      \
+    NAME::NAME(NAME const&) noexcept            = default;                                         \
+    NAME::NAME(NAME &&)     noexcept            = default;                                         \
+    NAME& NAME::operator=(NAME const&) noexcept = default;                                         \
+    NAME& NAME::operator=(NAME &&)     noexcept = default;                                         \
     NAME::~NAME()                               = default;                                         \
     }
 // clang-format on
