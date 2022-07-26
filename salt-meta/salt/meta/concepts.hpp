@@ -47,34 +47,4 @@ concept has_data = requires(Container c0, Container const c1) {
     requires noexcept(c1.data());
 };
 
-struct Size;
-
-// clang-format off
-template <typename Window>
-concept windowable = requires(Window window) {
-    requires std::is_class_v<Window>;
-    requires std::is_nothrow_constructible_v<Window, Size>
-          && std::is_nothrow_destructible_v<Window>;
-    { window.size()   } -> std::same_as<Size>;
-    { window.update() } -> std::same_as<void>;
-    { window.alive()  } -> std::same_as<bool>;
-};
-// clang-format on
-
-template <windowable Window> using is_windowable = Window;
-
-// clang-format off
-template <typename Overlay, typename Window>
-concept overliable = requires(Overlay overlay, Window window) {
-    requires std::is_class_v<Overlay>;
-    requires std::is_nothrow_constructible_v<Overlay>
-          && std::is_nothrow_destructible_v<Overlay>;
-    { overlay.attach(window) } -> std::same_as<void>;
-    { overlay.detach() } -> std::same_as<void>;
-    { overlay.render() } -> std::same_as<void>;
-};
-// clang-format on
-
-template <windowable Window, overliable<Window> Overlay> using is_overliable = Overlay;
-
 } // namespace salt
