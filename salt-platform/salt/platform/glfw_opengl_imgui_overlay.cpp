@@ -53,7 +53,7 @@ Glfw_opengl_imgui_overlay::~Glfw_opengl_imgui_overlay() {
     ImGui::DestroyContext();
 }
 
-void Glfw_opengl_imgui_overlay::attach(Platform_window const& window) const noexcept {
+void Glfw_opengl_imgui_overlay::attach(Glfw_window const& window) const noexcept {
     ImGui_ImplGlfw_InitForOpenGL(window.window_, true);
     ImGui_ImplOpenGL3_Init("#version 430");
 }

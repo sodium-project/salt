@@ -24,8 +24,6 @@ private:
     std::string_view title_;
     Size             size_;
     Position         position_;
-
-    Event_dispatcher dispatcher_;
 };
 
 // TODO:

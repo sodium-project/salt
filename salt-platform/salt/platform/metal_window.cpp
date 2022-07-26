@@ -21,7 +21,7 @@ Size Metal_window::size() const noexcept {
 void Metal_window::update() const noexcept {}
 
 bool Metal_window::alive() const noexcept {
-    return !dispatcher_.holds_state<Window_close_state>();
+    return true;
 }
 
 } // namespace salt

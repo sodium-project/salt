@@ -16,10 +16,20 @@ static void framebuffer_size_callback(::GLFWwindow* const, int const width, int 
 
 Glfw_window::Glfw_window() noexcept : Glfw_window(Size{.width = 1280, .height = 720}) {}
 
-Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
-        : window_{nullptr}, title_{"Win64 window"}, size_{size}, position_{position},
-          dispatcher_{} {
+Glfw_window::Glfw_window(Size size, Position position) noexcept
+        : window_{nullptr}, title_{"Win64 window"}, size_{std::move(size)},
+          position_{std::move(position)}, vsync_{false}, bus_{} {
     debug("Initializing Win64 window");
+
+    // set callbacks
+    // clang-format off
+    bus_.attach<Window_close_event  >([&](auto& event) { on(event); });
+    bus_.attach<Window_resize_event >([&](auto& event) { on(event); });
+    bus_.attach<Key_pressed_event   >([&](auto& event) { on(event); });
+    bus_.attach<Key_released_event  >([&](auto& event) { on(event); });
+    bus_.attach<Mouse_pressed_event >([&](auto& event) { on(event); });
+    bus_.attach<Mouse_released_event>([&](auto& event) { on(event); });
+    // clang-format on
 
     char const* error_message = nullptr;
     if (!::glfwInit()) {
@@ -45,7 +55,7 @@ Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
     ::glfwMakeContextCurrent(window_);
     ::glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
 
-    ::glfwSetWindowUserPointer(window_, static_cast<void*>(&dispatcher_));
+    ::glfwSetWindowUserPointer(window_, static_cast<void*>(&bus_));
 
     // glad: load all OpenGL function pointers
     if (!::gladLoadGLLoader(reinterpret_cast<::GLADloadproc>(::glfwGetProcAddress))) {
@@ -57,40 +67,37 @@ Glfw_window::Glfw_window(Size const& size, Position const& position) noexcept
 
     // Set GLFW callbacks
     ::glfwSetWindowCloseCallback(window_, [](::GLFWwindow* const window) {
-        auto const& dispatcher =
-                *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
-        dispatcher.dispatch(Window_close_event{});
-    });
-
-    ::glfwSetWindowSizeCallback(window_, [](::GLFWwindow* const window, int const width,
-                                            int const height) {
-        auto const& dispatcher =
-                *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
-        dispatcher.dispatch(Window_resize_event{.size = {std::size_t(width), std::size_t(height)}});
+        auto& bus = *static_cast<event_bus*>(::glfwGetWindowUserPointer(window));
+        bus.dispatch<Window_close_event>();
     });
 
     // clang-format off
+    ::glfwSetWindowSizeCallback(window_, [](::GLFWwindow* const window, int const width, int const height) {
+        auto& bus = *static_cast<event_bus*>(::glfwGetWindowUserPointer(window));
+        bus.dispatch<Window_resize_event>(Size{std::size_t(width), std::size_t(height)});
+    });
+
     ::glfwSetKeyCallback(window_, [](::GLFWwindow* const window, int const key, int const scancode, int const action,
                                      int const mods) {
         (void)scancode;
         (void)mods;
-        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+        auto& bus = *static_cast<event_bus*>(::glfwGetWindowUserPointer(window));
 
         switch (action) {
-            break; case GLFW_PRESS  : dispatcher.dispatch(Key_pressed_event{.key = key});
-            break; case GLFW_RELEASE: dispatcher.dispatch(Key_released_event{.key = key});
-            break; case GLFW_REPEAT : dispatcher.dispatch(Key_pressed_event{.key = key});
+            break; case GLFW_PRESS  : bus.dispatch<Key_pressed_event >(key);
+            break; case GLFW_RELEASE: bus.dispatch<Key_released_event>(key);
+            break; case GLFW_REPEAT : bus.dispatch<Key_pressed_event >(key);
         }
     });
 
     ::glfwSetMouseButtonCallback(window_, [](::GLFWwindow* const window, int const button, int const action,
                                              int const mods) {
         (void)mods;
-        auto const& dispatcher = *static_cast<Event_dispatcher const*>(::glfwGetWindowUserPointer(window));
+        auto& bus = *static_cast<event_bus*>(::glfwGetWindowUserPointer(window));
 
         switch (action) {
-            break; case GLFW_PRESS  : dispatcher.dispatch(Mouse_pressed_event{.button = button});
-            break; case GLFW_RELEASE: dispatcher.dispatch(Mouse_released_event{.button = button});
+            break; case GLFW_PRESS  : bus.dispatch<Mouse_pressed_event >(button);
+            break; case GLFW_RELEASE: bus.dispatch<Mouse_released_event>(button);
         }
     });
     // clang-format on
@@ -110,7 +117,45 @@ void Glfw_window::update() const noexcept {
 }
 
 bool Glfw_window::alive() const noexcept {
-    return !dispatcher_.holds_state<Window_close_state>();
+    return true;
+}
+
+bool Glfw_window::vsync() const noexcept {
+    return vsync_;
+}
+
+void Glfw_window::vsync(bool flag) noexcept {
+    vsync_ = flag;
+}
+
+Position Glfw_window::position() const noexcept {
+    return position_;
+}
+
+void Glfw_window::on(Window_close_event& event) noexcept {
+    (void)event;
+}
+
+void Glfw_window::on(Window_resize_event& event) noexcept {
+    auto const& new_size = event->size;
+    size_                = new_size;
+    trace("Window resized, width: {}, height: {}", new_size.width, new_size.height);
+}
+
+void Glfw_window::on(Key_pressed_event& event) noexcept {
+    trace("Key pressed, key code: {}", event->key);
+}
+
+void Glfw_window::on(Key_released_event& event) noexcept {
+    trace("Key released, key code: {}", event->key);
+}
+
+void Glfw_window::on(Mouse_pressed_event& event) noexcept {
+    trace("Mouse pressed, button code: {}", event->button);
+}
+
+void Glfw_window::on(Mouse_released_event& event) noexcept {
+    trace("Mouse released, button code: {}", event->button);
 }
 
 } // namespace salt
