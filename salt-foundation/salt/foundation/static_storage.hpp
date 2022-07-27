@@ -8,7 +8,7 @@ struct [[nodiscard]] In_place final {
 };
 inline constexpr In_place in_place{};
 
-template <storable T, std::size_t Size, std::size_t Alignment>
+template <typename T, std::size_t Size, std::size_t Alignment>
 struct [[nodiscard]] Static_storage final {
     // clang-format off
     template <typename... Args> requires constructible_from<T, Args...>

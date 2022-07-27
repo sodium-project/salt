@@ -6,6 +6,7 @@
 
 namespace salt {
 
+#if 0
 // clang-format off
 struct [[nodiscard]] Window_close_state final {};
 struct [[nodiscard]] Window_close_event final {};
@@ -32,5 +33,6 @@ using registered_states = parameter_pack<Window_close_state,
                                          Mouse_pressed_state,
                                          Mouse_released_state>;
 // clang-format on
+#endif
 
 } // namespace salt

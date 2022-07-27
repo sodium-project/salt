@@ -1,8 +1,8 @@
 #include <catch2/catch.hpp>
 
-#include <salt/utils.hpp>
+#include <salt/foundation.hpp>
 
-TEST_CASE("salt::Static_storage", "[salt-utils/static_storage.hpp]") {
+TEST_CASE("salt::Static_storage", "[salt-foundation/static_storage.hpp]") {
     using namespace salt;
 
     SECTION("it must be given valid Size and Alignment") {

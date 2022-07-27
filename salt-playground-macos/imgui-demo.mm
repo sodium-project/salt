@@ -100,7 +100,8 @@
         return event;
     }];
 
-    ImGui_ImplOSX_Init();
+    ImGui_ImplOSX_Init(self.view);
+    [NSApp activateIgnoringOtherApps:YES];
 }
 
 -(void)drawInMTKView:(nonnull MTKView*)view

@@ -8,6 +8,7 @@
 
 namespace salt {
 
+#if 0
 // clang-format off
 struct [[nodiscard]] Event_dispatcher final : registered_states::apply<State_machine, Event_dispatcher> {
     template<typename State, typename Event>
@@ -63,5 +64,6 @@ struct [[nodiscard]] Event_dispatcher final : registered_states::apply<State_mac
     auto on_event(Mouse_released_state&, [[maybe_unused]] Mouse_released_event&& event) const noexcept { return Mouse_released_state { event.button }; }
 };
 // clang-format on
+#endif
 
 } // namespace salt

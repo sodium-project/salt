@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <salt/platform.hpp>
+#include <salt/core/overlay.hpp>
 
 namespace salt {
 

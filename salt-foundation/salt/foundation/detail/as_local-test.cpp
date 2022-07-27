@@ -1,8 +1,10 @@
 #include <catch2/catch.hpp>
 
-#include <salt/utils.hpp>
+#include <salt/foundation.hpp>
 
-TEST_CASE("salt::as_local", "[salt-utils/as_local.hpp]") {
+using namespace salt::detail;
+
+TEST_CASE("salt::as_local", "[salt-foundation/as_local.hpp]") {
     SECTION("it produces a time as local") {
         using std::chrono::system_clock;
 
@@ -13,7 +15,7 @@ TEST_CASE("salt::as_local", "[salt-utils/as_local.hpp]") {
         auto const as_time_t           = system_clock::to_time_t(current_time);
         auto const expected_local_time = std::localtime(&as_time_t);
 
-        auto const local_time = salt::as_local(current_time);
+        auto const local_time = as_local(current_time);
         // clang-format off
         REQUIRE(local_time->tm_year  == expected_local_time->tm_year);
         REQUIRE(local_time->tm_mon   == expected_local_time->tm_mon);

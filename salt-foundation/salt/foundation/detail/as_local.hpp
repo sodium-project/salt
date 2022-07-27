@@ -2,7 +2,7 @@
 #include <chrono>
 #include <ctime>
 
-namespace salt {
+namespace salt::detail {
 
 SALT_DISABLE_WARNING_PUSH
 SALT_DISABLE_WARNING_DEPRECATED_DECLARATIONS
@@ -15,4 +15,4 @@ inline auto as_local(auto const now) noexcept {
 
 SALT_DISABLE_WARNING_POP
 
-} // namespace salt
+} // namespace salt::detail
