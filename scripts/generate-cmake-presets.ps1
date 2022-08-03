@@ -52,7 +52,8 @@ function generate_cmake_presets($os, $arch, $graphics) {
     return $presets
 }
 
-$cmake_presets = "../CMakePresets.json"
+$scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
+$cmake_presets = "$scriptPath/../CMakePresets.json"
 
 if (Test-Path $cmake_presets) {
     Remove-Item $cmake_presets
