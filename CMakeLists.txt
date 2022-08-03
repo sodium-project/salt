@@ -1,5 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
 
+#-----------------------------------------------------------------------------------------------------------------------
+# Set cmake export compile commands.
+#-----------------------------------------------------------------------------------------------------------------------
+
+if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS AND
+   NOT DEFINED ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
+  set(CMAKE_EXPORT_COMPILE_COMMANDS "ON"
+      CACHE BOOL "Enable/Disable output of compile commands during generation.")
+  mark_as_advanced(CMAKE_EXPORT_COMPILE_COMMANDS)
+
+  message(STATUS "CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+endif()
+
 project(salt CXX)
 
 include("cmake/project_settings.cmake")
