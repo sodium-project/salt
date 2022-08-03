@@ -135,8 +135,8 @@ struct [[nodiscard]] Event_bus final {
     template <typename Event> using callback_id   = typename callback_list<Event>::key_type;
 
     template <dispatchable Event> requires contains<Event, Events...>
-    auto attach(callback<Event> callback) noexcept {
-        return std::get<callback_list<Event>>(callbacks_).insert(std::move(callback));
+    auto attach(callback<Event> event_callback) noexcept {
+        return std::get<callback_list<Event>>(callbacks_).insert(std::move(event_callback));
     }
 
     template <dispatchable Event> requires contains<Event, Events...>
