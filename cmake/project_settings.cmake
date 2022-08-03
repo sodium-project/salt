@@ -130,9 +130,11 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
             # Get the correct target architecture.
             salt_set_target_architecture(SALT_TARGET_CPU)
 
-            set(SALT_TARGET_VENDOR   Apple  CACHE STRING "[READONLY] The target vendor."       FORCE)
-            set(SALT_TARGET_OS       MacOSX CACHE STRING "[READONLY] The current platform."    FORCE)
-            set(SALT_TARGET_GRAPHICS Metal  CACHE STRING "[READONLY] The target graphics api." FORCE)
+            set(SALT_TARGET_VENDOR   Apple            CACHE STRING "[READONLY] The target vendor."       FORCE)
+            set(SALT_TARGET_OS       MacOSX           CACHE STRING "[READONLY] The current platform."    FORCE)
+            set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
+
+            salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
         endif()
     endif()
 endif()
