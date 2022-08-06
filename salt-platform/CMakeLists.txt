@@ -5,8 +5,8 @@ find_package(imgui REQUIRED)
 salt_static_library(platform
     WINDOWS
         SOURCE
-            "salt/platform/glfw_window.cpp"
-            "salt/platform/glfw_opengl_imgui_overlay.cpp"
+            "salt/platform/opengl_window.cpp"
+            "salt/platform/opengl_imgui_overlay.cpp"
         LINK
             glad::glad
             glfw::glfw

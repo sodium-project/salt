@@ -1,4 +1,4 @@
-#include <salt/platform/glfw_opengl_imgui_overlay.hpp>
+#include <salt/platform/opengl_imgui_overlay.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -7,7 +7,7 @@
 
 namespace salt {
 
-Glfw_opengl_imgui_overlay::Glfw_opengl_imgui_overlay() noexcept {
+Opengl_imgui_overlay::Opengl_imgui_overlay(Opengl_window const& window) noexcept {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -45,22 +45,19 @@ Glfw_opengl_imgui_overlay::Glfw_opengl_imgui_overlay() noexcept {
     colors[ImGuiCol_TitleBg]          = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
     colors[ImGuiCol_TitleBgActive]    = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
     colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+    // Init
+    ImGui_ImplGlfw_InitForOpenGL(window.native_window_, true);
+    ImGui_ImplOpenGL3_Init("#version 430");
 }
 
-Glfw_opengl_imgui_overlay::~Glfw_opengl_imgui_overlay() {
+Opengl_imgui_overlay::~Opengl_imgui_overlay() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void Glfw_opengl_imgui_overlay::attach(Glfw_window const& window) const noexcept {
-    ImGui_ImplGlfw_InitForOpenGL(window.window_, true);
-    ImGui_ImplOpenGL3_Init("#version 430");
-}
-
-void Glfw_opengl_imgui_overlay::detach() const noexcept {}
-
-void Glfw_opengl_imgui_overlay::render() const noexcept {
+void Opengl_imgui_overlay::render() const noexcept {
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
