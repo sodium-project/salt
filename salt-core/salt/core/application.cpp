@@ -5,29 +5,36 @@
 
 namespace salt {
 
-std::string_view Command_line_args::operator[](std::size_t const i) const noexcept {
-    SALT_ASSERT(i < count);
-    return vector[i];
-}
-
 Application::Application(Command_line_args args) noexcept
         : window_{Size{.width = 1280, .height = 720}, Position{.x = 500, .y = 500}},
-          imgui_overlay_{} {
+          overlay_{window_} {
     (void)args;
-    imgui_overlay_.attach(window_);
+
+    // clang-format off
+    window_.subscribe<Window_close_event >([&](auto& event) { on(event); });
+    window_.subscribe<Window_resize_event>([&](auto& event) { on(event); });
+    // clang-format on
 }
 
 void Application::run(Fn fn) const noexcept {
     fn();
 
-    // while (1) {
-    //     window_.update();
-    // }
-
-    while (window_.alive()) {
+    while (running_) {
         window_.update();
-        imgui_overlay_.render();
+        overlay_.render();
     }
+}
+
+void Application::on(Window_close_event& event) noexcept {
+    (void)event;
+    running_ = false;
+}
+
+void Application::on(Window_resize_event& event) noexcept {
+    if (0 == event->size.width || 0 == event->size.height) {
+        minimized_ = true;
+    }
+    minimized_ = false;
 }
 
 } // namespace salt
