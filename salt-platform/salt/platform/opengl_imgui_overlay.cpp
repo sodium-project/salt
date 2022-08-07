@@ -57,12 +57,16 @@ Opengl_imgui_overlay::~Opengl_imgui_overlay() {
     ImGui::DestroyContext();
 }
 
-void Opengl_imgui_overlay::render() const noexcept {
+void Opengl_imgui_overlay::render(Fn fn) const noexcept {
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    // call functor
+    fn();
+
+#if 0
     // Docking
     static bool               fullscreen      = true;
     static bool               open            = true;
@@ -148,6 +152,7 @@ void Opengl_imgui_overlay::render() const noexcept {
     ImGui::End();
 
     ImGui::End();
+#endif
 
     // Rendering
     ImGui::Render();

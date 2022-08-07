@@ -17,9 +17,9 @@ static void framebuffer_size_callback(::GLFWwindow*, int width, int height) noex
 Opengl_window::Opengl_window() noexcept : Opengl_window(Size{.width = 1280, .height = 720}) {}
 
 Opengl_window::Opengl_window(Size size, Position position) noexcept
-        : native_window_{nullptr}, title_{"GLFW Window"}, size_{std::move(size)},
-          position_{std::move(position)}, vsync_{false}, bus_{} {
-    debug("Initializing GLFW Window");
+        : native_window_{nullptr}, title_{"OpenGL Window"}, size_{std::move(size)},
+          position_{std::move(position)}, vsync_{true}, bus_{} {
+    debug("Initializing OpenGL Window");
 
     char const* error_message = nullptr;
     if (!::glfwInit()) {

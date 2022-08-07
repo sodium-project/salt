@@ -2,6 +2,7 @@
 
 #include <string_view>
 
+#include <salt/core/layer_stack.hpp>
 #include <salt/core/overlay.hpp>
 
 namespace salt {
@@ -18,11 +19,15 @@ struct [[nodiscard]] Command_line_args final {
 };
 
 struct [[nodiscard]] Application final {
-    using Fn = void (*)();
+    using Fn = void (*)(Application&);
 
     Application(Command_line_args args = Command_line_args{}) noexcept;
 
-    void run(Fn fn) const noexcept;
+    void run(Fn fn) noexcept;
+
+    template <typename Layer> void push() {
+        layer_stack_.push<Layer>();
+    }
 
 private:
     void on(Window_close_event& event) noexcept;
@@ -32,6 +37,7 @@ private:
     bool          minimized_ = false;
     Window        window_;
     Imgui_overlay overlay_;
+    Layer_stack   layer_stack_;
 };
 
 } // namespace salt
