@@ -20,7 +20,7 @@
 #    include "imgui-demo.mm"
 #endif
 
-void salt::application_main() {
+void salt::on_application_render(Application&) {
     // test assertion
     SALT_ASSERT(2 < 1);
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <salt/utils/detail/aligned_cast.hpp>
+#include <salt/foundation/detail/aligned_cast.hpp>
 
 namespace salt {
 

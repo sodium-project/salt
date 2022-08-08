@@ -1,13 +1,13 @@
 #pragma once
 
 // clang-format off
-#define _SALT_JOIN(a, b) a##b
-#define  SALT_JOIN(a, b) _SALT_JOIN(a, b)
+#define _SALT_JOIN(A, B) A##B
+#define  SALT_JOIN(A, B) _SALT_JOIN(A, B)
 
-#define SALT_UNIQUE_NAME(base) SALT_JOIN(base, __COUNTER__)
+#define SALT_UNIQUE_NAME(BASE) SALT_JOIN(BASE, __COUNTER__)
 
-#define _SALT_TO_STRING(x) #x
-#define  SALT_TO_STRING(x) _SALT_TO_STRING(x)
+#define _SALT_TO_STRING(X) #X
+#define  SALT_TO_STRING(X) _SALT_TO_STRING(X)
 
 #define SALT_EVAL(...) __VA_ARGS__
 #define SALT_HEAD(X, ...) X
@@ -26,4 +26,35 @@
 #define SALT_TRANSFORM_7(FUNC, ...) FUNC(SALT_HEAD(__VA_ARGS__)), SALT_TRANSFORM_6(FUNC, SALT_TAIL(__VA_ARGS__))
 #define SALT_TRANSFORM_8(FUNC, ...) FUNC(SALT_HEAD(__VA_ARGS__)), SALT_TRANSFORM_7(FUNC, SALT_TAIL(__VA_ARGS__))
 #define SALT_TRANSFORM_9(FUNC, ...) FUNC(SALT_HEAD(__VA_ARGS__)), SALT_TRANSFORM_8(FUNC, SALT_TAIL(__VA_ARGS__))
+// clang-format on
+
+// clang-format off
+#define SALT_OPAQUE_TYPE(NAME)                                                                     \
+private:                                                                                           \
+    detail::NAME##_guts guts_;                                                                     \
+                                                                                                   \
+public:                                                                                            \
+    explicit NAME(detail::NAME##_guts guts) noexcept;                                              \
+                                                                                                   \
+    ~NAME();                                                                                       \
+                                                                                                   \
+    NAME(NAME const&) noexcept;                                                                    \
+    NAME(NAME &&)     noexcept;                                                                    \
+                                                                                                   \
+    NAME& operator=(NAME const&) noexcept;                                                         \
+    NAME& operator=(NAME &&)     noexcept;                                                         \
+                                                                                                   \
+    detail::NAME##_guts const& guts() const noexcept {                                             \
+        return guts_;                                                                              \
+    }
+
+#define SALT_DEFINE_OPAQUE_TYPE(NAME)                                                              \
+    namespace salt {                                                                               \
+    NAME::NAME(detail::NAME##_guts guts) noexcept : guts_{std::move(guts)} {}                      \
+    NAME::NAME(NAME const&) noexcept            = default;                                         \
+    NAME::NAME(NAME &&)     noexcept            = default;                                         \
+    NAME& NAME::operator=(NAME const&) noexcept = default;                                         \
+    NAME& NAME::operator=(NAME &&)     noexcept = default;                                         \
+    NAME::~NAME()                               = default;                                         \
+    }
 // clang-format on

@@ -2,26 +2,13 @@
 
 #include <vector>
 
-#include <entt/core/type_traits.hpp>
-#include <entt/poly/poly.hpp>
+#include <salt/core/layer.hpp>
 
 namespace salt {
 
-struct [[nodiscard]] Layer final : entt::type_list<> {
-    template <typename Base> struct type : Base {
-        void attach() const {
-            entt::poly_call<0>(*this);
-        }
-    };
-
-    template <typename Type> using impl = entt::value_list<&Type::attach>;
-};
-
-using Poly_layer = entt::poly<Layer>;
-
 struct [[nodiscard]] Layer_stack final {
 
-    template <typename Layer> constexpr void push() noexcept {
+    template <typename Layer> constexpr void push() {
         layers_.emplace_back(Layer{});
     }
 
@@ -45,8 +32,16 @@ struct [[nodiscard]] Layer_stack final {
         return layers_.front();
     }
 
+    // clang-format off
+    auto begin() noexcept       { return layers_.begin(); }
+    auto begin() const noexcept { return layers_.begin(); }
+    
+    auto end() noexcept       { return layers_.end(); }
+    auto end() const noexcept { return layers_.end(); }
+    // clang-format on
+
 private:
-    std::vector<Poly_layer> layers_;
+    std::vector<Layer> layers_;
 };
 
 } // namespace salt

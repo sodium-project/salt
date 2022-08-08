@@ -7,6 +7,9 @@
 
 #include <salt/meta.hpp>
 
+#include <salt/foundation/detail/as_local.hpp>
+#include <salt/foundation/detail/to_string.hpp>
+
 namespace salt {
 
 namespace detail {
@@ -27,12 +30,13 @@ concept string_like = convertible_to<T, std::string_view>;
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] trace final {
 
-    trace(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    trace(String                 message, Args&&... args,
+          source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print(detail::blue, "{} [TRACE] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
     }
@@ -40,12 +44,13 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] debug final {
 
-    debug(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    debug(String                 message, Args&&... args,
+          source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print("{} [DEBUG] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
     }
@@ -53,12 +58,13 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] info final {
 
-    info(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    info(String                 message, Args&&... args,
+         source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print(detail::green, "{} [INFO] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
     }
@@ -66,12 +72,13 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] warning final {
 
-    warning(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    warning(String                 message, Args&&... args,
+            source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print(detail::yellow, "{} [WARNING] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
     }
@@ -79,13 +86,13 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] error final {
 
-    [[noreturn]]
-    error(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    [[noreturn]] error(String                 message, Args&&... args,
+                       source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print(detail::red, "{} [ERROR] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
         std::abort();
@@ -94,12 +101,13 @@ template <detail::string_like String, typename... Args> struct [[maybe_unused]] 
 
 template <detail::string_like String, typename... Args> struct [[maybe_unused]] critical final {
 
-    critical(String message, Args&&... args, source_location const& source = source_location::current()) noexcept {
+    critical(String                 message, Args&&... args,
+             source_location const& source = source_location::current()) noexcept {
         using std::chrono::system_clock;
         // clang-format off
         fmt::print(detail::crimson, "{} [CRITICAL] {} {}\n",
-                   to_string(as_local(system_clock::now())),
-                   to_string(source),
+                   detail::to_string(detail::as_local(system_clock::now())),
+                   detail::to_string(source),
                    fmt::vformat(message, fmt::make_format_args(std::forward<Args>(args)...)));
         // clang-format on
     }
