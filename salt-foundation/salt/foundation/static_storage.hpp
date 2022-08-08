@@ -3,16 +3,11 @@
 
 namespace salt {
 
-struct [[nodiscard]] In_place final {
-    explicit In_place() = default;
-};
-inline constexpr In_place in_place{};
-
 template <typename T, std::size_t Size, std::size_t Alignment>
 struct [[nodiscard]] Static_storage final {
     // clang-format off
-    template <typename... Args> requires constructible_from<T, Args...>
-    explicit Static_storage(In_place,
+    template <typename... Args> requires std::constructible_from<T, Args...>
+    explicit Static_storage(std::in_place_t,
                             Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
         storage_.template construct<T>(std::forward<Args>(args)...);
     }
@@ -32,7 +27,7 @@ struct [[nodiscard]] Static_storage final {
 
     Static_storage&
     operator=(Static_storage const& other) noexcept(std::is_nothrow_copy_assignable_v<T>) {
-        if (this != &other) {
+        if (this != std::addressof(other)) {
             // clang-format off
             storage_.template destruct <T>();
             storage_.template construct<T>(*other);
@@ -43,7 +38,7 @@ struct [[nodiscard]] Static_storage final {
 
     Static_storage&
     operator=(Static_storage&& other) noexcept(std::is_nothrow_move_assignable_v<T>) {
-        if (this != &other) {
+        if (this != std::addressof(other)) {
             // clang-format off
             storage_.template destruct <T>();
             storage_.template construct<T>(std::move(*other));

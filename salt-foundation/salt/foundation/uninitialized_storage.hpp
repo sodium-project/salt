@@ -3,16 +3,11 @@
 
 namespace salt {
 
-using std::constructible_from;
-using std::destructible;
-
 template <std::size_t Size, std::size_t Alignment>
 struct [[nodiscard]] Uninitialized_storage final {
     // clang-format off
     template <typename T, typename... Args>
-    requires sized             <T, Size     >
-          && aligned           <T, Alignment>
-          && constructible_from<T, Args...  >
+    requires sized<T, Size> and aligned<T, Alignment> and std::constructible_from<T, Args...>
     T& construct(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
         auto const storage = get<T>();
         ::new (storage) T{std::forward<Args>(args)...};
@@ -20,7 +15,7 @@ struct [[nodiscard]] Uninitialized_storage final {
     }
     // clang-format on
 
-    template <destructible T> void destruct() noexcept {
+    template <std::destructible T> void destruct() noexcept {
         get<T>()->~T();
     }
 

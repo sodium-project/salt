@@ -52,17 +52,17 @@ public:
     }
 
     constexpr Layer& operator=(Layer const& other) {
-        if (std::addressof(other) == this)
-            return *this;
-        delete ptr_;
-        ptr_ = other.ptr_->clone();
+        if (this != std::addressof(other)) {
+            delete ptr_;
+            ptr_ = other.ptr_->clone();
+        }
         return *this;
     }
     constexpr Layer& operator=(Layer&& other) noexcept {
-        if (std::addressof(other) == this)
-            return *this;
-        delete ptr_;
-        ptr_ = std::exchange(other.ptr_, nullptr);
+        if (this != std::addressof(other)) {
+            delete ptr_;
+            ptr_ = std::exchange(other.ptr_, nullptr);
+        }
         return *this;
     }
 
