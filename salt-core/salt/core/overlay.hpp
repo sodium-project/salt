@@ -4,13 +4,13 @@
 namespace salt {
 
 // clang-format off
-template <typename Overlay,
-          typename Fn      = void()>
+template <typename Overlay>
 concept overlayable = 
     std::is_class_v<Overlay>                 and
     std::constructible_from<Overlay, Window> and
     requires(Overlay overlay) {
-        { overlay.render(std::declval<Fn>()) } -> std::same_as<void>;
+        { overlay.new_frame() } -> std::same_as<void>;
+        { overlay.render   () } -> std::same_as<void>;
     };
 // clang-format on
 
