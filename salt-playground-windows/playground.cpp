@@ -13,7 +13,7 @@
 struct [[nodiscard]] Playground_layer final {
     void update() {}
 
-    void overlay() {
+    void on_overlay_render() {
         // Docking
         static bool               fullscreen      = true;
         static bool               open            = true;
@@ -100,7 +100,7 @@ struct [[nodiscard]] Playground_layer final {
     }
 };
 
-void salt::on_application_render(Application& app) {
+void salt::application_main(Application& app) {
 #ifdef RUN_IMGUI_DEMO
     show_imgui_demo();
 #endif

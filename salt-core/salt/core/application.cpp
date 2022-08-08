@@ -16,19 +16,17 @@ Application::Application(Command_line_args args) noexcept
     // clang-format on
 }
 
-void Application::run(Fn fn) noexcept {
-    fn(*this);
-
+void Application::run() noexcept {
     while (running_) {
         if (!minimized_) {
             for (auto& layer : layer_stack_) {
                 layer.update();
             }
-            overlay_.render([&] {
-                for (auto& layer : layer_stack_) {
-                    layer.overlay();
-                }
-            });
+            overlay_.new_frame();
+            for (auto& layer : layer_stack_) {
+                layer.on_overlay_render();
+            }
+            overlay_.render();
         }
         window_.update();
     }

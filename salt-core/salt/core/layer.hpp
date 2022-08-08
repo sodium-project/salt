@@ -6,10 +6,11 @@ namespace salt {
 
 class [[nodiscard]] Layer {
     struct [[nodiscard]] Base {
-        virtual constexpr void  update()      = 0;
-        virtual constexpr void  overlay()     = 0;
-        virtual constexpr Base* clone() const = 0;
-        virtual constexpr ~Base()             = default;
+        virtual constexpr void  update()            = 0;
+        virtual constexpr void  on_overlay_render() = 0;
+        virtual constexpr Base* clone() const       = 0;
+
+        virtual constexpr ~Base() = default;
     };
 
     template <typename T> struct [[nodiscard]] Wrapper final : public Base {
@@ -26,8 +27,8 @@ class [[nodiscard]] Layer {
             object_.update();
         }
 
-        constexpr void overlay() override {
-            object_.overlay();
+        constexpr void on_overlay_render() override {
+            object_.on_overlay_render();
         }
 
     private:
@@ -51,6 +52,8 @@ public:
     }
 
     constexpr Layer& operator=(Layer const& other) {
+        if (std::addressof(other) == this)
+            return *this;
         delete ptr_;
         ptr_ = other.ptr_->clone();
         return *this;
@@ -67,8 +70,8 @@ public:
         ptr_->update();
     }
 
-    constexpr void overlay() {
-        ptr_->overlay();
+    constexpr void on_overlay_render() {
+        ptr_->on_overlay_render();
     }
 
 private:

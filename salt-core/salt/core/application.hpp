@@ -8,8 +8,8 @@
 namespace salt {
 
 struct [[nodiscard]] Command_line_args final {
-    std::size_t argc = 0;
-    char**      argv = nullptr;
+    int    argc = 0;
+    char** argv = nullptr;
 
     std::string_view operator[](std::size_t idx) const noexcept {
         // TODO:
@@ -19,11 +19,10 @@ struct [[nodiscard]] Command_line_args final {
 };
 
 struct [[nodiscard]] Application final {
-    using Fn = void (*)(Application&);
 
     Application(Command_line_args args = Command_line_args{}) noexcept;
 
-    void run(Fn fn) noexcept;
+    void run() noexcept;
 
     template <typename Layer> void push() {
         layer_stack_.push<Layer>();

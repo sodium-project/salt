@@ -3,6 +3,6 @@
 
 namespace salt {
 
-extern void on_application_render(Application&);
+extern void application_main(Application&);
 
 } // namespace salt
