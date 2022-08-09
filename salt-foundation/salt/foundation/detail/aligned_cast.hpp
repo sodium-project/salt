@@ -4,16 +4,18 @@
 
 namespace salt::detail {
 
-#if SALT_TARGET_WINDOWS
+#if defined(__cpp_lib_assume_aligned)
 using std::assume_aligned;
-// Since Apple put a big willie on the implementation of features from C++20, I have to implement
-// everything instead of them. What could be better than that?
-#elif SALT_TARGET_MACOSX && SALT_CLANG_FULL_VER <= 130106
+#else
 template <std::size_t N, typename T> [[nodiscard]] constexpr T* assume_aligned(T* ptr) {
-    static_assert(N != 0 && (N & (N - 1)) == 0,
-                  "std::assume_aligned<N>(p) requires N to be a power of two");
-
-    return static_cast<T*>(__builtin_assume_aligned(ptr, N));
+#    if __has_builtin(__builtin_assume_aligned)
+    if not consteval
+        return reinterpret_cast<T*>(__builtin_assume_aligned(ptr, N));
+    else
+        return ptr;
+#    else
+    return ptr;
+#    endif
 }
 #endif
 
