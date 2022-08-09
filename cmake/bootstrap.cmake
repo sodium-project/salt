@@ -100,42 +100,38 @@ if(NOT COMMAND_RESULT STREQUAL "0")
 endif()
 
 ########################################################################################################################
-# Configure, build, and install fmt.
+# Configure, build, and install fast_io.
 ########################################################################################################################
 
 message(" ==============================================================================\n"
-        " Configuring fmt, please wait...\n"
+        " Configuring fast_io, please wait...\n"
         " ==============================================================================")
 execute_process(COMMAND ${CMAKE_COMMAND}
-                        -B${CMAKE_BINARY_DIR}/libs/fmt
-                        -S${CMAKE_SOURCE_DIR}/libs/fmt
-                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/fmt
+                        -B${CMAKE_BINARY_DIR}/libs/fast_io
+                        -S${CMAKE_SOURCE_DIR}/libs/fast_io
+                        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/fast_io
                         -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
-                        -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
-                        -DFMT_DOC=OFF
-                        -DFMT_TEST=OFF
-                        -DFMT_DEBUG_POSTFIX:STRING=
+                        -DCMAKE_MSVC_RUNTIME_LIBRARY=${SALT_MSVC_RUNTIME_LIBRARY}
                         ${SALT_CMAKE_ARGUMENTS}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
                 COMMAND_ECHO STDOUT)
 if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to configure fmt.")
+    message(FATAL_ERROR "Failed to configure fast_io.")
 endif()
 
 message(" ==============================================================================\n"
-        " Building and installing fmt, please wait...\n"
+        " Building and installing fast_io, please wait...\n"
         " ==============================================================================")
 execute_process(COMMAND ${CMAKE_COMMAND}
-                        --build ${CMAKE_BINARY_DIR}/libs/fmt
+                        --build ${CMAKE_BINARY_DIR}/libs/fast_io
                         --target install
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
                 COMMAND_ECHO STDOUT)
 if(NOT COMMAND_RESULT STREQUAL "0")
-    message(FATAL_ERROR "Failed to install fmt.")
+    message(FATAL_ERROR "Failed to install fast_io.")
 endif()
-
 
 ########################################################################################################################
 # Configure, build, and install GLFW.
@@ -296,7 +292,7 @@ execute_process(COMMAND ${CMAKE_COMMAND}
                         -DGLFW_ROOT=${CMAKE_SOURCE_DIR}/libs/glfw
                         -DSALT_TARGET_GRAPHICS=${SALT_TARGET_GRAPHICS}
                         -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF
-                        -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug
+                        -DCMAKE_MSVC_RUNTIME_LIBRARY=${SALT_MSVC_RUNTIME_LIBRARY}
                         ${SALT_CMAKE_ARGUMENTS}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE COMMAND_RESULT
