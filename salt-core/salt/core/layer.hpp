@@ -13,7 +13,7 @@ class [[nodiscard]] Layer {
         virtual constexpr ~Base() = default;
     };
 
-    template <typename T> struct [[nodiscard]] Wrapper final : public Base {
+    template <typename T> struct [[nodiscard]] Wrapper final : Base {
         constexpr Wrapper(T&& object) noexcept : object_{std::move(object)} {}
 
         constexpr Base* clone() const override {
@@ -37,7 +37,7 @@ class [[nodiscard]] Layer {
 
 public:
     // clang-format off
-    template <typename T> requires(!std::derived_from<T, Layer>)
+    template <typename T> requires(not std::derived_from<T, Layer>)
     constexpr Layer(T object)
             : ptr_{new Wrapper<T>{std::move(object)}} {}
 
