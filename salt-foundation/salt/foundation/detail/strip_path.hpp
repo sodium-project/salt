@@ -26,6 +26,10 @@ struct [[nodiscard]] Basename final {
     char const* const end_;
 };
 
+inline std::string to_string(Basename const& basename) {
+    return basename.as_string();
+}
+
 constexpr char const* last_dot_of(char const* p) {
     char const* last_dot = nullptr;
     for (; *p; ++p) {

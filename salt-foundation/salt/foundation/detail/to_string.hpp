@@ -4,8 +4,8 @@
 
 namespace salt::detail {
 
-inline std::string to_string(auto const time) {
-    char mbstr[100];
+inline std::string to_string(std::tm const* time) {
+    char mbstr[20];
     std::strftime(mbstr, sizeof(mbstr), "%F %T", time);
     return mbstr;
 }
