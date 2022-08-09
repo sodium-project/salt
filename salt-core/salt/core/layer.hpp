@@ -14,7 +14,7 @@ class [[nodiscard]] Layer {
     };
 
     template <typename T> struct [[nodiscard]] Wrapper final : Base {
-        constexpr Wrapper(T&& object) noexcept : object_{std::move(object)} {}
+        constexpr Wrapper(T&& object) : object_{std::forward<T>(object)} {}
 
         constexpr Base* clone() const override {
             if constexpr (std::copyable<T>)
@@ -37,9 +37,12 @@ class [[nodiscard]] Layer {
 
 public:
     // clang-format off
-    template <typename T> requires(not std::derived_from<T, Layer>)
-    constexpr Layer(T object)
-            : ptr_{new Wrapper<T>{std::move(object)}} {}
+    template <typename T> requires(not std::derived_from<Layer, std::decay_t<T>>)
+    constexpr Layer(T&& object)
+            // Strip the reference, so that either a copy or a move occurs,
+            // but not reference binding.
+            : ptr_{new Wrapper<std::remove_cvref_t<T>>{
+                      std::forward<std::remove_cvref_t<T>>(object)}} {}
 
     constexpr Layer(Layer const& other)
             : ptr_{other.ptr_->clone()} {}

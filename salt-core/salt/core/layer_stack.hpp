@@ -9,7 +9,11 @@ namespace salt {
 struct [[nodiscard]] Layer_stack final {
 
     template <typename Layer> constexpr void push() {
-        layers_.emplace_back(Layer{});
+        layers_.push_back(Layer{});
+    }
+
+    template <typename... Args> constexpr void emplace(Args&&... args) {
+        layers_.emplace_back(std::forward<Args>(args)...);
     }
 
     constexpr void pop() noexcept {
@@ -33,11 +37,11 @@ struct [[nodiscard]] Layer_stack final {
     }
 
     // clang-format off
-    auto begin() noexcept       { return layers_.begin(); }
+    auto begin() noexcept { return layers_.begin(); }
+    auto end  () noexcept { return layers_.end();   }
+
     auto begin() const noexcept { return layers_.begin(); }
-    
-    auto end() noexcept       { return layers_.end(); }
-    auto end() const noexcept { return layers_.end(); }
+    auto end  () const noexcept { return layers_.end();   }
     // clang-format on
 
 private:
