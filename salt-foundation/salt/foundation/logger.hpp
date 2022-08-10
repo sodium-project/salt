@@ -1,10 +1,6 @@
 #pragma once
 #include <string_view>
 
-// #include <fmt/chrono.h>
-// #include <fmt/color.h>
-// #include <fmt/core.h>
-
 #include <salt/meta.hpp>
 
 #include <salt/foundation/detail/as_local.hpp>

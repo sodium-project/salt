@@ -121,7 +121,6 @@ cur_src_loc(salt::detail::Source_location location =
                     salt::detail::Source_location::current()) noexcept {
     return location;
 }
-
 } // namespace manipulators
 
 } // namespace fast_io
