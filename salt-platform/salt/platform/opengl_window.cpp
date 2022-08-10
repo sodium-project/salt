@@ -24,7 +24,7 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
     char const* error_message = nullptr;
     if (!::glfwInit()) {
         ::glfwGetError(&error_message);
-        error("Failed to initialize GLFW, error message: '{}'", error_message);
+        error("Failed to initialize GLFW, error message: '", error_message, "'");
     }
 
     // GL 4.3 + GLSL 430
@@ -37,7 +37,7 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
                                         nullptr);
     if (!native_window_) {
         ::glfwGetError(&error_message);
-        error("Failed to create Window, error message: '{}'", error_message);
+        error("Failed to create Window, error message: '", error_message, "'");
     } else {
         trace("Window created");
     }
@@ -53,8 +53,8 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
         trace("Failed to initialize GLAD");
     }
 
-    trace("Window size => width:{}, height:{}", size_.width, size_.height);
-    trace("Window position => x:{}, y:{}", position_.x, position_.y);
+    trace("Window size => {width:", size_.width, ", height:", size_.height, "}");
+    trace("Window position => {x:", position_.x, ", y:", position_.y, "}");
 
     // Set GLFW callbacks
     ::glfwSetWindowCloseCallback(native_window_, [](::GLFWwindow* window) {
