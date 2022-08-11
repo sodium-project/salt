@@ -2,17 +2,17 @@
 
 #include <cstdint>
 
+#include <fast_io.h>
 #include <salt/config.hpp>
 
 #if defined(__cpp_lib_source_location)
 #    include <source_location>
 #else
-#    include <fast_io.h>
 #    include <salt/foundation/detail/strip_path.hpp>
 namespace salt::detail {
 
 struct [[nodiscard]] Source_location final {
-    // NOTE(Andrii):
+    // NOTE:
     //  This method should be defined as `consteval`, but since `consteval` didn't work in MSVC
     //  prior to VS2022 and (Apple)Clang 14, let's stay with `constexpr`.
     static SALT_CONSTEVAL Source_location
@@ -31,7 +31,6 @@ struct [[nodiscard]] Source_location final {
 
     constexpr Source_location() noexcept = default;
 
-    // Source_location field access
     constexpr std::uint_least32_t line() const noexcept {
         return line_;
     }
@@ -59,7 +58,7 @@ private:
 
 namespace fast_io {
 
-struct custom_source_location_scatter {
+struct salt_source_location_scatter {
     basic_io_scatter_t<char> file_name;
     basic_io_scatter_t<char> function_name;
     std::uint_least32_t      line;
@@ -69,7 +68,7 @@ struct custom_source_location_scatter {
 namespace details {
 
 inline constexpr std::size_t
-print_reserve_size_source_location_impl(custom_source_location_scatter location) noexcept {
+print_reserve_size_source_location_impl(salt_source_location_scatter location) noexcept {
     constexpr auto        io_reserve     = io_reserve_type<char, std::uint_least32_t>;
     constexpr std::size_t rsv_size       = print_reserve_size(io_reserve);
     constexpr std::size_t total_rsv_size = (rsv_size * 2 + 3);
@@ -78,8 +77,8 @@ print_reserve_size_source_location_impl(custom_source_location_scatter location)
 }
 
 inline constexpr char*
-print_reserve_define_source_location_impl(char*                          iter,
-                                          custom_source_location_scatter location) noexcept {
+print_reserve_define_source_location_impl(char*                        iter,
+                                          salt_source_location_scatter location) noexcept {
     constexpr auto io_reserve = io_reserve_type<char, std::uint_least32_t>;
     *(iter = non_overlapped_copy_n(location.file_name.base, location.file_name.len, iter)) = ':';
     *(iter = print_reserve_define(io_reserve, ++iter, location.line))                      = ':';
@@ -87,7 +86,7 @@ print_reserve_define_source_location_impl(char*                          iter,
     return non_overlapped_copy_n(location.function_name.base, location.function_name.len, ++iter);
 }
 
-inline constexpr custom_source_location_scatter
+inline constexpr salt_source_location_scatter
 print_alias_define_source_location_impl(salt::detail::Source_location location) noexcept {
     using salt::detail::strip_path;
     return {{strip_path(location.file_name()), cstr_len(strip_path(location.file_name()))},
@@ -99,26 +98,25 @@ print_alias_define_source_location_impl(salt::detail::Source_location location) 
 } // namespace details
 
 inline constexpr std::size_t
-print_reserve_size(io_reserve_type_t<char, custom_source_location_scatter>,
-                   custom_source_location_scatter location) noexcept {
+print_reserve_size(io_reserve_type_t<char, salt_source_location_scatter>,
+                   salt_source_location_scatter location) noexcept {
     return details::print_reserve_size_source_location_impl(location);
 }
 
-inline constexpr char* print_reserve_define(io_reserve_type_t<char, custom_source_location_scatter>,
-                                            char*                          iter,
-                                            custom_source_location_scatter location) noexcept {
+inline constexpr char* print_reserve_define(io_reserve_type_t<char, salt_source_location_scatter>,
+                                            char*                        iter,
+                                            salt_source_location_scatter location) noexcept {
     return details::print_reserve_define_source_location_impl(iter, location);
 }
 
-inline constexpr custom_source_location_scatter
+inline constexpr salt_source_location_scatter
 print_alias_define(io_alias_t, salt::detail::Source_location location) noexcept {
     return details::print_alias_define_source_location_impl(location);
 }
 
 namespace manipulators {
-inline constexpr salt::detail::Source_location
-cur_src_loc(salt::detail::Source_location location =
-                    salt::detail::Source_location::current()) noexcept {
+inline constexpr auto cur_src_loc(salt::detail::Source_location location =
+                                          salt::detail::Source_location::current()) noexcept {
     return location;
 }
 } // namespace manipulators
