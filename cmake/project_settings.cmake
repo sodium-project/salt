@@ -400,10 +400,12 @@ if(SALT_TARGET_OS STREQUAL "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "(C|c)lan
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
         string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")        
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        set(SALT_MSVC_RUNTIME_LIBRARY  "MultiThreadedDebug")
     else()
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_MT -Xclang --dependent-lib=msvcrt")
         string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_MT -Xclang --dependent-lib=msvcrt")        
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+        set(SALT_MSVC_RUNTIME_LIBRARY  "MultiThreaded")
     endif()
 endif()
 

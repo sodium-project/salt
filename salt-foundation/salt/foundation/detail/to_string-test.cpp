@@ -30,7 +30,7 @@ TEST_CASE("salt::to_string", "[salt-foundation/to_string.hpp]") {
     }
 
     SECTION("it produces a source location as std::string") {
-        auto const expected_location = std::string{"to_string-test.cpp:C_A_T_C_H_T_E_S_T_0:34"};
+        auto const expected_location = std::string{"to_string-test.cpp:34:50:C_A_T_C_H_T_E_S_T_0"};
         auto const location          = to_string(salt::source_location::current());
         REQUIRE(location == expected_location);
     }
