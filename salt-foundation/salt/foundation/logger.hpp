@@ -32,36 +32,38 @@ template <typename Output> inline detail::Logger<Output>& logger() noexcept {
 }
 
 template <typename... Args> struct [[maybe_unused]] trace final {
-    constexpr trace(Args&&... args,
-                    source_location location = source_location::current()) noexcept {
+    constexpr explicit trace(Args&&... args,
+                             source_location location = source_location::current()) noexcept {
         logger<output::Console>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
                                       location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] debug final {
-    constexpr debug(Args&&... args,
-                    source_location location = source_location::current()) noexcept {
+    constexpr explicit debug(Args&&... args,
+                             source_location location = source_location::current()) noexcept {
         logger<output::Console>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
                                       location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] warning final {
-    constexpr warning(Args&&... args,
-                      source_location location = source_location::current()) noexcept {
+    constexpr explicit warning(Args&&... args,
+                               source_location location = source_location::current()) noexcept {
         logger<output::Console>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
                                       location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] error final {
-    [[noreturn]] constexpr error(Args&&... args,
-                                 source_location location = source_location::current()) noexcept {
+    // clang-format off
+    [[noreturn]] constexpr explicit
+    error(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<output::Console>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
                                       location);
         std::abort();
     }
+    // clang-format on
 };
 
 // clang-format off
@@ -72,36 +74,38 @@ template <typename... Args> error  (Args&&...) -> error  <Args...>;
 // clang-format on
 
 template <typename... Args> struct [[maybe_unused]] ftrace final {
-    constexpr ftrace(Args&&... args,
-                     source_location location = source_location::current()) noexcept {
+    constexpr explicit ftrace(Args&&... args,
+                              source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
                                    location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] fdebug final {
-    constexpr fdebug(Args&&... args,
-                     source_location location = source_location::current()) noexcept {
+    constexpr explicit fdebug(Args&&... args,
+                              source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
                                    location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] fwarning final {
-    constexpr fwarning(Args&&... args,
-                       source_location location = source_location::current()) noexcept {
+    constexpr explicit fwarning(Args&&... args,
+                                source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
                                    location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] ferror final {
-    [[noreturn]] constexpr ferror(Args&&... args,
-                                  source_location location = source_location::current()) noexcept {
+    // clang-format off
+    [[noreturn]] constexpr explicit
+    ferror(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
                                    location);
         std::abort();
     }
+    // clang-format on
 };
 
 // clang-format off
