@@ -72,7 +72,8 @@ template <typename... Args> error  (Args&&...) -> error  <Args...>;
 // clang-format on
 
 template <typename... Args> struct [[maybe_unused]] ftrace final {
-    ftrace(Args&&... args, source_location location = source_location::current()) noexcept {
+    constexpr ftrace(Args&&... args,
+                     source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
                                    location);
     }
@@ -87,7 +88,8 @@ template <typename... Args> struct [[maybe_unused]] fdebug final {
 };
 
 template <typename... Args> struct [[maybe_unused]] fwarning final {
-    fwarning(Args&&... args, source_location location = source_location::current()) noexcept {
+    constexpr fwarning(Args&&... args,
+                       source_location location = source_location::current()) noexcept {
         logger<output::File>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
                                    location);
     }
