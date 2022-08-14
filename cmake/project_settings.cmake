@@ -10,12 +10,12 @@ endif()
 check_language(OBJCXX)
 if(CMAKE_OBJCXX_COMPILER)
     enable_language(OBJCXX)
-    string(APPEND CMAKE_OBJCXX_FLAGS " -fobjc-arc -std=gnu++2a")
+    string(APPEND CMAKE_OBJCXX_FLAGS " -fobjc-arc -std=gnu++2b")
 endif()
 
 add_library(salt::project_settings INTERFACE IMPORTED)
 
-target_compile_features(salt::project_settings INTERFACE cxx_std_20)
+target_compile_features(salt::project_settings INTERFACE cxx_std_23)
 
 # Enable output of compile commands during generation. This file will be used by clangd.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
