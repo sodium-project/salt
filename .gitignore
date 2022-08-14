@@ -124,3 +124,6 @@ fabric.properties
 *.exe
 *.out
 *.app
+
+# ImGui files
+*.ini
