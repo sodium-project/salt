@@ -2,6 +2,8 @@
 #include <chrono>
 #include <ctime>
 
+#include <salt/config.hpp>
+
 namespace salt::detail {
 
 SALT_DISABLE_WARNING_PUSH

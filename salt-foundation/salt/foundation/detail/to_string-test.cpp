@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <salt/foundation.hpp>
+#include <salt/foundation/detail/to_string.hpp>
 
 using namespace salt::detail;
 
