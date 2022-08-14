@@ -126,4 +126,4 @@ fabric.properties
 *.app
 
 # ImGui files
-*.ini
+imgui.ini
