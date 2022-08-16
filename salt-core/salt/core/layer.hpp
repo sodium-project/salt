@@ -14,7 +14,7 @@ class [[nodiscard]] Layer {
     };
 
     template <typename T> struct [[nodiscard]] Wrapper final : Base {
-        constexpr Wrapper(T&& object) : object_{std::forward<T>(object)} {}
+        constexpr explicit Wrapper(T&& object) : object_{std::forward<T>(object)} {}
 
         constexpr Base* clone() const override {
             if constexpr (std::copyable<T>)

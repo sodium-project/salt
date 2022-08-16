@@ -41,8 +41,8 @@ template <typename T> struct [[nodiscard]] Event final {
     using data_type = T;
 
     template <typename... Args>
-    Event(Args&&... args) noexcept : event_{T{std::forward<Args>(args)...}} {}
-    Event(T&& event) noexcept : event_{std::move(event)} {}
+    explicit Event(Args&&... args) noexcept : event_{T{std::forward<Args>(args)...}} {}
+    explicit Event(T&& event) noexcept : event_{std::move(event)} {}
 
     // clang-format off
     void consume()       noexcept { consumed_ = true;  }
