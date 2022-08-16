@@ -6,6 +6,13 @@
 
 namespace salt {
 
+namespace output {
+
+static constexpr inline File    file;
+static constexpr inline Console console;
+
+} // namespace output
+
 namespace color {
 
 // clang-format off
@@ -19,100 +26,84 @@ static constexpr inline Color red    = {231, 31 , 31 };
 
 namespace log_level {
 
-static constexpr inline auto trace   = Trace{.color = color::cyan};
-static constexpr inline auto debug   = Debug{.color = color::white};
-static constexpr inline auto warning = Warning{.color = color::yellow};
-static constexpr inline auto error   = Error{.color = color::red};
+static constexpr inline Trace   trace   = {.color = color::cyan};
+static constexpr inline Debug   debug   = {.color = color::white};
+static constexpr inline Warning warning = {.color = color::yellow};
+static constexpr inline Error   error   = {.color = color::red};
 
 } // namespace log_level
 
-template <typename Output> inline detail::Logger<Output>& logger() noexcept {
+template <typename Output> detail::Logger<Output>& logger() noexcept {
     static detail::Logger<Output> instance;
     return instance;
 }
 
+// clang-format off
 template <typename... Args> struct [[maybe_unused]] trace final {
-    constexpr explicit trace(Args&&... args,
-                             source_location location = source_location::current()) noexcept {
-        logger<output::Console>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
-                                      location);
+    constexpr explicit
+    trace(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                              location);
+    }
+    constexpr explicit
+    trace(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] debug final {
-    constexpr explicit debug(Args&&... args,
-                             source_location location = source_location::current()) noexcept {
-        logger<output::Console>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
-                                      location);
+    constexpr explicit
+    debug(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
+                              location);
+    }
+    constexpr explicit
+    debug(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] warning final {
-    constexpr explicit warning(Args&&... args,
-                               source_location location = source_location::current()) noexcept {
-        logger<output::Console>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
-                                      location);
+    constexpr explicit
+    warning(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
+                              location);
+    }
+    constexpr explicit
+    warning(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] error final {
-    // clang-format off
     [[noreturn]] constexpr explicit
     error(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<output::Console>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
-                                      location);
+        logger<Console>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
+                              location);
         std::abort();
     }
-    // clang-format on
+    [[noreturn]] constexpr explicit
+    error(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
+        std::abort();
+    }
 };
+// clang-format on
 
 // clang-format off
 template <typename... Args> trace  (Args&&...) -> trace  <Args...>;
 template <typename... Args> debug  (Args&&...) -> debug  <Args...>;
 template <typename... Args> warning(Args&&...) -> warning<Args...>;
 template <typename... Args> error  (Args&&...) -> error  <Args...>;
-// clang-format on
 
-template <typename... Args> struct [[maybe_unused]] ftrace final {
-    constexpr explicit ftrace(Args&&... args,
-                              source_location location = source_location::current()) noexcept {
-        logger<output::File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
-                                   location);
-    }
-};
-
-template <typename... Args> struct [[maybe_unused]] fdebug final {
-    constexpr explicit fdebug(Args&&... args,
-                              source_location location = source_location::current()) noexcept {
-        logger<output::File>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
-                                   location);
-    }
-};
-
-template <typename... Args> struct [[maybe_unused]] fwarning final {
-    constexpr explicit fwarning(Args&&... args,
-                                source_location location = source_location::current()) noexcept {
-        logger<output::File>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
-                                   location);
-    }
-};
-
-template <typename... Args> struct [[maybe_unused]] ferror final {
-    // clang-format off
-    [[noreturn]] constexpr explicit
-    ferror(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<output::File>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
-                                   location);
-        std::abort();
-    }
-    // clang-format on
-};
-
-// clang-format off
-template <typename... Args> ftrace  (Args&&...) -> ftrace  <Args...>;
-template <typename... Args> fdebug  (Args&&...) -> fdebug  <Args...>;
-template <typename... Args> fwarning(Args&&...) -> fwarning<Args...>;
-template <typename... Args> ferror  (Args&&...) -> ferror  <Args...>;
+template <typename... Args> trace  (File, Args&&...) -> trace  <Args...>;
+template <typename... Args> debug  (File, Args&&...) -> debug  <Args...>;
+template <typename... Args> warning(File, Args&&...) -> warning<Args...>;
+template <typename... Args> error  (File, Args&&...) -> error  <Args...>;
 // clang-format on
 
 } // namespace salt

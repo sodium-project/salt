@@ -11,12 +11,8 @@
 //  Revisit it.
 namespace salt {
 
-namespace output {
-
 struct [[nodiscard]] File    final {};
 struct [[nodiscard]] Console final {};
-
-} // namespace output
 
 namespace color {
 
@@ -126,16 +122,19 @@ inline auto get_local_time() noexcept {
     println(output_file, left("+", 36, '-'), left("+", 63, '-'), left("+", 13, '-'),               \
             left("+", 32, '-'));
 
-template <> struct [[maybe_unused]] Logger<output::File> final {
+template <> struct [[maybe_unused]] Logger<File> final {
     constexpr Logger(Logger const&)            = delete;
     constexpr Logger(Logger&&)                 = delete;
     constexpr Logger& operator=(Logger const&) = delete;
     constexpr Logger& operator=(Logger&&)      = delete;
 
+    // clang-format off
     template <log_type Type, typename... Args>
-    constexpr void log(Type type, std::tuple<Args&&...> tuple_args,
-                       source_location location) noexcept {
+    constexpr void log(Type                  type,
+                       std::tuple<Args&&...> tuple_args,
+                       source_location       location) noexcept {
         using namespace fast_io::mnp;
+        [[maybe_unused]] fast_io::io_flush_guard guard{output_file_};
         std::apply(
                 [&](auto&&... args) {
                     println(output_file_, type.color, "  ", left(get_local_time(), 36),
@@ -144,6 +143,7 @@ template <> struct [[maybe_unused]] Logger<output::File> final {
                 },
                 tuple_args);
     }
+    // clang-format on
 
     template <typename Output> friend Logger<Output>& salt::logger() noexcept;
 
@@ -157,15 +157,17 @@ private:
     fast_io::obuf_file output_file_;
 };
 
-template <> struct [[maybe_unused]] Logger<output::Console> final {
+template <> struct [[maybe_unused]] Logger<Console> final {
     constexpr Logger(Logger const&)            = delete;
     constexpr Logger(Logger&&)                 = delete;
     constexpr Logger& operator=(Logger const&) = delete;
     constexpr Logger& operator=(Logger&&)      = delete;
 
+    // clang-format off
     template <log_type Type, typename... Args>
-    constexpr void log(Type type, std::tuple<Args&&...> tuple_args,
-                       source_location location) noexcept {
+    constexpr void log(Type                  type,
+                       std::tuple<Args&&...> tuple_args,
+                       source_location       location) noexcept {
         using namespace fast_io::mnp;
         std::apply(
                 [&](auto&&... args) {
@@ -174,6 +176,7 @@ template <> struct [[maybe_unused]] Logger<output::Console> final {
                 },
                 tuple_args);
     }
+    // clang-format on
 
     template <typename Output> friend Logger<Output>& salt::logger() noexcept;
 
