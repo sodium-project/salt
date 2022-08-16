@@ -60,7 +60,7 @@ template <typename... Args> struct [[maybe_unused]] debug final {
     }
     constexpr explicit
     debug(File, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+        logger<File>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
                            location);
     }
 };
@@ -73,7 +73,7 @@ template <typename... Args> struct [[maybe_unused]] warning final {
     }
     constexpr explicit
     warning(File, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+        logger<File>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
                            location);
     }
 };
@@ -87,7 +87,7 @@ template <typename... Args> struct [[maybe_unused]] error final {
     }
     [[noreturn]] constexpr explicit
     error(File, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+        logger<File>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
                            location);
         std::abort();
     }
