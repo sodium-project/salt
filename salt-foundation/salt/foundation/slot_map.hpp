@@ -1,5 +1,5 @@
 #pragma once
-
+#include <algorithm>
 #include <salt/foundation/slot_map_base.hpp>
 
 namespace salt {

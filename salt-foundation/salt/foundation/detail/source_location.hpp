@@ -69,21 +69,20 @@ namespace details {
 
 inline constexpr std::size_t
 print_reserve_size_source_location_impl(salt_source_location_scatter location) noexcept {
-    constexpr auto        io_reserve     = io_reserve_type<char, std::uint_least32_t>;
-    constexpr std::size_t rsv_size       = print_reserve_size(io_reserve);
-    constexpr std::size_t total_rsv_size = (rsv_size * 2 + 3);
+    constexpr auto reserve_size = print_reserve_size(io_reserve_type<char, std::uint_least32_t>);
+    constexpr auto total_size   = (reserve_size * 2 + 3);
     return intrinsics::add_or_overflow_die_chain(location.file_name.len, location.function_name.len,
-                                                 total_rsv_size);
+                                                 total_size);
 }
 
 inline constexpr char*
-print_reserve_define_source_location_impl(char*                        iter,
+print_reserve_define_source_location_impl(char*                        it,
                                           salt_source_location_scatter location) noexcept {
     constexpr auto io_reserve = io_reserve_type<char, std::uint_least32_t>;
-    *(iter = non_overlapped_copy_n(location.file_name.base, location.file_name.len, iter)) = ':';
-    *(iter = print_reserve_define(io_reserve, ++iter, location.line))                      = ':';
-    *(iter = print_reserve_define(io_reserve, ++iter, location.column))                    = ':';
-    return non_overlapped_copy_n(location.function_name.base, location.function_name.len, ++iter);
+    *(it = non_overlapped_copy_n(location.file_name.base, location.file_name.len, it)) = ':';
+    *(it = print_reserve_define(io_reserve, ++it, location.line))                      = ':';
+    *(it = print_reserve_define(io_reserve, ++it, location.column))                    = ':';
+    return non_overlapped_copy_n(location.function_name.base, location.function_name.len, ++it);
 }
 
 inline constexpr salt_source_location_scatter

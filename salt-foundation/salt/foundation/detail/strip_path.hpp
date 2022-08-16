@@ -15,8 +15,8 @@ constexpr char const* strip_path(char const* path) noexcept {
     return last_name;
 }
 
-struct [[nodiscard]] Basename final {
-    constexpr Basename(char const* begin, char const* end) noexcept : begin_{begin}, end_{end} {}
+struct [[nodiscard]] basename final {
+    constexpr basename(char const* begin, char const* end) noexcept : begin_{begin}, end_{end} {}
 
     std::string as_string() const {
         return std::string(begin_, end_);
@@ -26,7 +26,7 @@ struct [[nodiscard]] Basename final {
     char const* const end_;
 };
 
-inline std::string to_string(Basename const& basename) {
+inline std::string to_string(basename const& basename) {
     return basename.as_string();
 }
 

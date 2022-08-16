@@ -9,6 +9,7 @@ salt_interface_library(foundation
             "salt/foundation/static_storage-test.cpp"
             "salt/foundation/slot_map-test.cpp"
             "salt/foundation/detail/source_location-test.cpp"
+            "salt/foundation/detail/strip_path-test.cpp"
         LINK
             fast_io::fast_io
             salt::meta)

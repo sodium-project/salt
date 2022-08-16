@@ -1,76 +1,109 @@
 #pragma once
-#include <string_view>
 
 #include <salt/meta.hpp>
 
-#include <salt/foundation/detail/as_local.hpp>
-#include <salt/foundation/detail/to_string.hpp>
+#include <salt/foundation/detail/logger_impl.hpp>
 
 namespace salt {
 
+namespace output {
+
+static constexpr inline File    file;
+static constexpr inline Console console;
+
+} // namespace output
+
+namespace color {
+
+// clang-format off
+static constexpr inline Color cyan   = {0  , 200, 240};
+static constexpr inline Color white  = {255, 255, 255};
+static constexpr inline Color yellow = {231, 231, 31 };
+static constexpr inline Color red    = {231, 31 , 31 };
+// clang-format on
+
+} // namespace color
+
+namespace log_level {
+
+static constexpr inline Trace   trace   = {.color = color::cyan};
+static constexpr inline Debug   debug   = {.color = color::white};
+static constexpr inline Warning warning = {.color = color::yellow};
+static constexpr inline Error   error   = {.color = color::red};
+
+} // namespace log_level
+
+template <typename Output> detail::Logger<Output>& logger() noexcept {
+    static detail::Logger<Output> instance;
+    return instance;
+}
+
+// clang-format off
 template <typename... Args> struct [[maybe_unused]] trace final {
-    trace(Args&&... args, source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[TRACE] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
+    constexpr explicit
+    trace(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                              location);
+    }
+    constexpr explicit
+    trace(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] debug final {
-    debug(Args&&... args, source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[DEBUG] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
+    constexpr explicit
+    debug(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::debug, std::forward_as_tuple(std::move(args)...),
+                              location);
     }
-};
-
-template <typename... Args> struct [[maybe_unused]] info final {
-    info(Args&&... args, source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[INFO] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
+    constexpr explicit
+    debug(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] warning final {
-    warning(Args&&... args, source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[WARNING] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
+    constexpr explicit
+    warning(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::warning, std::forward_as_tuple(std::move(args)...),
+                              location);
+    }
+    constexpr explicit
+    warning(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
     }
 };
 
 template <typename... Args> struct [[maybe_unused]] error final {
-    [[noreturn]] error(Args&&... args,
-                       source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[ERROR] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
+    [[noreturn]] constexpr explicit
+    error(Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<Console>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
+                              location);
+        std::abort();
+    }
+    [[noreturn]] constexpr explicit
+    error(File, Args&&... args, source_location location = source_location::current()) noexcept {
+        logger<File>().log(log_level::trace, std::forward_as_tuple(std::move(args)...),
+                           location);
         std::abort();
     }
 };
-
-template <typename... Args> struct [[maybe_unused]] critical final {
-    critical(Args&&... args, source_location source = source_location::current()) noexcept {
-        fast_io::posix_tzset();
-        println(fast_io::out(), "[CRITICAL] ",
-                local(fast_io::posix_clock_gettime(fast_io::posix_clock_id::realtime)), " | ",
-                detail::to_string(source), " | ", std::forward<Args>(args)...);
-    }
-};
+// clang-format on
 
 // clang-format off
-template <typename... Args> trace   (Args&&...) -> trace   <Args...>;
-template <typename... Args> debug   (Args&&...) -> debug   <Args...>;
-template <typename... Args> info    (Args&&...) -> info    <Args...>;
-template <typename... Args> warning (Args&&...) -> warning <Args...>;
-template <typename... Args> error   (Args&&...) -> error   <Args...>;
-template <typename... Args> critical(Args&&...) -> critical<Args...>;
+template <typename... Args> trace  (Args&&...) -> trace  <Args...>;
+template <typename... Args> debug  (Args&&...) -> debug  <Args...>;
+template <typename... Args> warning(Args&&...) -> warning<Args...>;
+template <typename... Args> error  (Args&&...) -> error  <Args...>;
+
+template <typename... Args> trace  (File, Args&&...) -> trace  <Args...>;
+template <typename... Args> debug  (File, Args&&...) -> debug  <Args...>;
+template <typename... Args> warning(File, Args&&...) -> warning<Args...>;
+template <typename... Args> error  (File, Args&&...) -> error  <Args...>;
 // clang-format on
 
 } // namespace salt

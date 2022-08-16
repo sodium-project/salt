@@ -1,5 +1,4 @@
 #pragma once
-#include <ctime>
 #include <salt/foundation/detail/source_location.hpp>
 
 namespace salt::detail {
