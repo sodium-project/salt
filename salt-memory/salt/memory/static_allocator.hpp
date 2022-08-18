@@ -16,7 +16,7 @@ struct [[nodiscard]] Static_allocator final {
     static_assert(alignof(static_allocator_storage<1024>) == detail::max_alignment);
 
     template <std::size_t Size>
-    Static_allocator(static_allocator_storage<Size>& storage) noexcept
+    explicit Static_allocator(static_allocator_storage<Size>& storage) noexcept
             : stack_{&storage}, end_{stack_.top() + Size} {}
 
     void* allocate_node(std::size_t size, std::size_t alignment);

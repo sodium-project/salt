@@ -28,6 +28,7 @@ struct [[nodiscard]] Uninitialized_storage final {
     }
 
 private:
+    SALT_NO_UNIQUE_ADDRESS
     alignas(Alignment) std::byte storage_[Size];
 };
 
