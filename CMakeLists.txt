@@ -27,6 +27,7 @@ add_subdirectory("salt-core")
 add_subdirectory("salt-events")
 add_subdirectory("salt-foundation")
 add_subdirectory("salt-math")
+add_subdirectory("salt-memory")
 add_subdirectory("salt-meta")
 add_subdirectory("salt-platform")
 

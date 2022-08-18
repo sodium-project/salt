@@ -2,7 +2,7 @@
 
 namespace salt {
 
-template <std::integral T> constexpr bool is_pow2(T const value) noexcept {
+template <std::integral I> constexpr bool is_pow2(I value) noexcept {
     return value && !((value) & (value - 1));
 }
 

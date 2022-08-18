@@ -8,22 +8,22 @@ struct [[nodiscard]] Uninitialized_storage final {
     // clang-format off
     template <typename T, typename... Args>
     requires sized<T, Size> and aligned<T, Alignment> and std::constructible_from<T, Args...>
-    T& construct(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
+    constexpr T& construct(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
         auto const storage = get<T>();
         ::new (storage) T{std::forward<Args>(args)...};
         return *storage;
     }
     // clang-format on
 
-    template <std::destructible T> void destruct() noexcept {
+    template <std::destructible T> constexpr void destruct() noexcept {
         get<T>()->~T();
     }
 
-    template <aligned_as_pow2 T> [[nodiscard]] T* get() noexcept {
+    template <aligned_as_pow2 T> [[nodiscard]] constexpr T* get() noexcept {
         return detail::aligned_cast<T*>(addressof(storage_));
     }
 
-    template <aligned_as_pow2 T> [[nodiscard]] T const* get() const noexcept {
+    template <aligned_as_pow2 T> [[nodiscard]] constexpr T const* get() const noexcept {
         return detail::aligned_cast<T const*>(addressof(storage_));
     }
 
