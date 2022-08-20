@@ -7,8 +7,9 @@ template <typename T, std::size_t Size, std::size_t Alignment>
 struct [[nodiscard]] Static_storage final {
     // clang-format off
     template <typename... Args> requires std::constructible_from<T, Args...>
-    constexpr explicit Static_storage(std::in_place_t,
-                            Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
+    constexpr explicit Static_storage(std::in_place_t, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<T, Args...>
+    ) {
         storage_.template construct<T>(std::forward<Args>(args)...);
     }
 

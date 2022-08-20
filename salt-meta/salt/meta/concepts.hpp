@@ -7,12 +7,12 @@ template <std::integral I> constexpr bool is_pow2(I value) noexcept {
 }
 
 template <typename T, std::size_t Size>
-concept sized = requires {
+concept match_size = requires {
     requires sizeof(T) == Size;
 };
 
 template <typename T, std::size_t Alignment>
-concept aligned = requires {
+concept match_alignment = requires {
     requires alignof(T) == Alignment;
 };
 

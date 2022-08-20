@@ -4,12 +4,14 @@
 
 namespace salt::detail {
 
-template <typename Allocator> struct Low_level_allocator_leak_handler final {
+template <typename Allocator> struct Low_level_allocator_leak_handler {
     void operator()(std::ptrdiff_t amount) {
         debug_handle_memory_leak(Allocator::info(), amount);
     }
 };
 
+// TODO:
+//  * Add concept for `Allocator` contraints;
 template <typename Allocator>
 struct [[nodiscard]] Low_level_allocator
         : global_leak_detector<Low_level_allocator_leak_handler<Allocator>> {

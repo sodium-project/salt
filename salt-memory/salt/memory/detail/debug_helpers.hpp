@@ -49,9 +49,9 @@ void debug_handle_memory_leak(Allocator_info const& info, std::ptrdiff_t amount)
 
 // clang-format off
 template <std::predicate Predicate>
-void debug_check_pointer([[maybe_unused]] Predicate             predicate,
-                         [[maybe_unused]] Allocator_info const& info,
-                         [[maybe_unused]] void*                 ptr) {
+constexpr void debug_check_pointer([[maybe_unused]] Predicate             predicate,
+                                   [[maybe_unused]] Allocator_info const& info,
+                                   [[maybe_unused]] void*                 ptr) {
 #if SALT_MEMORY_DEBUG_POINTER
     if (!predicate())
         debug_handle_invalid_ptr(info, ptr);
@@ -60,9 +60,9 @@ void debug_check_pointer([[maybe_unused]] Predicate             predicate,
 // clang-format on
 
 template <std::predicate Predicate>
-void debug_check_double_free([[maybe_unused]] Predicate             predicate,
-                             [[maybe_unused]] Allocator_info const& info,
-                             [[maybe_unused]] void*                 ptr) {
+constexpr void debug_check_double_free([[maybe_unused]] Predicate             predicate,
+                                       [[maybe_unused]] Allocator_info const& info,
+                                       [[maybe_unused]] void*                 ptr) {
 #if SALT_MEMORY_DEBUG_DOUBLE_FREE
     debug_check_pointer(predicate, info, ptr);
 #endif
@@ -106,11 +106,11 @@ template <leak_handler Handler> struct [[maybe_unused]] Object_leak_detector : H
     }
 
     constexpr void on_allocate(std::uint32_t size) noexcept {
-        allocated_ += std::int64_t(size);
+        allocated_ += static_cast<std::int64_t>(size);
     }
 
     constexpr void on_deallocate(std::uint32_t size) noexcept {
-        allocated_ -= std::int64_t(size);
+        allocated_ -= static_cast<std::int64_t>(size);
     }
 
 private:
@@ -118,14 +118,14 @@ private:
 };
 
 template <leak_handler Handler> struct [[maybe_unused]] Global_leak_detector {
-    struct [[maybe_unused]] Counter final : Handler {
-        constexpr Counter() noexcept {
-            ++no_counter_objects_;
+    struct [[maybe_unused]] Object_counter final : Handler {
+        constexpr Object_counter() noexcept {
+            ++objects_;
         }
 
-        constexpr ~Counter() {
-            --no_counter_objects_;
-            if (no_counter_objects_ == 0u && allocated_ != 0u)
+        constexpr ~Object_counter() {
+            --objects_;
+            if (0u == objects_ && 0u != allocated_)
                 Handler::operator()(allocated_);
         }
     };
@@ -137,28 +137,25 @@ template <leak_handler Handler> struct [[maybe_unused]] Global_leak_detector {
     constexpr Global_leak_detector& operator=(Global_leak_detector&&) noexcept = default;
 
     constexpr void on_allocate(std::uint32_t size) noexcept {
-        allocated_ += std::int64_t(size);
+        allocated_ += static_cast<std::int64_t>(size);
     }
 
     constexpr void on_deallocate(std::uint32_t size) noexcept {
-        allocated_ -= std::int64_t(size);
+        allocated_ -= static_cast<std::int64_t>(size);
     }
 
 private:
-    static std::atomic_size_t  no_counter_objects_;
+    static std::atomic_size_t  objects_;
     static std::atomic_int64_t allocated_;
 };
 
-template <leak_handler Handler>
-std::atomic_size_t Global_leak_detector<Handler>::no_counter_objects_(0u);
-
-template <leak_handler Handler>
-std::atomic_int64_t Global_leak_detector<Handler>::allocated_(0);
+template <leak_handler Handler> std::atomic_size_t  Global_leak_detector<Handler>::objects_   = 0u;
+template <leak_handler Handler> std::atomic_int64_t Global_leak_detector<Handler>::allocated_ = 0;
 
 #if SALT_MEMORY_DEBUG_LEAK
 template <typename Handler> using global_leak_detector = Global_leak_detector<Handler>;
 #    define SALT_MEMORY_GLOBAL_LEAK_DETECTOR(handler, name)                                        \
-        static salt::detail::global_leak_detector<handler>::Counter name;
+        static salt::detail::global_leak_detector<handler>::Object_counter name;
 #else
 template <typename Handler> using global_leak_detector  = No_leak_detector<void>;
 #    define SALT_MEMORY_GLOBAL_LEAK_DETECTOR(handler, name)

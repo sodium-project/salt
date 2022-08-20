@@ -2,87 +2,10 @@
 
 #include <salt/config.hpp>
 #include <salt/foundation/logger.hpp>
-#include <salt/memory/debugging.hpp>
 #include <salt/memory/detail/debug_helpers.hpp>
+#include <salt/memory/detail/free_list_utils.hpp>
 
 namespace salt::detail {
-
-inline std::uintptr_t read_int(void* address) noexcept {
-    SALT_ASSERT(address);
-    std::uintptr_t value;
-#if __has_builtin(__builtin_memcpy)
-    __builtin_memcpy(&value, address, sizeof(std::uintptr_t));
-#else
-    std::memcpy(&value, address, sizeof(std::uintptr_t));
-#endif
-    return value;
-}
-
-inline void write_int(void* address, std::uintptr_t value) noexcept {
-    SALT_ASSERT(address);
-#if __has_builtin(__builtin_memcpy)
-    __builtin_memcpy(address, &value, sizeof(std::uintptr_t));
-#else
-    std::memcpy(address, &value, sizeof(std::uintptr_t));
-#endif
-}
-
-inline std::uintptr_t to_int(std::byte* ptr) noexcept {
-    return reinterpret_cast<std::uintptr_t>(ptr);
-}
-
-inline std::byte* from_int(std::uintptr_t value) noexcept {
-    return reinterpret_cast<std::byte*>(value);
-}
-
-inline std::byte* list_get_next(void* address) noexcept {
-    return from_int(read_int(address));
-}
-
-inline void list_set_next(void* address, std::byte* ptr) noexcept {
-    write_int(address, to_int(ptr));
-}
-
-inline std::byte* xor_list_get(void* address, std::byte* prev_or_next) noexcept {
-    return from_int(read_int(address) ^ to_int(prev_or_next));
-}
-
-inline void xor_list_set(void* address, std::byte* prev, std::byte* next) noexcept {
-    write_int(address, to_int(prev) ^ to_int(next));
-}
-
-inline void xor_list_exchange(void* address, std::byte* old_ptr, std::byte* new_ptr) noexcept {
-    auto other = xor_list_get(address, old_ptr);
-    xor_list_set(address, other, new_ptr);
-}
-
-inline void xor_list_iter_next(std::byte*& current, std::byte*& prev) noexcept {
-    auto next = xor_list_get(current, prev);
-    prev      = current;
-    current   = next;
-}
-
-inline void xor_list_insert(std::byte* new_node, std::byte* prev, std::byte* next) noexcept {
-    xor_list_set(new_node, prev, next);
-    xor_list_exchange(prev, next, new_node);
-    xor_list_exchange(next, prev, new_node);
-}
-
-inline bool less(void* a, void* b) noexcept {
-    return std::less<void*>()(a, b);
-}
-
-inline bool less_equal(void* a, void* b) noexcept {
-    return a == b || less(a, b);
-}
-
-inline bool greater(void* a, void* b) noexcept {
-    return std::greater<void*>()(a, b);
-}
-
-inline bool greater_equal(void* a, void* b) noexcept {
-    return a == b || greater(a, b);
-}
 
 struct [[nodiscard]] Interval final {
     std::byte* prev;
@@ -103,8 +26,8 @@ Interval list_search_bytes(std::byte* first, std::size_t bytes_needed,
     Interval interval = {
             .prev  = nullptr,
             .first = first,
-            .last  = first,               // used as iterator
-            .next  = list_get_next(first) // used as iterator
+            .last  = first,          // used as iterator
+            .next  = list_get(first) // used as iterator
     };
 
     auto bytes_so_far = node_size;
@@ -113,11 +36,11 @@ Interval list_search_bytes(std::byte* first, std::size_t bytes_needed,
             interval.prev  = interval.last;
             interval.first = interval.next;
             interval.last  = interval.next;
-            interval.next  = list_get_next(interval.last);
+            interval.next  = list_get(interval.last);
 
             bytes_so_far = node_size;
         } else {
-            auto new_next = list_get_next(interval.next);
+            auto new_next = list_get(interval.next);
             interval.last = interval.next;
             interval.next = new_next;
 
@@ -197,7 +120,7 @@ void* Unordered_free_list::allocate() noexcept {
     --capacity_;
 
     auto memory = first_;
-    first_      = list_get_next(first_);
+    first_      = list_get(first_);
     return debug_fill_new(memory, node_size_, 0);
 }
 
@@ -211,7 +134,7 @@ void* Unordered_free_list::allocate(std::size_t n) noexcept {
         return nullptr;
 
     if (interval.prev)
-        list_set_next(interval.prev, interval.next);
+        list_set(interval.prev, interval.next);
     else
         first_ = interval.next;
     capacity_ -= interval.count(node_size_);
@@ -223,7 +146,7 @@ void Unordered_free_list::deallocate(void* ptr) noexcept {
     ++capacity_;
 
     auto node = static_cast<std::byte*>(debug_fill_free(ptr, node_size_, 0));
-    list_set_next(node, first_);
+    list_set(node, first_);
     first_ = node;
 }
 
@@ -246,10 +169,10 @@ void Unordered_free_list::insert_impl(void* memory, std::size_t size) noexcept {
 
     auto current = static_cast<std::byte*>(memory);
     for (std::size_t i = 0u; i != no_nodes - 1; ++i) {
-        list_set_next(current, current + node_size_);
+        list_set(current, current + node_size_);
         current += node_size_;
     }
-    list_set_next(current, first_);
+    list_set(current, first_);
     first_ = static_cast<std::byte*>(memory);
 
     capacity_ += no_nodes;
@@ -257,7 +180,7 @@ void Unordered_free_list::insert_impl(void* memory, std::size_t size) noexcept {
 
 namespace {
 
-void block_to_xor_list(void* memory, std::size_t node_size, std::size_t no_nodes, std::byte* prev,
+void xor_block_to_list(void* memory, std::size_t node_size, std::size_t no_nodes, std::byte* prev,
                        std::byte* next) noexcept {
     auto current = static_cast<std::byte*>(memory);
     xor_list_exchange(prev, next, current);
@@ -296,8 +219,8 @@ Position find_insert_position(Allocator_info const& info, std::byte* memory, std
         debug_check_double_free(
                 [&] { return cur_forward != memory && cur_backward != memory; }, info, memory);
         // clang-format on
-        xor_list_iter_next(cur_forward, prev_forward);
-        xor_list_iter_next(cur_backward, prev_backward);
+        xor_list_next(cur_forward, prev_forward);
+        xor_list_next(cur_backward, prev_backward);
     } while (less(prev_forward, prev_backward));
 
     // clang-format off
@@ -498,7 +421,7 @@ std::byte* Free_list::insert_impl(void* memory, std::size_t size) noexcept {
                                   static_cast<std::byte*>(memory), begin_node(), end_node(),
                                   prev_dealloc_, last_dealloc_);
 
-    block_to_xor_list(memory, node_size_, no_nodes, position.prev, position.next);
+    xor_block_to_list(memory, node_size_, no_nodes, position.prev, position.next);
     capacity_ += no_nodes;
 
     if (position.prev == prev_dealloc_) {

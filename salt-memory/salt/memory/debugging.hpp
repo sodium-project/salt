@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 namespace salt {
 
@@ -20,8 +21,8 @@ enum class debug_magic : std::uint8_t {
 };
 
 struct [[nodiscard]] Allocator_info final {
-    char const* name;
-    void const* allocator;
+    std::string_view name;
+    void const*      allocator;
 
     friend constexpr bool operator==(Allocator_info const& lhs,
                                      Allocator_info const& rhs) noexcept = default;
