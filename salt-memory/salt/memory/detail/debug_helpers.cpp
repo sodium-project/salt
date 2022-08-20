@@ -15,9 +15,10 @@ void debug_fill(void* memory, std::size_t size, debug_magic magic_value) noexcep
 
 void* debug_is_filled(void* memory, std::size_t size, debug_magic magic_value) noexcept {
     auto byte = static_cast<std::byte*>(memory);
-    for (auto end = byte + size; byte != end; ++byte)
+    for (auto const end = byte + size; byte != end; ++byte) {
         if (*byte != static_cast<std::byte>(magic_value))
             return byte;
+    }
     return nullptr;
 }
 

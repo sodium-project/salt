@@ -80,11 +80,11 @@ struct [[nodiscard]] Static_block_allocator final {
     }
 
     constexpr void deallocate_block(Memory_block block) noexcept {
-        detail::debug_check_pointer(
-                [&] {
+        // clang-format off
+        detail::debug_check_pointer([&] {
                     return current_ == static_cast<std::byte*>(block.memory) + block.size;
-                },
-                Allocator_info{"salt::Static_block_allocator", this}, block.memory);
+                }, Allocator_info{"salt::Static_block_allocator", this}, block.memory);
+        // clang-format on
         current_ -= block_size_;
     }
 

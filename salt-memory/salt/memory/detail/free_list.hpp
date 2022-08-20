@@ -108,8 +108,8 @@ struct [[nodiscard]] Free_list final {
 private:
     std::byte* insert_impl(void* memory, std::size_t size) noexcept;
 
-    std::byte* begin_node() noexcept;
-    std::byte* end_node() noexcept;
+    std::byte* first_node() noexcept;
+    std::byte* last_node() noexcept;
 
     std::uintptr_t begin_proxy_;
     std::uintptr_t end_proxy_;

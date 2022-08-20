@@ -180,19 +180,19 @@ void Unordered_free_list::insert_impl(void* memory, std::size_t size) noexcept {
 
 namespace {
 
-void xor_block_to_list(void* memory, std::size_t node_size, std::size_t no_nodes, std::byte* prev,
+void xor_block_to_list(void* memory, std::size_t node_size, std::size_t no_nodes, std::byte* first,
                        std::byte* next) noexcept {
     auto current = static_cast<std::byte*>(memory);
-    xor_list_exchange(prev, next, current);
+    xor_list_exchange(first, next, current);
 
-    auto last_cur = prev;
+    auto last_cur = first;
     for (std::size_t i = 0u; i != no_nodes - 1; ++i) {
         xor_list_set(current, last_cur, current + node_size);
         last_cur = current;
         current += node_size;
     }
     xor_list_set(current, last_cur, next);
-    xor_list_exchange(next, prev, current);
+    xor_list_exchange(next, first, current);
 }
 
 struct Position {
@@ -229,22 +229,22 @@ Position find_insert_position(Allocator_info const& info, std::byte* memory, std
     return {nullptr, nullptr};
 }
 
-Position find_position(Allocator_info const& info, std::byte* memory, std::byte* begin_node,
-                       std::byte* end_node, std::byte* prev_dealloc,
+Position find_position(Allocator_info const& info, std::byte* memory, std::byte* first_node,
+                       std::byte* last_node, std::byte* prev_dealloc,
                        std::byte* last_dealloc) noexcept {
-    auto first = xor_list_get(begin_node, nullptr);
-    auto last  = xor_list_get(end_node, nullptr);
+    auto first = xor_list_get(first_node, nullptr);
+    auto last  = xor_list_get(last_node, nullptr);
 
     if (greater(first, memory))
-        return {begin_node, first};
+        return {first_node, first};
     else if (less(last, memory))
-        return {last, end_node};
+        return {last, last_node};
     else if (less(prev_dealloc, memory) && less(memory, last_dealloc))
         return {prev_dealloc, last_dealloc};
     else if (less(memory, last_dealloc))
-        return find_insert_position(info, memory, begin_node, first, prev_dealloc, last_dealloc);
+        return find_insert_position(info, memory, first_node, first, prev_dealloc, last_dealloc);
     else if (greater(memory, last_dealloc))
-        return find_insert_position(info, memory, prev_dealloc, last_dealloc, last, end_node);
+        return find_insert_position(info, memory, prev_dealloc, last_dealloc, last, last_node);
 
     fast_terminate();
     return {nullptr, nullptr};
@@ -254,9 +254,9 @@ Position find_position(Allocator_info const& info, std::byte* memory, std::byte*
 
 Free_list::Free_list(std::size_t node_size) noexcept
         : node_size_{node_size > min_element_size ? node_size : min_element_size}, capacity_{0u},
-          prev_dealloc_{begin_node()}, last_dealloc_{end_node()} {
-    xor_list_set(begin_node(), nullptr, end_node());
-    xor_list_set(end_node(), begin_node(), nullptr);
+          prev_dealloc_{first_node()}, last_dealloc_{last_node()} {
+    xor_list_set(first_node(), nullptr, last_node());
+    xor_list_set(last_node(), first_node(), nullptr);
 }
 
 Free_list::Free_list(std::size_t node_size, void* memory, std::size_t size) noexcept
@@ -267,62 +267,62 @@ Free_list::Free_list(std::size_t node_size, void* memory, std::size_t size) noex
 Free_list::Free_list(Free_list&& other) noexcept
         : node_size_{other.node_size_}, capacity_{other.capacity_} {
     if (!other.empty()) {
-        auto first = xor_list_get(other.begin_node(), nullptr);
-        auto last  = xor_list_get(other.end_node(), nullptr);
+        auto first = xor_list_get(other.first_node(), nullptr);
+        auto last  = xor_list_get(other.last_node(), nullptr);
 
-        xor_list_set(begin_node(), nullptr, first);
-        xor_list_exchange(first, other.begin_node(), begin_node());
-        xor_list_exchange(last, other.end_node(), end_node());
-        xor_list_set(end_node(), last, nullptr);
+        xor_list_set(first_node(), nullptr, first);
+        xor_list_exchange(first, other.first_node(), first_node());
+        xor_list_exchange(last, other.last_node(), last_node());
+        xor_list_set(last_node(), last, nullptr);
 
         other.capacity_ = 0u;
-        xor_list_set(other.begin_node(), nullptr, other.end_node());
-        xor_list_set(other.end_node(), other.begin_node(), nullptr);
+        xor_list_set(other.first_node(), nullptr, other.last_node());
+        xor_list_set(other.last_node(), other.first_node(), nullptr);
     } else {
-        xor_list_set(begin_node(), nullptr, end_node());
-        xor_list_set(end_node(), begin_node(), nullptr);
+        xor_list_set(first_node(), nullptr, last_node());
+        xor_list_set(last_node(), first_node(), nullptr);
     }
 
-    prev_dealloc_ = begin_node();
+    prev_dealloc_ = first_node();
     last_dealloc_ = xor_list_get(prev_dealloc_, nullptr);
 }
 
 Free_list& Free_list::operator=(Free_list&& other) noexcept {
     Free_list tmp{std::move(other)};
-    auto      first = xor_list_get(begin_node(), nullptr);
-    auto      last  = xor_list_get(end_node(), nullptr);
+    auto      first = xor_list_get(first_node(), nullptr);
+    auto      last  = xor_list_get(last_node(), nullptr);
 
-    auto other_first = xor_list_get(tmp.begin_node(), nullptr);
-    auto other_last  = xor_list_get(tmp.end_node(), nullptr);
+    auto other_first = xor_list_get(tmp.first_node(), nullptr);
+    auto other_last  = xor_list_get(tmp.last_node(), nullptr);
 
     if (!empty()) {
-        xor_list_set(tmp.begin_node(), nullptr, first);
-        xor_list_exchange(first, begin_node(), tmp.begin_node());
-        xor_list_exchange(last, end_node(), tmp.end_node());
-        xor_list_set(tmp.end_node(), last, nullptr);
+        xor_list_set(tmp.first_node(), nullptr, first);
+        xor_list_exchange(first, first_node(), tmp.first_node());
+        xor_list_exchange(last, last_node(), tmp.last_node());
+        xor_list_set(tmp.last_node(), last, nullptr);
     } else {
-        xor_list_set(tmp.begin_node(), nullptr, tmp.end_node());
-        xor_list_set(tmp.end_node(), tmp.begin_node(), nullptr);
+        xor_list_set(tmp.first_node(), nullptr, tmp.last_node());
+        xor_list_set(tmp.last_node(), tmp.first_node(), nullptr);
     }
 
     if (!tmp.empty()) {
-        xor_list_set(begin_node(), nullptr, other_first);
-        xor_list_exchange(other_first, tmp.begin_node(), begin_node());
-        xor_list_exchange(other_last, tmp.end_node(), end_node());
-        xor_list_set(end_node(), other_last, nullptr);
+        xor_list_set(first_node(), nullptr, other_first);
+        xor_list_exchange(other_first, tmp.first_node(), first_node());
+        xor_list_exchange(other_last, tmp.last_node(), last_node());
+        xor_list_set(last_node(), other_last, nullptr);
     } else {
-        xor_list_set(begin_node(), nullptr, end_node());
-        xor_list_set(end_node(), begin_node(), nullptr);
+        xor_list_set(first_node(), nullptr, last_node());
+        xor_list_set(last_node(), first_node(), nullptr);
     }
 
     std::swap(node_size_, tmp.node_size_);
     std::swap(capacity_, tmp.capacity_);
 
     // for programming convenience, last_dealloc is reset
-    prev_dealloc_ = begin_node();
+    prev_dealloc_ = first_node();
     last_dealloc_ = xor_list_get(prev_dealloc_, nullptr);
 
-    tmp.prev_dealloc_ = tmp.begin_node();
+    tmp.prev_dealloc_ = tmp.first_node();
     tmp.last_dealloc_ = xor_list_get(tmp.prev_dealloc_, nullptr);
 
     return *this;
@@ -340,19 +340,19 @@ void* Free_list::allocate() noexcept {
     SALT_ASSERT(!empty());
 
     // remove first node
-    auto prev = begin_node();
-    auto node = xor_list_get(prev, nullptr);
-    auto next = xor_list_get(node, prev);
+    auto first = first_node();
+    auto node  = xor_list_get(first, nullptr);
+    auto next  = xor_list_get(node, first);
 
-    xor_list_set(prev, nullptr, next);   // link prev to next
-    xor_list_exchange(next, node, prev); // change prev of next
+    xor_list_set(first, nullptr, next);   // link first to next
+    xor_list_exchange(next, node, first); // change first of next
     --capacity_;
 
     if (node == last_dealloc_) {
         last_dealloc_ = next;
-        SALT_ASSERT(prev_dealloc_ == prev);
+        SALT_ASSERT(prev_dealloc_ == first);
     } else if (node == prev_dealloc_) {
-        prev_dealloc_ = prev;
+        prev_dealloc_ = first;
         SALT_ASSERT(last_dealloc_ == next);
     }
 
@@ -365,7 +365,7 @@ void* Free_list::allocate(std::size_t n) noexcept {
     if (n <= node_size_)
         return allocate();
 
-    auto interval = xor_list_search_bytes(begin_node(), end_node(), n, node_size_);
+    auto interval = xor_list_search_bytes(first_node(), last_node(), n, node_size_);
     if (interval.first == nullptr)
         return nullptr;
 
@@ -388,13 +388,13 @@ void Free_list::deallocate(void* ptr) noexcept {
     auto node = static_cast<std::byte*>(debug_fill_free(ptr, node_size_, 0));
 
     auto position = find_position(Allocator_info{"salt::detail::Free_list", this}, node,
-                                  begin_node(), end_node(), prev_dealloc_, last_dealloc_);
+                                  first_node(), last_node(), prev_dealloc_, last_dealloc_);
 
     xor_list_insert(node, position.prev, position.next);
     ++capacity_;
 
-    last_dealloc_ = node;
     prev_dealloc_ = position.prev;
+    last_dealloc_ = node;
 }
 
 void Free_list::deallocate(void* ptr, std::size_t n) noexcept {
@@ -404,8 +404,8 @@ void Free_list::deallocate(void* ptr, std::size_t n) noexcept {
         auto memory = detail::debug_fill_free(ptr, n, 0);
         auto prev   = insert_impl(memory, n);
 
-        last_dealloc_ = static_cast<std::byte*>(memory);
         prev_dealloc_ = prev;
+        last_dealloc_ = static_cast<std::byte*>(memory);
     }
 }
 
@@ -418,7 +418,7 @@ std::byte* Free_list::insert_impl(void* memory, std::size_t size) noexcept {
     SALT_ASSERT(no_nodes > 0);
 
     auto position = find_position(Allocator_info{"salt::detail::Free_list", this},
-                                  static_cast<std::byte*>(memory), begin_node(), end_node(),
+                                  static_cast<std::byte*>(memory), first_node(), last_node(),
                                   prev_dealloc_, last_dealloc_);
 
     xor_block_to_list(memory, node_size_, no_nodes, position.prev, position.next);
@@ -431,12 +431,12 @@ std::byte* Free_list::insert_impl(void* memory, std::size_t size) noexcept {
     return position.prev;
 }
 
-std::byte* Free_list::begin_node() noexcept {
+std::byte* Free_list::first_node() noexcept {
     void* memory = &begin_proxy_;
     return static_cast<std::byte*>(memory);
 }
 
-std::byte* Free_list::end_node() noexcept {
+std::byte* Free_list::last_node() noexcept {
     void* memory = &end_proxy_;
     return static_cast<std::byte*>(memory);
 }

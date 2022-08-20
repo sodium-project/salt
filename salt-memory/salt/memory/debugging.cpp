@@ -8,10 +8,10 @@ namespace {
 
 void default_leak_handler(Allocator_info const& info, std::ptrdiff_t amount) noexcept {
     if (amount > 0)
-        error("Allocator ", info.name, " (at", info.allocator, ") leaked ", amount, "bytes");
+        error("Allocator ", info.name, " (at ", info.allocator, ") leaked ", amount, " bytes");
     else
-        error("Allocator ", info.name, " (at", info.allocator, ") has deallocated ", amount,
-              "bytes more than ever allocated (it's amazing you're able to see this message!).");
+        error("Allocator ", info.name, " (at ", info.allocator, ") has deallocated ", amount,
+              " bytes more than ever allocated (it's amazing you're able to see this message!)");
 }
 
 std::atomic<leak_handler> internal_leak_handler(default_leak_handler);
@@ -30,7 +30,7 @@ namespace {
 
 void default_invalid_ptr_handler(Allocator_info const& info, const void* ptr) noexcept {
     error("Deallocation function of allocator ", info.name, " (at", info.allocator,
-          ") received invalid pointer", ptr);
+          ") received invalid pointer ", ptr);
 }
 
 std::atomic<invalid_pointer_handler> internal_invalid_ptr_handler(default_invalid_ptr_handler);
@@ -50,7 +50,7 @@ namespace {
 void default_buffer_overflow_handler(const void* memory, std::size_t node_size,
                                      const void* ptr) noexcept {
     error("Buffer overflow at address ", ptr, " detected, corresponding memory block", memory,
-          " has only size", node_size);
+          " has only size ", node_size);
 }
 
 std::atomic<buffer_overflow_handler>
