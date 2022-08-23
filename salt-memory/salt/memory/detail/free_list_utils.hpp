@@ -5,7 +5,8 @@ namespace salt::detail {
 
 namespace utils {
 
-inline std::uintptr_t read_int(void* address) noexcept {
+// A load operation copies data from a pointer to an integer.
+inline std::uintptr_t load_int(void* address) noexcept {
     SALT_ASSERT(address);
     std::uintptr_t value;
 #if __has_builtin(__builtin_memcpy)
@@ -16,7 +17,8 @@ inline std::uintptr_t read_int(void* address) noexcept {
     return value;
 }
 
-inline void write_int(void* address, std::uintptr_t value) noexcept {
+// A store operation copies data from an integer to a pointer.
+inline void store_int(void* address, std::uintptr_t value) noexcept {
     SALT_ASSERT(address);
 #if __has_builtin(__builtin_memcpy)
     __builtin_memcpy(address, &value, sizeof(std::uintptr_t));
@@ -35,29 +37,29 @@ to_int(std::byte* ptr) noexcept {
     return reinterpret_cast<std::uintptr_t>(ptr);
 }
 
-inline std::byte* read(void* address) noexcept {
-    return reinterpret_cast<std::byte*>(read_int(address));
+inline std::byte* load(void* address) noexcept {
+    return reinterpret_cast<std::byte*>(load_int(address));
 }
 
-inline void write(void* address, std::byte* ptr) noexcept {
-    write_int(address, to_int(ptr));
+inline void store(void* address, std::byte* ptr) noexcept {
+    store_int(address, to_int(ptr));
 }
 
-inline std::byte* xor_read(void* address, std::byte* prev_or_next) noexcept {
-    return reinterpret_cast<std::byte*>(read_int(address) ^ to_int(prev_or_next));
+inline std::byte* xor_load(void* address, std::byte* prev_or_next) noexcept {
+    return reinterpret_cast<std::byte*>(load_int(address) ^ to_int(prev_or_next));
 }
 
-inline void xor_write(void* address, std::byte* prev, std::byte* next) noexcept {
-    write_int(address, to_int(prev) ^ to_int(next));
+inline void xor_store(void* address, std::byte* prev, std::byte* next) noexcept {
+    store_int(address, to_int(prev) ^ to_int(next));
 }
 
 inline void xor_exchange(void* address, std::byte* old_ptr, std::byte* new_ptr) noexcept {
-    auto other = xor_read(address, old_ptr);
-    xor_write(address, other, new_ptr);
+    auto other = xor_load(address, old_ptr);
+    xor_store(address, other, new_ptr);
 }
 
 inline void xor_next(std::byte*& current, std::byte*& prev) noexcept {
-    auto next = xor_read(current, prev);
+    auto next = xor_load(current, prev);
     prev      = current;
     current   = next;
 }
