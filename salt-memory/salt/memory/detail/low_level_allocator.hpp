@@ -10,8 +10,7 @@ template <typename Allocator> struct Low_level_allocator_leak_handler {
     }
 };
 
-// TODO:
-//  * Add concept for `Allocator` contraints;
+// TODO: Add concept for `Allocator` contraints;
 template <typename Allocator>
 struct [[nodiscard]] Low_level_allocator
         : global_leak_detector<Low_level_allocator_leak_handler<Allocator>> {

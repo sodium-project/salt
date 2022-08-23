@@ -7,76 +7,75 @@
 
 namespace salt::detail {
 
-struct [[nodiscard]] Interval final {
+struct [[nodiscard]] Range final {
     std::byte* prev;
     std::byte* first;
     std::byte* last;
     std::byte* next;
 
     constexpr std::size_t count(std::size_t node_size) const noexcept {
-        // last is inclusive, so add actual_size to it
-        auto end = last + node_size;
+        auto end = last + node_size; // last is inclusive, so add actual size to it
         SALT_ASSERT(0u == static_cast<std::size_t>(end - first) % node_size);
         return static_cast<std::size_t>(end - first) / node_size;
     }
 };
 
-Interval list_search_bytes(std::byte* first, std::size_t bytes_needed,
-                           std::size_t node_size) noexcept {
-    Interval interval = {
-            .prev  = nullptr,
-            .first = first,
-            .last  = first,          // used as iterator
-            .next  = list_get(first) // used as iterator
-    };
+// Searches for a range in memory that fits the size required for the allocation
+Range find_range(std::byte* first, std::size_t bytes_needed, std::size_t node_size) noexcept {
+    Range range;
+    range.prev  = nullptr;
+    range.first = first;
+    range.last  = first;
+    range.next  = utils::read(first);
 
     auto bytes_so_far = node_size;
-    while (interval.next) {
-        if (interval.last + node_size != interval.next) {
-            interval.prev  = interval.last;
-            interval.first = interval.next;
-            interval.last  = interval.next;
-            interval.next  = list_get(interval.last);
+    while (range.next) {
+        if (range.last + node_size != range.next) {
+            range.prev  = range.last;
+            range.first = range.next;
+            range.last  = range.next;
+            range.next  = utils::read(range.last);
 
             bytes_so_far = node_size;
         } else {
-            auto new_next = list_get(interval.next);
-            interval.last = interval.next;
-            interval.next = new_next;
+            auto new_next = utils::read(range.next);
+            range.last    = range.next;
+            range.next    = new_next;
 
             bytes_so_far += node_size;
             if (bytes_so_far >= bytes_needed)
-                return interval;
+                return range;
         }
     }
     return {nullptr, nullptr, nullptr, nullptr};
 }
 
-Interval xor_list_search_bytes(std::byte* begin, std::byte* end, std::size_t bytes_needed,
-                               std::size_t node_size) noexcept {
-    Interval interval;
-    interval.prev  = begin;
-    interval.first = xor_list_get(begin, nullptr);
-    interval.last  = interval.first;                             // used as iterator
-    interval.next  = xor_list_get(interval.last, interval.prev); // used as iterator
+// Searches for a range in memory that fits the size required for the allocation
+Range xor_find_range(std::byte* begin, std::byte* end, std::size_t bytes_needed,
+                     std::size_t node_size) noexcept {
+    Range range;
+    range.prev  = begin;
+    range.first = utils::xor_read(begin, nullptr);
+    range.last  = range.first;
+    range.next  = utils::xor_read(range.last, range.prev);
 
     auto bytes_so_far = node_size;
-    while (interval.next != end) {
-        if (interval.last + node_size != interval.next) {
-            interval.prev  = interval.last;
-            interval.first = interval.next;
-            interval.last  = interval.next;
-            interval.next  = xor_list_get(interval.first, interval.prev);
+    while (range.next != end) {
+        if (range.last + node_size != range.next) {
+            range.prev  = range.last;
+            range.first = range.next;
+            range.last  = range.next;
+            range.next  = utils::xor_read(range.first, range.prev);
 
             bytes_so_far = node_size;
         } else {
-            auto new_next = xor_list_get(interval.next, interval.last);
-            interval.last = interval.next;
-            interval.next = new_next;
+            auto new_next = utils::xor_read(range.next, range.last);
+            range.last    = range.next;
+            range.next    = new_next;
 
             bytes_so_far += node_size;
             if (bytes_so_far >= bytes_needed)
-                return interval;
+                return range;
         }
     }
     return {nullptr, nullptr, nullptr, nullptr};
@@ -120,7 +119,7 @@ void* Unordered_free_list::allocate() noexcept {
     --capacity_;
 
     auto memory = first_;
-    first_      = list_get(first_);
+    first_      = utils::read(first_);
     return debug_fill_new(memory, node_size_, 0);
 }
 
@@ -129,24 +128,24 @@ void* Unordered_free_list::allocate(std::size_t n) noexcept {
     if (n <= node_size_)
         return allocate();
 
-    auto interval = list_search_bytes(first_, n, node_size_);
-    if (interval.first == nullptr)
+    auto range = find_range(first_, n, node_size_);
+    if (!range.first)
         return nullptr;
 
-    if (interval.prev)
-        list_set(interval.prev, interval.next);
+    if (range.prev)
+        utils::write(range.prev, range.next);
     else
-        first_ = interval.next;
-    capacity_ -= interval.count(node_size_);
+        first_ = range.next;
+    capacity_ -= range.count(node_size_);
 
-    return debug_fill_new(interval.first, n, 0);
+    return debug_fill_new(range.first, n, 0);
 }
 
 void Unordered_free_list::deallocate(void* ptr) noexcept {
     ++capacity_;
 
     auto node = static_cast<std::byte*>(debug_fill_free(ptr, node_size_, 0));
-    list_set(node, first_);
+    utils::write(node, first_);
     first_ = node;
 }
 
@@ -159,40 +158,36 @@ void Unordered_free_list::deallocate(void* ptr, std::size_t n) noexcept {
     }
 }
 
-std::size_t Unordered_free_list::alignment() const noexcept {
-    return alignment_for(node_size_);
-}
-
 void Unordered_free_list::insert_impl(void* memory, std::size_t size) noexcept {
-    auto no_nodes = size / node_size_;
-    SALT_ASSERT(no_nodes > 0);
+    auto node_count = size / node_size_;
+    SALT_ASSERT(node_count > 0);
 
     auto current = static_cast<std::byte*>(memory);
-    for (std::size_t i = 0u; i != no_nodes - 1; ++i) {
-        list_set(current, current + node_size_);
+    for (std::size_t i = 0u; i < node_count - 1; ++i) {
+        utils::write(current, current + node_size_);
         current += node_size_;
     }
-    list_set(current, first_);
+    utils::write(current, first_);
     first_ = static_cast<std::byte*>(memory);
 
-    capacity_ += no_nodes;
+    capacity_ += node_count;
 }
 
 namespace {
 
-void xor_block_to_list(void* memory, std::size_t node_size, std::size_t no_nodes, std::byte* first,
-                       std::byte* next) noexcept {
+void xor_block_to_list(void* memory, std::size_t node_size, std::size_t node_count,
+                       std::byte* first, std::byte* next) noexcept {
     auto current = static_cast<std::byte*>(memory);
-    xor_list_exchange(first, next, current);
+    utils::xor_exchange(first, next, current);
 
     auto last_cur = first;
-    for (std::size_t i = 0u; i != no_nodes - 1; ++i) {
-        xor_list_set(current, last_cur, current + node_size);
+    for (std::size_t i = 0u; i < node_count - 1; ++i) {
+        utils::xor_write(current, last_cur, current + node_size);
         last_cur = current;
         current += node_size;
     }
-    xor_list_set(current, last_cur, next);
-    xor_list_exchange(next, first, current);
+    utils::xor_write(current, last_cur, next);
+    utils::xor_exchange(next, first, current);
 }
 
 struct Position {
@@ -200,15 +195,14 @@ struct Position {
     std::byte* next;
 };
 
-Position find_insert_position(Allocator_info const& info, std::byte* memory, std::byte* first_prev,
-                              std::byte* first, std::byte* last, std::byte* last_next) noexcept {
-    SALT_ASSERT(less(first, memory) && less(memory, last));
+Position find_position(Allocator_info const& info, std::byte* memory, Range range) noexcept {
+    SALT_ASSERT(less(range.first, memory) && less(memory, range.last));
 
-    auto cur_forward  = first;
-    auto prev_forward = first_prev;
+    auto cur_forward  = range.first;
+    auto prev_forward = range.prev;
 
-    auto cur_backward  = last;
-    auto prev_backward = last_next;
+    auto cur_backward  = range.last;
+    auto prev_backward = range.next;
 
     do {
         if (greater(cur_forward, memory))
@@ -219,8 +213,8 @@ Position find_insert_position(Allocator_info const& info, std::byte* memory, std
         debug_check_double_free(
                 [&] { return cur_forward != memory && cur_backward != memory; }, info, memory);
         // clang-format on
-        xor_list_next(cur_forward, prev_forward);
-        xor_list_next(cur_backward, prev_backward);
+        utils::xor_next(cur_forward, prev_forward);
+        utils::xor_next(cur_backward, prev_backward);
     } while (less(prev_forward, prev_backward));
 
     // clang-format off
@@ -229,22 +223,22 @@ Position find_insert_position(Allocator_info const& info, std::byte* memory, std
     return {nullptr, nullptr};
 }
 
-Position find_position(Allocator_info const& info, std::byte* memory, std::byte* first_node,
-                       std::byte* last_node, std::byte* prev_dealloc,
-                       std::byte* last_dealloc) noexcept {
-    auto first = xor_list_get(first_node, nullptr);
-    auto last  = xor_list_get(last_node, nullptr);
+Position find_insert_position(Allocator_info const& info, std::byte* memory, std::byte* begin,
+                              std::byte* end, std::byte* prev_dealloc,
+                              std::byte* last_dealloc) noexcept {
+    auto first = utils::xor_read(begin, nullptr);
+    auto last  = utils::xor_read(end, nullptr);
 
     if (greater(first, memory))
-        return {first_node, first};
+        return {begin, first};
     else if (less(last, memory))
-        return {last, last_node};
+        return {last, end};
     else if (less(prev_dealloc, memory) && less(memory, last_dealloc))
         return {prev_dealloc, last_dealloc};
     else if (less(memory, last_dealloc))
-        return find_insert_position(info, memory, first_node, first, prev_dealloc, last_dealloc);
+        return find_position(info, memory, {begin, first, prev_dealloc, last_dealloc});
     else if (greater(memory, last_dealloc))
-        return find_insert_position(info, memory, prev_dealloc, last_dealloc, last, last_node);
+        return find_position(info, memory, {prev_dealloc, last_dealloc, last, end});
 
     fast_terminate();
     return {nullptr, nullptr};
@@ -254,9 +248,9 @@ Position find_position(Allocator_info const& info, std::byte* memory, std::byte*
 
 Free_list::Free_list(std::size_t node_size) noexcept
         : node_size_{node_size > min_element_size ? node_size : min_element_size}, capacity_{0u},
-          prev_dealloc_{first_node()}, last_dealloc_{last_node()} {
-    xor_list_set(first_node(), nullptr, last_node());
-    xor_list_set(last_node(), first_node(), nullptr);
+          prev_dealloc_{begin()}, last_dealloc_{end()} {
+    utils::xor_write(begin(), nullptr, end());
+    utils::xor_write(end(), begin(), nullptr);
 }
 
 Free_list::Free_list(std::size_t node_size, void* memory, std::size_t size) noexcept
@@ -265,65 +259,51 @@ Free_list::Free_list(std::size_t node_size, void* memory, std::size_t size) noex
 }
 
 Free_list::Free_list(Free_list&& other) noexcept
-        : node_size_{other.node_size_}, capacity_{other.capacity_} {
+        : node_size_{other.node_size_}, capacity_{std::exchange(other.capacity_, 0)} {
     if (!other.empty()) {
-        auto first = xor_list_get(other.first_node(), nullptr);
-        auto last  = xor_list_get(other.last_node(), nullptr);
+        auto first = utils::xor_read(other.begin(), nullptr);
+        auto last  = utils::xor_read(other.end(), nullptr);
 
-        xor_list_set(first_node(), nullptr, first);
-        xor_list_exchange(first, other.first_node(), first_node());
-        xor_list_exchange(last, other.last_node(), last_node());
-        xor_list_set(last_node(), last, nullptr);
+        utils::xor_write(begin(), nullptr, first);
+        utils::xor_exchange(first, other.begin(), begin());
+        utils::xor_exchange(last, other.end(), end());
+        utils::xor_write(end(), last, nullptr);
 
-        other.capacity_ = 0u;
-        xor_list_set(other.first_node(), nullptr, other.last_node());
-        xor_list_set(other.last_node(), other.first_node(), nullptr);
+        utils::xor_write(other.begin(), nullptr, other.end());
+        utils::xor_write(other.end(), other.begin(), nullptr);
     } else {
-        xor_list_set(first_node(), nullptr, last_node());
-        xor_list_set(last_node(), first_node(), nullptr);
+        utils::xor_write(begin(), nullptr, end());
+        utils::xor_write(end(), begin(), nullptr);
     }
 
-    prev_dealloc_ = first_node();
-    last_dealloc_ = xor_list_get(prev_dealloc_, nullptr);
+    prev_dealloc_ = begin();
+    last_dealloc_ = utils::xor_read(prev_dealloc_, nullptr);
 }
 
 Free_list& Free_list::operator=(Free_list&& other) noexcept {
     Free_list tmp{std::move(other)};
-    auto      first = xor_list_get(first_node(), nullptr);
-    auto      last  = xor_list_get(last_node(), nullptr);
-
-    auto other_first = xor_list_get(tmp.first_node(), nullptr);
-    auto other_last  = xor_list_get(tmp.last_node(), nullptr);
-
-    if (!empty()) {
-        xor_list_set(tmp.first_node(), nullptr, first);
-        xor_list_exchange(first, first_node(), tmp.first_node());
-        xor_list_exchange(last, last_node(), tmp.last_node());
-        xor_list_set(tmp.last_node(), last, nullptr);
-    } else {
-        xor_list_set(tmp.first_node(), nullptr, tmp.last_node());
-        xor_list_set(tmp.last_node(), tmp.first_node(), nullptr);
-    }
+    auto      tmp_first = utils::xor_read(tmp.begin(), nullptr);
+    auto      tmp_last  = utils::xor_read(tmp.end(), nullptr);
 
     if (!tmp.empty()) {
-        xor_list_set(first_node(), nullptr, other_first);
-        xor_list_exchange(other_first, tmp.first_node(), first_node());
-        xor_list_exchange(other_last, tmp.last_node(), last_node());
-        xor_list_set(last_node(), other_last, nullptr);
+        utils::xor_write(begin(), nullptr, tmp_first);
+        utils::xor_exchange(tmp_first, tmp.begin(), begin());
+        utils::xor_exchange(tmp_last, tmp.end(), end());
+        utils::xor_write(end(), tmp_last, nullptr);
     } else {
-        xor_list_set(first_node(), nullptr, last_node());
-        xor_list_set(last_node(), first_node(), nullptr);
+        utils::xor_write(begin(), nullptr, end());
+        utils::xor_write(end(), begin(), nullptr);
     }
 
-    std::swap(node_size_, tmp.node_size_);
-    std::swap(capacity_, tmp.capacity_);
+    node_size_ = tmp.node_size_;
+    capacity_  = tmp.capacity_;
 
-    // for programming convenience, last_dealloc is reset
-    prev_dealloc_ = first_node();
-    last_dealloc_ = xor_list_get(prev_dealloc_, nullptr);
+    // For programming convenience, last_dealloc is reset
+    prev_dealloc_ = begin();
+    last_dealloc_ = utils::xor_read(prev_dealloc_, nullptr);
 
-    tmp.prev_dealloc_ = tmp.first_node();
-    tmp.last_dealloc_ = xor_list_get(tmp.prev_dealloc_, nullptr);
+    tmp.prev_dealloc_ = tmp.begin();
+    tmp.last_dealloc_ = utils::xor_read(tmp.prev_dealloc_, nullptr);
 
     return *this;
 }
@@ -339,13 +319,12 @@ void Free_list::insert(void* memory, std::size_t size) noexcept {
 void* Free_list::allocate() noexcept {
     SALT_ASSERT(!empty());
 
-    // remove first node
-    auto first = first_node();
-    auto node  = xor_list_get(first, nullptr);
-    auto next  = xor_list_get(node, first);
+    auto first = begin();
+    auto node  = utils::xor_read(first, nullptr);
+    auto next  = utils::xor_read(node, first);
 
-    xor_list_set(first, nullptr, next);   // link first to next
-    xor_list_exchange(next, node, first); // change first of next
+    utils::xor_write(first, nullptr, next);
+    utils::xor_exchange(next, node, first);
     --capacity_;
 
     if (node == last_dealloc_) {
@@ -365,32 +344,34 @@ void* Free_list::allocate(std::size_t n) noexcept {
     if (n <= node_size_)
         return allocate();
 
-    auto interval = xor_list_search_bytes(first_node(), last_node(), n, node_size_);
-    if (interval.first == nullptr)
+    auto range = xor_find_range(begin(), end(), n, node_size_);
+    if (!range.first)
         return nullptr;
 
-    xor_list_exchange(interval.prev, interval.first, interval.next);
-    xor_list_exchange(interval.next, interval.last, interval.prev);
-    capacity_ -= interval.count(node_size_);
+    utils::xor_exchange(range.prev, range.first, range.next);
+    utils::xor_exchange(range.next, range.last, range.prev);
+    capacity_ -= range.count(node_size_);
 
-    if ((less_equal(interval.first, last_dealloc_) && less_equal(last_dealloc_, interval.last))) {
-        last_dealloc_ = interval.next;
-        prev_dealloc_ = interval.prev;
-    } else if (prev_dealloc_ == interval.last) {
-        SALT_ASSERT(last_dealloc_ == interval.next);
-        prev_dealloc_ = interval.prev;
+    if ((less_equal(range.first, last_dealloc_) && less_equal(last_dealloc_, range.last))) {
+        last_dealloc_ = range.next;
+        prev_dealloc_ = range.prev;
+    } else if (prev_dealloc_ == range.last) {
+        SALT_ASSERT(last_dealloc_ == range.next);
+        prev_dealloc_ = range.prev;
     }
 
-    return detail::debug_fill_new(interval.first, n, 0);
+    return detail::debug_fill_new(range.first, n, 0);
 }
 
 void Free_list::deallocate(void* ptr) noexcept {
     auto node = static_cast<std::byte*>(debug_fill_free(ptr, node_size_, 0));
 
-    auto position = find_position(Allocator_info{"salt::detail::Free_list", this}, node,
-                                  first_node(), last_node(), prev_dealloc_, last_dealloc_);
-
-    xor_list_insert(node, position.prev, position.next);
+    auto position = find_insert_position(Allocator_info{"salt::detail::Free_list", this}, node,
+                                         begin(), end(), prev_dealloc_, last_dealloc_);
+    // Links new node between prev and next
+    utils::xor_write(node, position.prev, position.next);
+    utils::xor_exchange(position.prev, position.next, node);
+    utils::xor_exchange(position.next, position.prev, node);
     ++capacity_;
 
     prev_dealloc_ = position.prev;
@@ -409,20 +390,16 @@ void Free_list::deallocate(void* ptr, std::size_t n) noexcept {
     }
 }
 
-std::size_t Free_list::alignment() const noexcept {
-    return alignment_for(node_size_);
-}
-
 std::byte* Free_list::insert_impl(void* memory, std::size_t size) noexcept {
-    auto no_nodes = size / node_size_;
-    SALT_ASSERT(no_nodes > 0);
+    auto node_count = size / node_size_;
+    SALT_ASSERT(node_count > 0);
 
-    auto position = find_position(Allocator_info{"salt::detail::Free_list", this},
-                                  static_cast<std::byte*>(memory), first_node(), last_node(),
-                                  prev_dealloc_, last_dealloc_);
+    auto position = find_insert_position(Allocator_info{"salt::detail::Free_list", this},
+                                         static_cast<std::byte*>(memory), begin(), end(),
+                                         prev_dealloc_, last_dealloc_);
 
-    xor_block_to_list(memory, node_size_, no_nodes, position.prev, position.next);
-    capacity_ += no_nodes;
+    xor_block_to_list(memory, node_size_, node_count, position.prev, position.next);
+    capacity_ += node_count;
 
     if (position.prev == prev_dealloc_) {
         last_dealloc_ = static_cast<std::byte*>(memory);
@@ -431,12 +408,12 @@ std::byte* Free_list::insert_impl(void* memory, std::size_t size) noexcept {
     return position.prev;
 }
 
-std::byte* Free_list::first_node() noexcept {
+std::byte* Free_list::begin() noexcept {
     void* memory = &begin_proxy_;
     return static_cast<std::byte*>(memory);
 }
 
-std::byte* Free_list::last_node() noexcept {
+std::byte* Free_list::end() noexcept {
     void* memory = &end_proxy_;
     return static_cast<std::byte*>(memory);
 }

@@ -32,7 +32,9 @@ struct [[nodiscard]] Unordered_free_list final {
 
     void deallocate(void* ptr, std::size_t n) noexcept;
 
-    std::size_t alignment() const noexcept;
+    std::size_t alignment() const noexcept {
+        return alignment_for(node_size_);
+    }
 
     std::size_t node_size() const noexcept {
         return node_size_;
@@ -87,7 +89,9 @@ struct [[nodiscard]] Free_list final {
 
     void deallocate(void* ptr, std::size_t n) noexcept;
 
-    std::size_t alignment() const noexcept;
+    std::size_t alignment() const noexcept {
+        return alignment_for(node_size_);
+    }
 
     std::size_t node_size() const noexcept {
         return node_size_;
@@ -108,17 +112,19 @@ struct [[nodiscard]] Free_list final {
 private:
     std::byte* insert_impl(void* memory, std::size_t size) noexcept;
 
-    std::byte* first_node() noexcept;
-    std::byte* last_node() noexcept;
+    std::byte* begin() noexcept;
+    std::byte* end() noexcept;
 
     std::uintptr_t begin_proxy_;
     std::uintptr_t end_proxy_;
     std::size_t    node_size_;
     std::size_t    capacity_;
-    std::byte*     prev_dealloc_;
-    std::byte*     last_dealloc_;
+
+    std::byte* prev_dealloc_;
+    std::byte* last_dealloc_;
 };
 
+// TODO: Resolve all naming issues
 #if SALT_MEMORY_DEBUG_DOUBLE_FREE
 using Node_free_list  = Free_list;
 using Array_free_list = Free_list;
