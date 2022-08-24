@@ -6,6 +6,7 @@ namespace salt::detail {
 
 template <typename Allocator> struct Low_level_allocator_leak_handler {
     void operator()(std::ptrdiff_t amount) {
+        (void)amount;
         debug_handle_memory_leak(Allocator::info(), amount);
     }
 };
@@ -13,10 +14,10 @@ template <typename Allocator> struct Low_level_allocator_leak_handler {
 // TODO: Add concept for `Allocator` contraints;
 template <typename Allocator>
 struct [[nodiscard]] Low_level_allocator
-        : global_leak_detector<Low_level_allocator_leak_handler<Allocator>> {
+        : Global_leak_detector<Low_level_allocator_leak_handler<Allocator>> {
     using is_stateful        = std::false_type;
     using allocator_type     = Allocator;
-    using leak_detector_type = global_leak_detector<Low_level_allocator_leak_handler<Allocator>>;
+    using leak_detector_type = Global_leak_detector<Low_level_allocator_leak_handler<Allocator>>;
 
     constexpr Low_level_allocator() noexcept  = default;
     constexpr ~Low_level_allocator() noexcept = default;
@@ -28,10 +29,10 @@ struct [[nodiscard]] Low_level_allocator
         auto const actual_size = size + (debug_fence_size ? 2u * max_alignment : 0u);
 
         auto memory = allocator_type::allocate(actual_size, alignment);
-        if (!memory)
-            error("Out of memory"); // allocator_type::info(), actual_size
+        // if (!memory)
+        //     salt::error("Out of memory"); // allocator_type::info(), actual_size
 
-        leak_detector_type::on_allocate(actual_size);
+        leak_detector_type::on_allocate(static_cast<std::uint32_t>(actual_size));
 
         return debug_fill_new(memory, size, max_alignment);
     }
@@ -42,7 +43,7 @@ struct [[nodiscard]] Low_level_allocator
         auto memory = debug_fill_free(node, size, max_alignment);
         allocator_type::deallocate(memory, actual_size, alignment);
 
-        leak_detector_type::on_deallocate(actual_size);
+        leak_detector_type::on_deallocate(static_cast<std::uint32_t>(actual_size));
     }
 
     constexpr std::size_t max_node_size() const noexcept {

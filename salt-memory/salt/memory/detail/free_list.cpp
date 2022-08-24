@@ -129,7 +129,7 @@ void* Unordered_free_list::allocate(std::size_t n) noexcept {
         return allocate();
 
     auto range = find_range(first_, n, node_size_);
-    if (!range.first)
+    if (!range.first) [[unlikely]]
         return nullptr;
 
     if (range.prev)
@@ -345,7 +345,7 @@ void* Free_list::allocate(std::size_t n) noexcept {
         return allocate();
 
     auto range = xor_find_range(begin(), end(), n, node_size_);
-    if (!range.first)
+    if (!range.first) [[unlikely]]
         return nullptr;
 
     utils::xor_exchange(range.prev, range.first, range.next);

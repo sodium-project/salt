@@ -124,7 +124,6 @@ private:
     std::byte* last_dealloc_;
 };
 
-// TODO: Resolve all naming issues
 #if SALT_MEMORY_DEBUG_DOUBLE_FREE
 using Node_free_list  = Free_list;
 using Array_free_list = Free_list;

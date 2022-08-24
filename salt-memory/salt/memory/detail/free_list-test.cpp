@@ -94,7 +94,7 @@ template <typename FreeList> void check_list(FreeList& list, void* memory, std::
 }
 
 template <typename FreeList> void check_move(FreeList& list) {
-    static_allocator_storage<1024> memory;
+    Static_allocator_storage<1024> memory;
     list.insert(&memory, 1024);
 
     auto ptr = list.allocate();
@@ -110,7 +110,7 @@ template <typename FreeList> void check_move(FreeList& list) {
 
     list2.deallocate(ptr);
 
-    static_allocator_storage<1024> memory2;
+    Static_allocator_storage<1024> memory2;
     list.insert(&memory2, 1024);
     REQUIRE(!list.empty());
     REQUIRE(list.capacity() <= 1024 / list.node_size());
@@ -196,21 +196,21 @@ TEST_CASE("salt::detail::Unordered_free_list", "[salt-memory/free_memory_list.hp
     REQUIRE(list.capacity() == 0u);
 
     SECTION("normal insert") {
-        static_allocator_storage<1024> memory;
+        Static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
     SECTION("uneven insert") {
-        static_allocator_storage<1023> memory; // not dividable
+        Static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
 
         check_move(list);
     }
     SECTION("multiple insert") {
-        static_allocator_storage<1024> a;
-        static_allocator_storage<100>  b;
-        static_allocator_storage<1337> c;
+        Static_allocator_storage<1024> a;
+        Static_allocator_storage<100>  b;
+        Static_allocator_storage<1337> c;
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
         check_list(list, &c, 1337);
@@ -226,23 +226,23 @@ TEST_CASE("salt::detail::Free_list", "[salt-memory/free_memory_list.hpp]") {
     REQUIRE(list.capacity() == 0u);
 
     SECTION("normal insert") {
-        static_allocator_storage<1024> memory;
+        Static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
         use_list_array(list);
 
         check_move(list);
     }
     SECTION("uneven insert") {
-        static_allocator_storage<1023> memory; // not dividable
+        Static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
         use_list_array(list);
 
         check_move(list);
     }
     SECTION("multiple insert") {
-        static_allocator_storage<1024> a;
-        static_allocator_storage<100>  b;
-        static_allocator_storage<1337> c;
+        Static_allocator_storage<1024> a;
+        Static_allocator_storage<100>  b;
+        Static_allocator_storage<1337> c;
         check_list(list, &a, 1024);
         use_list_array(list);
         check_list(list, &b, 100);

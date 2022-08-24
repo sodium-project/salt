@@ -11,7 +11,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/memory_stack.hpp]") 
     REQUIRE(stack.top() == nullptr);
 
     SECTION("allocate") {
-        static_allocator_storage<1024> memory;
+        Static_allocator_storage<1024> memory;
         stack    = Fixed_memory_stack{&memory};
         auto end = stack.top() + 1024;
 
@@ -52,7 +52,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/memory_stack.hpp]") 
         }
     }
     SECTION("move") {
-        static_allocator_storage<1024> memory;
+        Static_allocator_storage<1024> memory;
         auto                           end = reinterpret_cast<std::byte*>(&memory) + 1024;
 
         Fixed_memory_stack other(reinterpret_cast<std::byte*>(&memory));

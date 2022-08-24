@@ -9,16 +9,16 @@
 namespace salt {
 
 template <std::size_t Size>
-using static_allocator_storage = Uninitialized_storage<Size, detail::max_alignment>;
+using Static_allocator_storage = Uninitialized_storage<Size, detail::max_alignment>;
 
 struct [[nodiscard]] Static_allocator final {
     using is_stateful = std::true_type;
 
     // clang-format off
     template <std::size_t Size>
-    requires match_size     <static_allocator_storage<Size>, Size> and
-             match_alignment<static_allocator_storage<Size>, detail::max_alignment>
-    constexpr explicit Static_allocator(static_allocator_storage<Size>& storage) noexcept
+    requires match_size     <Static_allocator_storage<Size>, Size> and
+             match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
+    constexpr explicit Static_allocator(Static_allocator_storage<Size>& storage) noexcept
             : stack_{&storage}, end_{stack_.top() + Size} {}
     // clang-format on
 
@@ -47,10 +47,10 @@ private:
 struct [[nodiscard]] Static_block_allocator final {
     // clang-format off
     template <std::size_t Size>    
-    requires match_size     <static_allocator_storage<Size>, Size> and
-             match_alignment<static_allocator_storage<Size>, detail::max_alignment>
+    requires match_size     <Static_allocator_storage<Size>, Size> and
+             match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
     constexpr Static_block_allocator(std::size_t                     block_size,
-                                     static_allocator_storage<Size>& storage) noexcept
+                                     Static_allocator_storage<Size>& storage) noexcept
             : current_{static_cast<std::byte*>(static_cast<void*>(&storage))},
               end_{current_ + Size}, block_size_{block_size} {
         SALT_ASSERT(block_size <= Size);

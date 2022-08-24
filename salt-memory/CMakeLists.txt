@@ -9,7 +9,9 @@ salt_static_library(memory
             "salt/memory/detail/debug_helpers-test.cpp"
             "salt/memory/detail/memory_stack-test.cpp"
             "salt/memory/detail/free_list-test.cpp"
+            "salt/memory/detail/free_list_array-test.cpp"
             "salt/memory/static_allocator-test.cpp"
+            "salt/memory/heap_allocator-test.cpp"
         LINK
             salt::meta
             salt::foundation)

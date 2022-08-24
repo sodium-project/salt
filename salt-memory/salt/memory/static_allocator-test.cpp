@@ -6,7 +6,7 @@ using namespace salt;
 using namespace salt::detail;
 
 TEST_CASE("salt::Static_allocator", "[salt-memory/static_allocator.hpp]") {
-    static_allocator_storage<256> storage;
+    Static_allocator_storage<256> storage;
     Static_allocator              static_allocator{storage};
 
     auto ptr = static_allocator.allocate_node(sizeof(char), alignof(char));
