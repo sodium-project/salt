@@ -68,10 +68,10 @@ extern void* __stdcall HeapReAlloc(void*, std::uint32_t, void*, std::size_t) noe
 #endif
 inline void*
 win32_heapalloc_common_impl(std::size_t size, std::uint32_t flag) noexcept {
-    auto* ptr = win32::HeapAlloc(win32::GetProcessHeap(), flag, size ? size : 1);
-    if (!ptr)
+    auto* memory = win32::HeapAlloc(win32::GetProcessHeap(), flag, size ? size : 1);
+    if (!memory)
         salt::fast_terminate();
-    return ptr;
+    return memory;
 }
 
 #if __has_cpp_attribute(__gnu__::__returns_nonnull__)
@@ -103,7 +103,7 @@ struct [[nodiscard]] Win32_heap_allocator final {
     }
 
     static inline void deallocate(void* ptr, std::size_t, std::size_t) noexcept {
-        if (!ptr)
+        if (!ptr) [[unlikely]]
             return;
 
         win32::HeapFree(win32::GetProcessHeap(), 0u, ptr);
