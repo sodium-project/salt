@@ -24,7 +24,7 @@ __declspec(dllimport)
 #endif
 extern void* SALT_CDECL mi_malloc(std::size_t) noexcept
 #if defined(SALT_CLANG) || defined(SALT_GNUC)
-        __asm__("mi_malloc")
+__asm__("mi_malloc")
 #endif
 ;
 
@@ -38,7 +38,7 @@ __declspec(dllimport)
 #endif
 extern void SALT_CDECL mi_free(void*) noexcept
 #if defined(SALT_CLANG) || defined(SALT_GNUC)
-        __asm__("mi_free")
+__asm__("mi_free")
 #endif
 ;
 // clang-format on
@@ -67,7 +67,7 @@ struct [[nodiscard]] Mimalloc_allocator final {
     }
 
     static inline std::size_t max_size() noexcept {
-        // The maximum size of a user request for memory that can be granted on x64.
+        // The maximum size of a user request for memory that can be granted.
         return PTRDIFF_MAX / sizeof(std::byte);
     }
 };

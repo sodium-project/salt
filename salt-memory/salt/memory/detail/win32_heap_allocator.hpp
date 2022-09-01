@@ -20,7 +20,7 @@ __declspec(dllimport)
 #endif
 extern void* __stdcall HeapAlloc(void*, std::uint32_t, std::size_t) noexcept
 #if defined(SALT_CLANG) || defined(SALT_GNUC)
-    __asm__("HeapAlloc")
+__asm__("HeapAlloc")
 #endif
 ;
 
@@ -31,7 +31,7 @@ __declspec(dllimport)
 #endif
 extern int __stdcall HeapFree(void*, std::uint32_t, void*) noexcept
 #if defined(SALT_CLANG) || defined(SALT_GNUC)
-    __asm__("HeapFree")
+__asm__("HeapFree")
 #endif
 ;
 
@@ -45,18 +45,7 @@ __declspec(dllimport)
 #endif
 extern void* __stdcall GetProcessHeap() noexcept
 #if defined(SALT_CLANG) || defined(SALT_GNUC)
-    __asm__("GetProcessHeap")
-#endif
-;
-
-#if defined(_MSC_VER) && !defined(SALT_CLANG)
-__declspec(dllimport)
-#elif __has_cpp_attribute(__gnu__::__dllimport__)
-[[__gnu__::__dllimport__]]
-#endif
-extern void* __stdcall HeapReAlloc(void*, std::uint32_t, void*, std::size_t) noexcept
-#if defined(SALT_CLANG) || defined(SALT_GNUC)
-    __asm__("HeapReAlloc")
+__asm__("GetProcessHeap")
 #endif
 ;
 // clang-format on
@@ -69,20 +58,6 @@ extern void* __stdcall HeapReAlloc(void*, std::uint32_t, void*, std::size_t) noe
 inline void*
 win32_heapalloc_common_impl(std::size_t size, std::uint32_t flag) noexcept {
     auto* memory = win32::HeapAlloc(win32::GetProcessHeap(), flag, size ? size : 1);
-    if (!memory)
-        salt::fast_terminate();
-    return memory;
-}
-
-#if __has_cpp_attribute(__gnu__::__returns_nonnull__)
-[[__gnu__::__returns_nonnull__]]
-#endif
-inline void*
-win32_heaprealloc_common_impl(void* ptr, std::size_t size, std::uint32_t flag) noexcept {
-    if (!ptr) [[unlikely]]
-        return win32_heapalloc_common_impl(size, flag);
-
-    auto* memory = win32::HeapReAlloc(win32::GetProcessHeap(), flag, ptr, size ? size : 1);
     if (!memory)
         salt::fast_terminate();
     return memory;
@@ -110,6 +85,7 @@ struct [[nodiscard]] Win32_heap_allocator final {
     }
 
     static inline std::size_t max_size() noexcept {
+        // The maximum size of a user request for memory that can be granted.
         return 0xFFFFFFFFFFFFFFE0;
     }
 };
