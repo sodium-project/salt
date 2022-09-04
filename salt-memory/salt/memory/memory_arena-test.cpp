@@ -97,7 +97,7 @@ template <std::size_t N> struct Test_block_allocator {
     Static_allocator_storage<1024> blocks[N];
     size_type                      i = 0;
 
-    Test_block_allocator(size_type) {}
+    explicit Test_block_allocator(size_type) {}
 
     ~Test_block_allocator() {
         REQUIRE(i == 0u);
