@@ -79,14 +79,14 @@ concept leak_handler =
 // clang-format on
 
 template <typename Handler> struct [[maybe_unused]] No_leak_detector {
-    constexpr No_leak_detector() noexcept  = default;
-    constexpr ~No_leak_detector() noexcept = default;
+    No_leak_detector() noexcept = default;
+    ~No_leak_detector()         = default;
 
-    constexpr No_leak_detector(No_leak_detector&&) noexcept            = default;
-    constexpr No_leak_detector& operator=(No_leak_detector&&) noexcept = default;
+    No_leak_detector(No_leak_detector&&) noexcept            = default;
+    No_leak_detector& operator=(No_leak_detector&&) noexcept = default;
 
-    constexpr void on_allocate(std::uint32_t) noexcept {}
-    constexpr void on_deallocate(std::uint32_t) noexcept {}
+    constexpr void on_allocate(std::size_t) noexcept {}
+    constexpr void on_deallocate(std::size_t) noexcept {}
 };
 
 template <leak_handler Handler> struct [[maybe_unused]] Object_leak_detector : Handler {
@@ -95,7 +95,7 @@ template <leak_handler Handler> struct [[maybe_unused]] Object_leak_detector : H
     constexpr Object_leak_detector(Object_leak_detector&& other) noexcept
             : allocated_{std::exchange(other.allocated_, 0)} {}
 
-    constexpr ~Object_leak_detector() noexcept {
+    constexpr ~Object_leak_detector() {
         if (allocated_ != 0)
             Handler::operator()(allocated_);
     }
@@ -105,16 +105,16 @@ template <leak_handler Handler> struct [[maybe_unused]] Object_leak_detector : H
         return *this;
     }
 
-    constexpr void on_allocate(std::uint32_t size) noexcept {
-        allocated_ += static_cast<std::int64_t>(size);
+    constexpr void on_allocate(std::size_t size) noexcept {
+        allocated_ += static_cast<std::ptrdiff_t>(size);
     }
 
-    constexpr void on_deallocate(std::uint32_t size) noexcept {
-        allocated_ -= static_cast<std::int64_t>(size);
+    constexpr void on_deallocate(std::size_t size) noexcept {
+        allocated_ -= static_cast<std::ptrdiff_t>(size);
     }
 
 private:
-    std::int64_t allocated_;
+    std::ptrdiff_t allocated_;
 };
 
 template <leak_handler Handler> struct [[maybe_unused]] Global_leak_detector_impl {
@@ -130,29 +130,29 @@ template <leak_handler Handler> struct [[maybe_unused]] Global_leak_detector_imp
         }
     };
 
-    constexpr Global_leak_detector_impl() noexcept  = default;
-    constexpr ~Global_leak_detector_impl() noexcept = default;
+    Global_leak_detector_impl() noexcept = default;
+    ~Global_leak_detector_impl()         = default;
 
-    constexpr Global_leak_detector_impl(Global_leak_detector_impl&&) noexcept            = default;
-    constexpr Global_leak_detector_impl& operator=(Global_leak_detector_impl&&) noexcept = default;
+    Global_leak_detector_impl(Global_leak_detector_impl&&) noexcept            = default;
+    Global_leak_detector_impl& operator=(Global_leak_detector_impl&&) noexcept = default;
 
-    constexpr void on_allocate(std::uint32_t size) noexcept {
-        allocated_ += static_cast<std::int64_t>(size);
+    constexpr void on_allocate(std::size_t size) noexcept {
+        allocated_ += static_cast<std::ptrdiff_t>(size);
     }
 
-    constexpr void on_deallocate(std::uint32_t size) noexcept {
-        allocated_ -= static_cast<std::int64_t>(size);
+    constexpr void on_deallocate(std::size_t size) noexcept {
+        allocated_ -= static_cast<std::ptrdiff_t>(size);
     }
 
 private:
-    static std::atomic_size_t  objects_;
-    static std::atomic_int64_t allocated_;
+    static std::atomic_size_t    objects_;
+    static std::atomic_ptrdiff_t allocated_;
 };
 
 template <leak_handler Handler>
 std::atomic_size_t Global_leak_detector_impl<Handler>::objects_ = 0u;
 template <leak_handler Handler>
-std::atomic_int64_t Global_leak_detector_impl<Handler>::allocated_ = 0;
+std::atomic_ptrdiff_t Global_leak_detector_impl<Handler>::allocated_ = 0;
 
 #if SALT_MEMORY_DEBUG_LEAK
 template <typename Handler> using Global_leak_detector = Global_leak_detector_impl<Handler>;

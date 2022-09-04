@@ -1,7 +1,4 @@
 #pragma once
-#include <cstddef>
-#include <cstdint>
-
 #include <salt/foundation/fast_terminate.hpp>
 #include <salt/memory/debugging.hpp>
 
@@ -65,26 +62,28 @@ win32_heapalloc_common_impl(std::size_t size, std::uint32_t flag) noexcept {
 
 // clang-format off
 struct [[nodiscard]] Win32_heap_allocator final {
+    using size_type       = std::size_t;
+    using difference_type = std::ptrdiff_t;
 
-    static inline Allocator_info info() noexcept {
-        return {"salt::detail::Win32_heap_allocator", nullptr};
+    static inline auto info() noexcept {
+        return Allocator_info{"salt::detail::Win32_heap_allocator", nullptr};
     }
 
 #if __has_cpp_attribute(__gnu__::__malloc__)
     [[__gnu__::__malloc__]]
 #endif
-    static inline void* allocate(std::size_t size, std::size_t) noexcept {
+    static inline void* allocate(size_type size, size_type) noexcept {
         return win32_heapalloc_common_impl(size, 0u);
     }
 
-    static inline void deallocate(void* ptr, std::size_t, std::size_t) noexcept {
-        if (!ptr) [[unlikely]]
+    static inline void deallocate(void* memory, size_type, size_type) noexcept {
+        if (!memory) [[unlikely]]
             return;
 
-        win32::HeapFree(win32::GetProcessHeap(), 0u, ptr);
+        win32::HeapFree(win32::GetProcessHeap(), 0u, memory);
     }
 
-    static inline std::size_t max_size() noexcept {
+    static inline size_type max_size() noexcept {
         // The maximum size of a user request for memory that can be granted.
         return 0xFFFFFFFFFFFFFFE0;
     }

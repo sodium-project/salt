@@ -2,7 +2,6 @@
 #include <vector>
 
 #include <salt/memory/detail/align.hpp>
-#include <salt/memory/detail/linux_heap_allocator.hpp>
 #include <salt/memory/detail/mimalloc_allocator.hpp>
 #include <salt/memory/heap_allocator.hpp>
 
