@@ -62,8 +62,8 @@ template <typename Allocator> struct [[nodiscard]] allocator_traits final {
     using difference_type = typename allocator_type::difference_type;
     using is_stateful     = typename allocator_type::is_stateful;
 
-    static inline constexpr bool has_allocate_node   = detail::has_allocate_node<allocator_type>;
-    static inline constexpr bool has_deallocate_node = detail::has_deallocate_node<allocator_type>;
+    static constexpr bool has_allocate_node   = detail::has_allocate_node<allocator_type>;
+    static constexpr bool has_deallocate_node = detail::has_deallocate_node<allocator_type>;
 
     static constexpr void*
     allocate_node(allocator_type& allocator,

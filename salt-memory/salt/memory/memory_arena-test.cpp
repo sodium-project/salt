@@ -113,7 +113,7 @@ template <std::size_t N> struct Test_block_allocator {
         --i;
     }
 
-    size_type next_block_size() const {
+    size_type block_size() const {
         return 1024;
     }
 };
@@ -225,4 +225,19 @@ TEST_CASE("salt::Memory_arena not cached", "[salt-memory/memory_arena.hpp]") {
         REQUIRE(small_arena.size() == 1u);
         REQUIRE(small_arena.capacity() == 1u);
     }
+}
+
+static_assert(std::is_same<Growing_block_allocator<>,
+                           block_allocator_t<Growing_block_allocator<>>>::value);
+static_assert(std::is_same<Growing_block_allocator<>, block_allocator_t<Default_allocator>>::value);
+
+template <typename RawAllocator> using Block_allocator = Growing_block_allocator<RawAllocator>;
+
+TEST_CASE("salt::make_block_allocator", "[salt-memory/memory_arena.hpp]") {
+    Growing_block_allocator<Heap_allocator> a1 = make_block_allocator<Heap_allocator>(1024);
+    REQUIRE(a1.block_size() == 1024);
+
+    Growing_block_allocator<Heap_allocator> a2 =
+            make_block_allocator<Block_allocator, Heap_allocator>(1024);
+    REQUIRE(a2.block_size() == 1024);
 }

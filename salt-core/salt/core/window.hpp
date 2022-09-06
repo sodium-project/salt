@@ -21,7 +21,7 @@ concept windowable =
         { window.vsync   ()  } noexcept -> std::same_as<bool>;
         { window.vsync   (1) } noexcept -> std::same_as<void>;
 
-        { window.template subscribe  <Event>(std::declval<Fn>()) } noexcept -> std::same_as<Id>;
+        { window.template   subscribe<Event>(std::declval<Fn>()) } noexcept -> std::same_as<Id>;
         { window.template unsubscribe<Event>(std::declval<Id>()) } noexcept -> std::same_as<void>;
     };
 // clang-format on
