@@ -5,6 +5,10 @@
 
 namespace salt {
 
+// NOTE:
+//  The magic values that are used for debug filling. If SALT_MEMORY_DEBUG_FILL is true, memory will
+//  be filled to help detect use-after-free or missing initialization errors. These are the
+//  constants for the different types.
 enum class debug_magic : std::uint8_t {
     // Marks internal memory used by the allocator - "allocated block".
     internal_memory = 0xAB,
@@ -20,6 +24,9 @@ enum class debug_magic : std::uint8_t {
     fence_memory = 0xFD
 };
 
+// NOTE:
+//  Contains information about an allocator. It can be used for logging in the various handler
+//  functions.
 struct [[nodiscard]] Allocator_info final {
     std::string_view name;
     void const*      allocator;
@@ -28,18 +35,21 @@ struct [[nodiscard]] Allocator_info final {
                                      Allocator_info const& rhs) noexcept = default;
 };
 
+// The type of the handler called when a memory leak is detected.
 using leak_handler = void (*)(Allocator_info const& info, std::ptrdiff_t amount);
 
 leak_handler set_leak_handler(leak_handler handler);
 
 leak_handler get_leak_handler();
 
+// The type of the handler called when an invalid pointer is passed to a deallocation function.
 using invalid_pointer_handler = void (*)(Allocator_info const& info, void const* ptr);
 
 invalid_pointer_handler set_invalid_pointer_handler(invalid_pointer_handler handler);
 
 invalid_pointer_handler get_invalid_pointer_handler();
 
+// The type of the handler called when a buffer under/overflow is detected.
 using buffer_overflow_handler = void (*)(void const* memory, std::size_t size, void const* ptr);
 
 buffer_overflow_handler set_buffer_overflow_handler(buffer_overflow_handler handler);

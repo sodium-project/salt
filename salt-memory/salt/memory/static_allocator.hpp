@@ -8,9 +8,15 @@
 
 namespace salt {
 
+// NOTE:
+//  Storage for a Static_allocator. Its constructor will take a reference to it and use it for its
+//  allocation. The storage type is simply a byte array aligned for maximum alignment.
 template <std::size_t Size>
 using Static_allocator_storage = Uninitialized_storage<Size, detail::max_alignment>;
 
+// NOTE:
+//  A stateful allocator,RawAllocator that uses a fixed sized storage for the allocations.
+//  Deallocations are not supported, memory cannot be marked as freed.
 struct [[nodiscard]] Static_allocator final {
     using is_stateful = std::true_type;
 
@@ -44,6 +50,9 @@ private:
     std::byte const*           end_;
 };
 
+// NOTE:
+//  An allocator that allocates the blocks from a fixed size storage. Deallocations are only allowed
+//  in reversed order which is guaranteed by Memory_arena.
 struct [[nodiscard]] Static_block_allocator final {
     // clang-format off
     template <std::size_t Size>    
