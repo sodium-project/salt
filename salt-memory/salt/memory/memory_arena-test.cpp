@@ -228,8 +228,9 @@ TEST_CASE("salt::Memory_arena not cached", "[salt-memory/memory_arena.hpp]") {
 }
 
 static_assert(std::is_same<Growing_block_allocator<>,
-                           block_allocator_t<Growing_block_allocator<>>>::value);
-static_assert(std::is_same<Growing_block_allocator<>, block_allocator_t<Default_allocator>>::value);
+                           block_allocator_type<Growing_block_allocator<>>>::value);
+static_assert(
+        std::is_same<Growing_block_allocator<>, block_allocator_type<Default_allocator>>::value);
 
 template <typename RawAllocator> using Block_allocator = Growing_block_allocator<RawAllocator>;
 

@@ -8,7 +8,16 @@
 namespace salt::detail {
 
 // clang-format off
-template <typename FreeList, typename AccessPolicy>
+template <typename AccessPolicy>
+concept access_policy =
+    requires {
+        { AccessPolicy::index_from_size(1) } -> std::same_as<std::size_t>;
+        { AccessPolicy::size_from_index(1) } -> std::same_as<std::size_t>;
+    };
+// clang-format on
+
+// clang-format off
+template <typename FreeList, access_policy AccessPolicy>
 struct [[nodiscard]] Free_list_array final {
     // Creates sufficient elements to support up to given maximum node size. The actual amount is
     // calculated according to the policy.
@@ -24,11 +33,11 @@ struct [[nodiscard]] Free_list_array final {
         }
     }
 
+    constexpr ~Free_list_array() = default;
+
     constexpr Free_list_array(Free_list_array&& other) noexcept
             : array_{std::exchange(other.array_, nullptr)},
               size_ {std::exchange(other.size_ , 0u     )} {}
-
-    ~Free_list_array() noexcept = default;
 
     constexpr Free_list_array& operator=(Free_list_array&& other) noexcept {
         array_ = std::exchange(other.array_, nullptr);

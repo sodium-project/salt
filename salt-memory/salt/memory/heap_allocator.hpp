@@ -40,10 +40,11 @@ struct [[nodiscard]] Malloc_allocator final {
     [[__gnu__::__returns_nonnull__]]
 #    endif
     static inline void* allocate(size_type size, size_type) noexcept {
+        void* memory = 
 #    if __has_builtin(__builtin_malloc)
-        void* memory = __builtin_malloc(size);
+        __builtin_malloc(size);
 #    else
-        void* memory = std::malloc(size);
+        std::malloc(size);
 #    endif
         if (!memory)
             salt::fast_terminate();

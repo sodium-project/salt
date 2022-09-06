@@ -13,6 +13,8 @@ salt_static_library(memory
             "salt/memory/static_allocator-test.cpp"
             "salt/memory/heap_allocator-test.cpp"
             "salt/memory/memory_arena-test.cpp"
+            "salt/memory/memory_pool-test.cpp"
+            "salt/memory/memory_pool_list-test.cpp"
         LINK
             salt::meta
             salt::foundation)

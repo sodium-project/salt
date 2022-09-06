@@ -16,9 +16,9 @@ struct [[nodiscard]] Unordered_free_list final {
 
     Unordered_free_list(std::size_t node_size, void* memory, std::size_t size) noexcept;
 
-    Unordered_free_list(Unordered_free_list&& other) noexcept;
+    ~Unordered_free_list() = default;
 
-    ~Unordered_free_list() noexcept = default;
+    Unordered_free_list(Unordered_free_list&& other) noexcept;
 
     Unordered_free_list& operator=(Unordered_free_list&& other) noexcept;
 
@@ -73,9 +73,9 @@ struct [[nodiscard]] Free_list final {
 
     Free_list(std::size_t node_size, void* memory, std::size_t size) noexcept;
 
-    Free_list(Free_list&& other) noexcept;
+    ~Free_list() = default;
 
-    ~Free_list() noexcept = default;
+    Free_list(Free_list&& other) noexcept;
 
     Free_list& operator=(Free_list&& other) noexcept;
 

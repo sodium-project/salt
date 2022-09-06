@@ -10,8 +10,20 @@ template <typename Allocator> struct Low_level_allocator_leak_handler {
     }
 };
 
-// TODO: Add concept for `Allocator` contraints;
-template <typename Allocator>
+// clang-format off
+template <typename Allocator, std::size_t Size = 1, std::size_t Alignment = 1>
+concept allocator_like =
+    requires {
+        // Static allocate(), deallocate()
+        { Allocator::  allocate(         Size, Alignment) } -> std::same_as<void*>;
+        { Allocator::deallocate(nullptr, Size, Alignment) } -> std::same_as<void>;
+        // Static max_size(), info()
+        { Allocator::max_size() } -> std::same_as<std::size_t>;
+        { Allocator::    info() } -> std::same_as<Allocator_info>;
+    };
+// clang-format on
+
+template <allocator_like Allocator>
 struct [[nodiscard]] Low_level_allocator
         : Global_leak_detector<Low_level_allocator_leak_handler<Allocator>> {
     using is_stateful        = std::false_type;
@@ -45,7 +57,7 @@ struct [[nodiscard]] Low_level_allocator
     }
 
     constexpr size_type max_node_size() const noexcept {
-        return allocator_type::max_node_size();
+        return allocator_type::max_size();
     }
 };
 

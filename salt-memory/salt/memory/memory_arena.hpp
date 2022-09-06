@@ -9,8 +9,8 @@
 
 namespace salt {
 
-constexpr bool arena_enable_caching  = true;
-constexpr bool arena_disable_caching = false;
+static constexpr inline bool enable_caching  = true;
+static constexpr inline bool disable_caching = false;
 
 namespace detail {
 
@@ -95,7 +95,7 @@ private:
 
 template <bool Cached> struct Memory_arena_cache;
 
-template <> struct [[nodiscard]] Memory_arena_cache<arena_enable_caching> {
+template <> struct [[nodiscard]] Memory_arena_cache<enable_caching> {
 protected:
     constexpr std::size_t size() const noexcept {
         return cache_.size();
@@ -138,7 +138,7 @@ private:
     Memory_block_stack cache_;
 };
 
-template <> struct [[nodiscard]] Memory_arena_cache<arena_disable_caching> {
+template <> struct [[nodiscard]] Memory_arena_cache<disable_caching> {
 protected:
     constexpr std::size_t size() const noexcept {
         return 0u;
@@ -181,7 +181,14 @@ concept block_allocator =
 template <typename Allocator>
 static constexpr inline bool is_block_allocator = block_allocator<Allocator>;
 
-template <block_allocator BlockAllocator, bool Cached = arena_enable_caching>
+// NOTE:
+//  A memory arena that manages huge memory blocks for a higher-level allocator. Some allocators
+//  like Memory_stack work on huge memory blocks, this class manages them for those allocators. It
+//  uses a BlockAllocator for the allocation of those blocks. The memory blocks in use are put onto
+//  a stack like structure, deallocation will pop from the top, so it is only possible to deallocate
+//  the last allocated block of the arena. By default, blocks are not really deallocated but stored
+//  in a cache.
+template <block_allocator BlockAllocator, bool Cached = enable_caching>
 class [[nodiscard]] Memory_arena : BlockAllocator, detail::Memory_arena_cache<Cached> {
     using memory_cache       = detail::Memory_arena_cache<Cached>;
     using memory_block       = Memory_block;
@@ -191,7 +198,7 @@ public:
     using allocator_type  = BlockAllocator;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
-    using is_cached       = std::integral_constant<bool, Cached>;
+    using is_cached       = std::bool_constant<Cached>;
 
     template <typename... Args>
     constexpr explicit Memory_arena(size_type block_size, Args&&... args)
@@ -251,9 +258,8 @@ public:
     }
 
     constexpr size_type next_block_size() const noexcept {
-        return memory_cache::empty()
-                       ? allocator_type::next_block_size() - memory_block_stack::offset()
-                       : memory_cache::block_size();
+        return memory_cache::empty() ? allocator_type::block_size() - memory_block_stack::offset()
+                                     : memory_cache::block_size();
     }
 
     constexpr allocator_type& allocator() noexcept {
@@ -268,10 +274,18 @@ private:
     memory_block_stack used_blocks_;
 };
 
+// NOTE:
+//  An allocator that uses a given RawAllocator for allocating the blocks. It calls the
+//  allocate_array() function with a node of size 1 and maximum alignment on the used allocator for
+//  the block allocation. The size of the next memory block will grow by a given factor after each
+//  allocation, allowing an amortized constant allocation time in the higher level allocator. The
+//  factor can be given as rational in the template parameter, default is 2.
 // clang-format off
-template <typename RawAllocator = Default_allocator,
-          unsigned Numerator    = 2u,
-          unsigned Denominator  = 1u>
+template <
+    typename RawAllocator = Default_allocator,
+    unsigned Numerator    = 2u,
+    unsigned Denominator  = 1u
+>
 // clang-format on
 class [[nodiscard]] Growing_block_allocator : allocator_traits<RawAllocator>::allocator_type {
     using memory_block = Memory_block;
@@ -325,6 +339,10 @@ private:
     size_type block_size_;
 };
 
+// NOTE:
+//  An allocator that allows only one block allocation. It can be used to prevent higher-level
+//  allocators from expanding. The one block allocation is performed through the allocate_array()
+//  function of the given RawAllocator.
 template <typename RawAllocator = Default_allocator>
 class [[nodiscard]] Fixed_block_allocator : allocator_traits<RawAllocator>::allocator_type {
     using memory_block = Memory_block;
@@ -392,13 +410,13 @@ constexpr auto make_block_allocator(std::false_type, std::size_t block_size,
 
 template <typename BlockOrRawAllocator,
           template <typename...> typename BlockAllocator = detail::default_block_allocator>
-using block_allocator_t =
+using block_allocator_type =
         std::conditional_t<is_block_allocator<BlockOrRawAllocator>, BlockOrRawAllocator,
                            BlockAllocator<BlockOrRawAllocator>>;
 
 // clang-format off
 template <typename BlockOrRawAllocator, typename... Args>
-constexpr block_allocator_t<BlockOrRawAllocator>
+constexpr block_allocator_type<BlockOrRawAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
     using is_block_or_raw_allocator_t = std::bool_constant<is_block_allocator<BlockOrRawAllocator>>;
     return detail::make_block_allocator<detail::default_block_allocator, BlockOrRawAllocator>(
@@ -408,7 +426,7 @@ make_block_allocator(std::size_t block_size, Args&&... args) {
 template <template <typename...> typename BlockAllocator,
           typename                        BlockOrRawAllocator,
           typename...                     Args>
-constexpr block_allocator_t<BlockOrRawAllocator, BlockAllocator>
+constexpr block_allocator_type<BlockOrRawAllocator, BlockAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
     using is_block_or_raw_allocator_t = std::bool_constant<is_block_allocator<BlockOrRawAllocator>>;
     return detail::make_block_allocator<BlockAllocator, BlockOrRawAllocator>(
