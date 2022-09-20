@@ -93,7 +93,7 @@ private:
     Node* head_ = nullptr;
 };
 
-template <bool Cached> struct Memory_arena_cache;
+template <bool Cached> struct [[nodiscard]] Memory_arena_cache;
 
 template <> struct [[nodiscard]] Memory_arena_cache<enable_caching> {
 protected:
@@ -173,9 +173,9 @@ protected:
 template <typename Allocator>
 concept block_allocator =
     requires(Allocator allocator) {
-        { allocator.allocate_block  () } -> std::same_as<Memory_block>;
+        { allocator.block_size()     } -> std::same_as<std::size_t>;
+        { allocator.allocate_block() } -> std::same_as<Memory_block>;
         { allocator.deallocate_block(std::declval<Memory_block>()) };
-        { allocator.block_size      () } -> std::same_as<std::size_t>;
     };
 // clang-format on
 template <typename Allocator>

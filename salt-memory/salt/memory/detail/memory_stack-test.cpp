@@ -34,7 +34,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/memory_stack.hpp]") 
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, 2 * max_alignment));
         }
-        SECTION("allocate/unwind") {
+        SECTION("unwind") {
             REQUIRE(stack.allocate(end, 10u, 1u));
             auto diff = std::size_t(stack.top() - reinterpret_cast<std::byte*>(&memory));
             REQUIRE(diff == 2 * debug_fence_size + 10u);

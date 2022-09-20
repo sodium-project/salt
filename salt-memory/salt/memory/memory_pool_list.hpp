@@ -63,24 +63,24 @@ public:
     template <typename... Args>
     constexpr Memory_pool_list(size_type max_node_size, size_type block_size, Args&&... args)
             : arena_{block_size, std::forward<Args>(args)...}, stack_{allocate_block()},
-              pools_{stack_, block_end(), max_node_size} {}
+              lists_{stack_, block_end(), max_node_size} {}
 
     constexpr ~Memory_pool_list() = default;
 
     constexpr Memory_pool_list(Memory_pool_list&& other) noexcept
             : leak_detector{std::move(other)}, arena_{std::move(other.arena_)},
-              stack_{std::move(other.stack_)}, pools_{std::move(other.pools_)} {}
+              stack_{std::move(other.stack_)}, lists_{std::move(other.lists_)} {}
 
     constexpr Memory_pool_list& operator=(Memory_pool_list&& other) noexcept {
         leak_detector::operator=(std::move(other));
         arena_ = std::move(other.arena_);
         stack_ = std::move(other.stack_);
-        pools_ = std::move(other.pools_);
+        lists_ = std::move(other.lists_);
         return *this;
     }
 
     constexpr void* allocate_node(size_type node_size) {
-        auto& pool = pools_[node_size];
+        auto& pool = lists_[node_size];
         if (pool.empty()) {
             auto block = reserve_memory(pool, next_capacity());
             pool.insert(block.memory, block.size);
@@ -95,7 +95,7 @@ public:
         if (node_size > max_node_size())
             return nullptr;
 
-        auto& pool = pools_[node_size];
+        auto& pool = lists_[node_size];
         if (pool.empty()) {
             try_reserve_memory(pool, next_capacity());
             return pool.empty() ? nullptr : pool.allocate();
@@ -104,7 +104,7 @@ public:
     }
 
     constexpr void* allocate_array(size_type count, size_type node_size) {
-        auto& pool   = pools_[node_size];
+        auto& pool   = lists_[node_size];
         auto* memory = pool.empty() ? nullptr : pool.allocate(count * node_size);
         if (!memory) {
             auto block = reserve_memory(pool, next_capacity());
@@ -126,7 +126,7 @@ public:
         if (node_size > max_node_size())
             return nullptr;
 
-        auto& pool = pools_[node_size];
+        auto& pool = lists_[node_size];
         if (pool.empty()) {
             try_reserve_memory(pool, next_capacity());
             return pool.empty() ? nullptr : pool.allocate(count * node_size);
@@ -135,37 +135,37 @@ public:
     }
 
     constexpr void deallocate_node(void* node, size_type node_size) noexcept {
-        pools_[node_size].deallocate(node);
+        lists_[node_size].deallocate(node);
     }
 
     constexpr bool try_deallocate_node(void* node, size_type node_size) noexcept {
         if (node_size > max_node_size() || !arena_.contains(node))
             return false;
 
-        pools_[node_size].deallocate(node);
+        lists_[node_size].deallocate(node);
         return true;
     }
 
     constexpr void deallocate_array(void* ptr, size_type count, size_type node_size) noexcept {
-        pools_[node_size].deallocate(ptr, count * node_size);
+        lists_[node_size].deallocate(ptr, count * node_size);
     }
 
     constexpr bool try_deallocate_array(void* ptr, size_type count, size_type node_size) noexcept {
         if (node_size > max_node_size() || !arena_.contains(ptr))
             return false;
 
-        pools_[node_size].deallocate(ptr, count * node_size);
+        lists_[node_size].deallocate(ptr, count * node_size);
         return true;
     }
 
     constexpr void reserve(size_type node_size, size_type capacity) {
         SALT_ASSERT(node_size <= max_node_size());
-        auto& pool = pools_[node_size];
+        auto& pool = lists_[node_size];
         reserve_memory(pool, capacity);
     }
 
     constexpr size_type max_node_size() const noexcept {
-        return pools_.max_node_size();
+        return lists_.max_node_size();
     }
 
     constexpr size_type size() const noexcept {
@@ -174,7 +174,7 @@ public:
 
     constexpr size_type free_capacity(size_type node_size) const noexcept {
         SALT_ASSERT(node_size <= max_node_size());
-        return pools_[node_size].capacity();
+        return lists_[node_size].capacity();
     }
 
     constexpr size_type capacity() const noexcept {
@@ -193,7 +193,7 @@ private:
     }
 
     constexpr size_type next_capacity() const noexcept {
-        return arena_.next_block_size() / pools_.size();
+        return arena_.next_block_size() / lists_.size();
     }
 
     constexpr memory_stack allocate_block() {
@@ -238,7 +238,7 @@ private:
 
     Memory_arena<allocator_type, Cached> arena_;
     memory_stack                         stack_;
-    memory_list_array                    pools_;
+    memory_list_array                    lists_;
 };
 
 // clang-format off

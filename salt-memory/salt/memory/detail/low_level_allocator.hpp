@@ -14,12 +14,11 @@ template <typename Allocator> struct Low_level_allocator_leak_handler {
 template <typename Allocator, std::size_t Size = 1, std::size_t Alignment = 1>
 concept allocator_like =
     requires {
-        // Static allocate(), deallocate()
-        { Allocator::  allocate(         Size, Alignment) } -> std::same_as<void*>;
+        { Allocator::allocate(Size, Alignment)            } -> std::same_as<void*>;
         { Allocator::deallocate(nullptr, Size, Alignment) } -> std::same_as<void>;
-        // Static max_size(), info()
+
         { Allocator::max_size() } -> std::same_as<std::size_t>;
-        { Allocator::    info() } -> std::same_as<Allocator_info>;
+        { Allocator::info()     } -> std::same_as<Allocator_info>;
     };
 // clang-format on
 

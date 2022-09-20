@@ -42,26 +42,26 @@ public:
 
     template <typename... Args>
     constexpr Memory_pool(size_type node_size, size_type block_size, Args&&... args)
-            : memory_arena_{block_size, std::forward<Args>(args)...}, free_list_{node_size} {
+            : arena_{block_size, std::forward<Args>(args)...}, list_{node_size} {
         allocate_block();
     }
 
     constexpr ~Memory_pool() {}
 
     constexpr Memory_pool(Memory_pool&& other) noexcept
-            : leak_detector{std::move(other)}, memory_arena_{std::move(other.memory_arena_)},
-              free_list_{std::move(other.free_list_)} {}
+            : leak_detector{std::move(other)}, arena_{std::move(other.arena_)},
+              list_{std::move(other.list_)} {}
 
     constexpr Memory_pool& operator=(Memory_pool&& other) noexcept = default;
 
     constexpr void* allocate_node() {
-        if (free_list_.empty()) [[unlikely]]
+        if (list_.empty()) [[unlikely]]
             allocate_block();
-        return free_list_.allocate();
+        return list_.allocate();
     }
 
     constexpr void* try_allocate_node() noexcept {
-        return free_list_.empty() ? nullptr : free_list_.allocate();
+        return list_.empty() ? nullptr : list_.allocate();
     }
 
     constexpr void* allocate_array(size_type count) {
@@ -73,18 +73,18 @@ public:
     }
 
     constexpr void deallocate_node(void* node) noexcept {
-        free_list_.deallocate(node);
+        list_.deallocate(node);
     }
 
     constexpr bool try_deallocate_node(void* node) noexcept {
-        if (!memory_arena_.contains(node)) [[unlikely]]
+        if (!arena_.contains(node)) [[unlikely]]
             return false;
-        free_list_.deallocate(node);
+        list_.deallocate(node);
         return true;
     }
 
     constexpr void deallocate_array(void* ptr, size_type count) noexcept {
-        free_list_.deallocate(ptr, count * node_size());
+        list_.deallocate(ptr, count * node_size());
     }
 
     constexpr bool try_deallocate_array(void* ptr, size_type count) noexcept {
@@ -92,19 +92,19 @@ public:
     }
 
     constexpr size_type node_size() const noexcept {
-        return free_list_.node_size();
+        return list_.node_size();
     }
 
     constexpr size_type size() const noexcept {
-        return free_list_.usable_size(memory_arena_.next_block_size());
+        return list_.usable_size(arena_.next_block_size());
     }
 
     constexpr size_type capacity() const noexcept {
-        return free_list_.capacity() * node_size();
+        return list_.capacity() * node_size();
     }
 
     constexpr allocator_type& allocator() noexcept {
-        return memory_arena_.allocator();
+        return arena_.allocator();
     }
 
     static constexpr size_type min_node_size = memory_list::min_size;
@@ -121,15 +121,15 @@ private:
     }
 
     constexpr void allocate_block() {
-        auto block = memory_arena_.allocate_block();
-        free_list_.insert(static_cast<std::byte*>(block.memory), block.size);
+        auto block = arena_.allocate_block();
+        list_.insert(static_cast<std::byte*>(block.memory), block.size);
     }
 
     constexpr void* allocate_array(size_type count, size_type node_size) {
-        auto* memory = free_list_.empty() ? nullptr : free_list_.allocate(count * node_size);
+        auto* memory = list_.empty() ? nullptr : list_.allocate(count * node_size);
         if (!memory) {
             allocate_block();
-            memory = free_list_.allocate(count * node_size);
+            memory = list_.allocate(count * node_size);
             if (!memory) [[unlikely]]
                 throw std::bad_alloc();
         }
@@ -137,18 +137,18 @@ private:
     }
 
     constexpr void* try_allocate_array(size_type count, size_type node_size) noexcept {
-        return free_list_.empty() ? nullptr : free_list_.allocate(count * node_size);
+        return list_.empty() ? nullptr : list_.allocate(count * node_size);
     }
 
     constexpr bool try_deallocate_array(void* ptr, size_type count, size_type node_size) noexcept {
-        if (!memory_arena_.contains(ptr))
+        if (!arena_.contains(ptr))
             return false;
-        free_list_.deallocate(ptr, count * node_size);
+        list_.deallocate(ptr, count * node_size);
         return true;
     }
 
-    Memory_arena<allocator_type, Cached> memory_arena_;
-    memory_list                          free_list_;
+    Memory_arena<allocator_type, Cached> arena_;
+    memory_list                          list_;
 };
 
 template <typename PoolType, typename RawAllocator, bool Cached>
@@ -201,7 +201,7 @@ struct [[nodiscard]] allocator_traits<Memory_pool<PoolType, RawAllocator, Cached
                      size_type       alignment) noexcept
     {
         (void)alignment;
-        allocator.free_list_.deallocate(array, count * size);
+        allocator.list_.deallocate(array, count * size);
         allocator.on_deallocate(count * size);
     }
     // clang-format on
@@ -215,7 +215,7 @@ struct [[nodiscard]] allocator_traits<Memory_pool<PoolType, RawAllocator, Cached
     }
 
     static constexpr size_type max_alignment(allocator_type const& allocator) noexcept {
-        return allocator.free_list_.alignment();
+        return allocator.list_.alignment();
     }
 };
 
