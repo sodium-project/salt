@@ -14,7 +14,7 @@ static constexpr inline bool disable_caching = false;
 
 namespace detail {
 
-// stores memory block in an intrusive linked list and allows LIFO access
+// Stores memory block in an intrusive linked list and allows LIFO access.
 struct [[nodiscard]] Memory_block_stack final {
     using memory_block = salt::Memory_block;
 
@@ -181,13 +181,12 @@ concept block_allocator =
 template <typename Allocator>
 static constexpr inline bool is_block_allocator = block_allocator<Allocator>;
 
-// NOTE:
-//  A memory arena that manages huge memory blocks for a higher-level allocator. Some allocators
-//  like Memory_stack work on huge memory blocks, this class manages them for those allocators. It
-//  uses a BlockAllocator for the allocation of those blocks. The memory blocks in use are put onto
-//  a stack like structure, deallocation will pop from the top, so it is only possible to deallocate
-//  the last allocated block of the arena. By default, blocks are not really deallocated but stored
-//  in a cache.
+// A memory arena that manages huge memory blocks for a higher-level allocator. Some allocators
+// like Memory_stack work on huge memory blocks, this class manages them for those allocators. It
+// uses a BlockAllocator for the allocation of those blocks. The memory blocks in use are put onto
+// a stack like structure, deallocation will pop from the top, so it is only possible to deallocate
+// the last allocated block of the arena. By default, blocks are not really deallocated but stored
+// in a cache.
 template <block_allocator BlockAllocator, bool Cached = enable_caching>
 class [[nodiscard]] Memory_arena : BlockAllocator, detail::Memory_arena_cache<Cached> {
     using memory_cache       = detail::Memory_arena_cache<Cached>;
@@ -274,12 +273,11 @@ private:
     memory_block_stack used_blocks_;
 };
 
-// NOTE:
-//  An allocator that uses a given RawAllocator for allocating the blocks. It calls the
-//  allocate_array() function with a node of size 1 and maximum alignment on the used allocator for
-//  the block allocation. The size of the next memory block will grow by a given factor after each
-//  allocation, allowing an amortized constant allocation time in the higher level allocator. The
-//  factor can be given as rational in the template parameter, default is 2.
+// An allocator that uses a given RawAllocator for allocating the blocks. It calls the
+// allocate_array() function with a node of size 1 and maximum alignment on the used allocator for
+// the block allocation. The size of the next memory block will grow by a given factor after each
+// allocation, allowing an amortized constant allocation time in the higher level allocator. The
+// factor can be given as rational in the template parameter, default is 2.
 // clang-format off
 template <
     typename RawAllocator = Default_allocator,
@@ -339,10 +337,9 @@ private:
     size_type block_size_;
 };
 
-// NOTE:
-//  An allocator that allows only one block allocation. It can be used to prevent higher-level
-//  allocators from expanding. The one block allocation is performed through the allocate_array()
-//  function of the given RawAllocator.
+// An allocator that allows only one block allocation. It can be used to prevent higher-level
+// allocators from expanding. The one block allocation is performed through the allocate_array()
+// function of the given RawAllocator.
 template <typename RawAllocator = Default_allocator>
 class [[nodiscard]] Fixed_block_allocator : allocator_traits<RawAllocator>::allocator_type {
     using memory_block = Memory_block;
@@ -397,12 +394,13 @@ template <typename RawAllocator>
 using default_block_allocator = Growing_block_allocator<RawAllocator>;
 
 template <template <typename...> typename Wrapper, typename BlockAllocator, typename... Args>
-constexpr auto make_block_allocator(std::true_type, std::size_t block_size, Args&&... args) {
+requires salt::is_block_allocator<BlockAllocator>
+constexpr auto make_block_allocator(std::size_t block_size, Args&&... args) {
     return BlockAllocator{block_size, std::forward<Args>(args)...};
 }
 
 template <template <typename...> typename Wrapper, typename RawAllocator>
-constexpr auto make_block_allocator(std::false_type, std::size_t block_size,
+constexpr auto make_block_allocator(std::size_t  block_size,
                                     RawAllocator allocator = RawAllocator()) {
     return Wrapper<RawAllocator>(block_size, std::move(allocator));
 }
@@ -418,19 +416,16 @@ using block_allocator_type =
 template <typename BlockOrRawAllocator, typename... Args>
 constexpr block_allocator_type<BlockOrRawAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
-    using is_block_or_raw_allocator_t = std::bool_constant<is_block_allocator<BlockOrRawAllocator>>;
     return detail::make_block_allocator<detail::default_block_allocator, BlockOrRawAllocator>(
-            is_block_or_raw_allocator_t{}, block_size, std::forward<Args>(args)...);
+            block_size, std::forward<Args>(args)...);
 }
 
-template <template <typename...> typename BlockAllocator,
-          typename                        BlockOrRawAllocator,
-          typename...                     Args>
+template <template <typename...> typename BlockAllocator, typename BlockOrRawAllocator,
+          typename... Args>
 constexpr block_allocator_type<BlockOrRawAllocator, BlockAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
-    using is_block_or_raw_allocator_t = std::bool_constant<is_block_allocator<BlockOrRawAllocator>>;
     return detail::make_block_allocator<BlockAllocator, BlockOrRawAllocator>(
-            is_block_or_raw_allocator_t{}, block_size, std::forward<Args>(args)...);
+            block_size, std::forward<Args>(args)...);
 }
 // clang-format on
 

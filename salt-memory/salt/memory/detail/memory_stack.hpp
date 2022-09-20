@@ -14,7 +14,7 @@ struct [[nodiscard]] Fixed_memory_stack final {
     constexpr Fixed_memory_stack(Fixed_memory_stack&& other) noexcept
             : current_{std::exchange(other.current_, nullptr)} {}
 
-    constexpr ~Fixed_memory_stack() noexcept = default;
+    constexpr ~Fixed_memory_stack() = default;
 
     constexpr Fixed_memory_stack& operator=(Fixed_memory_stack&& other) noexcept {
         current_ = std::exchange(other.current_, nullptr);
@@ -38,7 +38,7 @@ struct [[nodiscard]] Fixed_memory_stack final {
         return memory;
     }
 
-    constexpr void* allocate(const std::byte* end, std::size_t size, std::size_t alignment,
+    constexpr void* allocate(std::byte const* end, std::size_t size, std::size_t alignment,
                              std::size_t fence_size = debug_fence_size) noexcept {
         if (current_ == nullptr)
             return nullptr;
@@ -55,9 +55,9 @@ struct [[nodiscard]] Fixed_memory_stack final {
                                        std::size_t fence_size = debug_fence_size) noexcept {
         shift(fence_size, debug_magic::fence_memory);
         shift(align_offset, debug_magic::alignment_memory);
-        auto mem = shift_top(size);
+        auto memory = shift_top(size);
         shift(fence_size, debug_magic::fence_memory);
-        return mem;
+        return memory;
     }
 
     constexpr void unwind(std::byte* top) noexcept {
@@ -72,5 +72,7 @@ struct [[nodiscard]] Fixed_memory_stack final {
 private:
     std::byte* current_;
 };
+
+using Memory_stack = Fixed_memory_stack;
 
 } // namespace salt::detail

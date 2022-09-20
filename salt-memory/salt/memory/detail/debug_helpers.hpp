@@ -12,7 +12,8 @@ enum class debug_magic : std::uint8_t;
 
 namespace detail {
 
-using debug_fill_enabled               = std::integral_constant<bool, SALT_MEMORY_DEBUG_FILL>;
+using debug_fill_enabled = std::bool_constant<SALT_MEMORY_DEBUG_FILL>;
+
 constexpr std::size_t debug_fence_size = SALT_MEMORY_DEBUG_FILL ? SALT_MEMORY_DEBUG_FENCE : 0u;
 
 #if SALT_MEMORY_DEBUG_FILL
@@ -50,8 +51,8 @@ void debug_handle_memory_leak(Allocator_info const& info, std::ptrdiff_t amount)
 // clang-format off
 template <std::predicate Predicate>
 constexpr void debug_check_pointer([[maybe_unused]] Predicate             predicate,
-                                   [[maybe_unused]] Allocator_info const& info,
-                                   [[maybe_unused]] void*                 ptr) {
+                                   [[maybe_unused]] Allocator_info const& info     ,
+                                   [[maybe_unused]] void*                 ptr      ) {
 #if SALT_MEMORY_DEBUG_POINTER
     if (!predicate())
         debug_handle_invalid_ptr(info, ptr);

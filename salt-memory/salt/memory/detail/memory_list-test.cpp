@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <salt/memory/detail/free_list.hpp>
+#include <salt/memory/detail/memory_list.hpp>
 #include <salt/memory/static_allocator.hpp>
 
 #include <algorithm>
@@ -10,7 +10,7 @@
 using namespace salt;
 using namespace salt::detail;
 
-template <typename FreeList> void use_list_node(FreeList& list) {
+template <typename MemoryList> void use_list_node(MemoryList& list) {
     std::vector<void*> ptrs;
     auto               capacity = list.capacity();
 
@@ -73,7 +73,7 @@ template <typename FreeList> void use_list_node(FreeList& list) {
     }
 }
 
-template <typename FreeList> void check_list(FreeList& list, void* memory, std::size_t size) {
+template <typename MemoryList> void check_list(MemoryList& list, void* memory, std::size_t size) {
     auto old_capacity = list.capacity();
 
     list.insert(memory, size);
@@ -93,7 +93,7 @@ template <typename FreeList> void check_list(FreeList& list, void* memory, std::
     use_list_node(list);
 }
 
-template <typename FreeList> void check_move(FreeList& list) {
+template <typename MemoryList> void check_move(MemoryList& list) {
     Static_allocator_storage<1024> memory;
     list.insert(&memory, 1024);
 
@@ -131,7 +131,7 @@ template <typename FreeList> void check_move(FreeList& list) {
     list.deallocate(ptr);
 }
 
-void use_list_array(Free_list& list) {
+void use_list_array(Memory_list& list) {
     std::vector<void*> ptrs;
     auto               capacity = list.capacity();
     // We would need capacity / 3 nodes, but the memory might not be contiguous.
@@ -189,8 +189,8 @@ void use_list_array(Free_list& list) {
     }
 }
 
-TEST_CASE("salt::detail::Unordered_free_list", "[salt-memory/free_memory_list.hpp]") {
-    Unordered_free_list list(4);
+TEST_CASE("salt::detail::Unordered_memory_list", "[salt-memory/memory_list.hpp]") {
+    Unordered_memory_list list(4);
     REQUIRE(list.empty());
     REQUIRE(list.node_size() >= 4);
     REQUIRE(list.capacity() == 0u);
@@ -219,8 +219,8 @@ TEST_CASE("salt::detail::Unordered_free_list", "[salt-memory/free_memory_list.hp
     }
 }
 
-TEST_CASE("salt::detail::Free_list", "[salt-memory/free_memory_list.hpp]") {
-    Free_list list(4);
+TEST_CASE("salt::detail::Memory_list", "[salt-memory/memory_list.hpp]") {
+    Memory_list list(4);
     REQUIRE(list.empty());
     REQUIRE(list.node_size() >= 4);
     REQUIRE(list.capacity() == 0u);

@@ -15,14 +15,13 @@ struct Memory_pool_leak_handler {
 };
 } // namespace detail
 
-// NOTE:
-//  It uses a memory_arena with a given BlockOrRawAllocator defaulting to Growing_block_allocator,
-//  subdivides them in small nodes of given size and puts them onto a free list. Allocation and
-//  deallocation simply remove or add nodes from this list and are thus fast. The way the list is
-//  maintained can be controlled via the PoolType which is either Node_pool, Array_pool. This kind
-//  of allocator is ideal for fixed size allocations and deallocations in any order, for example in
-//  a node based container like std::list. It is not so good for different allocation sizes and has
-//  some drawbacks for arrays.
+// It uses a memory_arena with a given BlockOrRawAllocator defaulting to Growing_block_allocator,
+// subdivides them in small nodes of given size and puts them onto a free list. Allocation and
+// deallocation simply remove or add nodes from this list and are thus fast. The way the list is
+// maintained can be controlled via the PoolType which is either Node_pool, Array_pool. This kind
+// of allocator is ideal for fixed size allocations and deallocations in any order, for example in
+// a node based container like std::list. It is not so good for different allocation sizes and has
+// some drawbacks for arrays.
 // clang-format off
 template <
     typename PoolType            = Node_pool,
@@ -31,7 +30,7 @@ template <
 >
 // clang-format on
 class [[nodiscard]] Memory_pool : detail::Default_leak_detector<detail::Memory_pool_leak_handler> {
-    using free_list          = typename PoolType::type;
+    using memory_list        = typename PoolType::type;
     using memory_block_stack = detail::Memory_block_stack;
     using leak_detector      = detail::Default_leak_detector<detail::Memory_pool_leak_handler>;
 
@@ -108,10 +107,10 @@ public:
         return memory_arena_.allocator();
     }
 
-    static constexpr size_type min_node_size = free_list::min_element_size;
+    static constexpr size_type min_node_size = memory_list::min_size;
 
     static constexpr size_type min_block_size(size_type node_size, size_type count) noexcept {
-        return memory_block_stack::offset() + free_list::min_block_size(node_size, count);
+        return memory_block_stack::offset() + memory_list::min_block_size(node_size, count);
     }
 
 private:
@@ -149,7 +148,7 @@ private:
     }
 
     Memory_arena<allocator_type, Cached> memory_arena_;
-    free_list                            free_list_;
+    memory_list                          free_list_;
 };
 
 template <typename PoolType, typename RawAllocator, bool Cached>

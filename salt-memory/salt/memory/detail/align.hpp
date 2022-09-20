@@ -31,11 +31,11 @@ constexpr std::size_t ilog2_base(std::size_t value) noexcept {
 #endif
 }
 
-constexpr std::size_t ilog2(std::size_t value) {
+constexpr std::size_t ilog2(std::size_t value) noexcept {
     return ilog2_base(value) - 1u;
 }
 
-constexpr std::size_t ilog2_ceil(std::size_t value) {
+constexpr std::size_t ilog2_ceil(std::size_t value) noexcept {
     return ilog2_base(value) - std::size_t(is_pow2(value));
 }
 

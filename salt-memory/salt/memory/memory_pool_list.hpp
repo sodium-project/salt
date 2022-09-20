@@ -1,6 +1,6 @@
 #pragma once
 #include <salt/memory/detail/align.hpp>
-#include <salt/memory/detail/free_list_array.hpp>
+#include <salt/memory/detail/memory_list_array.hpp>
 #include <salt/memory/detail/memory_stack.hpp>
 
 #include <salt/memory/debugging.hpp>
@@ -17,29 +17,26 @@ struct Memory_pool_list_leak_handler {
 };
 } // namespace detail
 
-// NOTE:
-//  A BucketType for Memory_pool_list defining that there is a bucket, i.e. pool, for each
-//  size. That means that for each possible size up to an upper bound there will be a seperate free
-//  list. Allocating a node will not waste any memory.
+// A BucketType for Memory_pool_list defining that there is a bucket, i.e. pool, for each
+// size. That means that for each possible size up to an upper bound there will be a seperate free
+// list. Allocating a node will not waste any memory.
 struct [[nodiscard]] Identity_buckets final {
     using type = detail::Identity_access_policy;
 };
 
-// NOTE:
-//  A BucketType for Memory_pool_list defining that there is a bucket, i.e. pool, for each
-//  power of two. That means for each power of two up to an upper bound there will be a separate
-//  free list. Allocating a node will only waste half of the memory.
+// A BucketType for Memory_pool_list defining that there is a bucket, i.e. pool, for each
+// power of two. That means for each power of two up to an upper bound there will be a separate
+// free list. Allocating a node will only waste half of the memory.
 struct [[nodiscard]] Log2_buckets final {
     using type = detail::Log2_access_policy;
 };
 
-// NOTE:
-//  An stateful allocator that behaves as a collection of multiple Memory_pool objects. It maintains
-//  a list of multiple free lists, whose types are controlled via the PoolType tags defined in
-//  memory_pool_type.hpp, each of a different size as defined in the BucketType (Identity_buckets or
-//  Log2_buckets). Allocating a node of given size will use the appropriate free list. This
-//  allocator is ideal for allocations in any order but with a predefined set of sizes, not only one
-//  size like Memory_pool.
+// An stateful allocator that behaves as a collection of multiple Memory_pool objects. It maintains
+// a list of multiple memory lists, whose types are controlled via the PoolType tags defined in
+// memory_pool_type.hpp, each of a different size as defined in the BucketType (Identity_buckets or
+// Log2_buckets). Allocating a node of given size will use the appropriate free list. This
+// allocator is ideal for allocations in any order but with a predefined set of sizes, not only one
+// size like Memory_pool.
 // clang-format off
 template <
     typename PoolType            = Node_pool,
@@ -50,10 +47,10 @@ template <
 // clang-format on
 class [[nodiscard]] Memory_pool_list
         : detail::Default_leak_detector<detail::Memory_pool_list_leak_handler> {
-    using free_list       = typename PoolType::type;
-    using free_list_array = detail::Free_list_array<free_list, typename BucketType::type>;
-    using memory_stack    = detail::Fixed_memory_stack;
-    using leak_detector   = detail::Default_leak_detector<detail::Memory_pool_list_leak_handler>;
+    using memory_list       = typename PoolType::type;
+    using memory_list_array = detail::Memory_list_array<memory_list, typename BucketType::type>;
+    using memory_stack      = detail::Fixed_memory_stack;
+    using leak_detector     = detail::Default_leak_detector<detail::Memory_pool_list_leak_handler>;
 
 public:
     using allocator_type  = block_allocator_type<BlockOrRawAllocator>;
@@ -61,6 +58,7 @@ public:
     using difference_type = typename allocator_type::difference_type;
     using pool_type       = PoolType;
     using bucket_type     = BucketType;
+    using const_iterator  = typename memory_list_array::const_iterator;
 
     template <typename... Args>
     constexpr Memory_pool_list(size_type max_node_size, size_type block_size, Args&&... args)
@@ -202,9 +200,9 @@ private:
         return memory_stack{arena_.allocate_block().memory};
     }
 
-    constexpr std::byte const* block_end() const noexcept {
+    constexpr const_iterator block_end() const noexcept {
         auto block = arena_.current_block();
-        return static_cast<std::byte const*>(block.memory) + block.size;
+        return static_cast<const_iterator>(block.memory) + block.size;
     }
 
     constexpr bool fill(typename pool_type::type& pool) noexcept {
@@ -240,7 +238,7 @@ private:
 
     Memory_arena<allocator_type, Cached> arena_;
     memory_stack                         stack_;
-    free_list_array                      pools_;
+    memory_list_array                    pools_;
 };
 
 // clang-format off

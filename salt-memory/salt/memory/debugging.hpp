@@ -5,10 +5,9 @@
 
 namespace salt {
 
-// NOTE:
-//  The magic values that are used for debug filling. If SALT_MEMORY_DEBUG_FILL is true, memory will
-//  be filled to help detect use-after-free or missing initialization errors. These are the
-//  constants for the different types.
+// The magic values that are used for debug filling. If SALT_MEMORY_DEBUG_FILL is true, memory will
+// be filled to help detect use-after-free or missing initialization errors. These are the
+// constants for the different types.
 enum class debug_magic : std::uint8_t {
     // Marks internal memory used by the allocator - "allocated block".
     internal_memory = 0xAB,
@@ -24,9 +23,8 @@ enum class debug_magic : std::uint8_t {
     fence_memory = 0xFD
 };
 
-// NOTE:
-//  Contains information about an allocator. It can be used for logging in the various handler
-//  functions.
+// Contains information about an allocator. It can be used for logging in the various handler
+// functions.
 struct [[nodiscard]] Allocator_info final {
     std::string_view name;
     void const*      allocator;
