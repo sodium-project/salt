@@ -239,10 +239,14 @@ endmacro(_salt_unit_tests)
 
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
 # it unless you know what you are doing.
-macro(_salt_install_headers _ARG_NAME)
-    install(DIRECTORY   "${CMAKE_CURRENT_LIST_DIR}/salt"
-            DESTINATION "salt-${_ARG_NAME}/include"
-            FILES_MATCHING PATTERN "*.hpp")
+macro(_salt_install_headers _ARG_NAME _ARG_DIRS)
+    foreach(DIR IN ITEMS ${_ARG_DIRS})
+        install(DIRECTORY   "${CMAKE_CURRENT_LIST_DIR}/salt"
+                DESTINATION "salt-${_ARG_NAME}/include"
+                FILES_MATCHING
+                    PATTERN "*.hpp"
+                    PATTERN "*.h")
+    endforeach()
 endmacro(_salt_install_headers)
 
 # salt_metal_library(<name>
