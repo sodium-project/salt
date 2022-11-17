@@ -281,28 +281,28 @@ endfunction(salt_metal_library)
 
 # salt_static_library(<name>
 #     <WINDOWS|APPLE|MACOSX|COMMON>
-#          <SOURCE|TEST|LINK> items...
-#         [<SOURCE|TEST|LINK> items...]...
+#          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
+#         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...
 #     [<WINDOWS|APPLE|MACOSX|COMMON>
-#          <SOURCE|TEST|LINK> items...
-#         [<SOURCE|TEST|LINK> items...]...]...)
+#          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
+#         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...]...)
 function(_salt_static_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
-                          _ARG                  # variable prefix
-                          ""                    # options
-                          ""                    # one   value keywords
-                          "SOURCE;TEST;LINK")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                      # start at the 1st argument
+                          _ARG                              # variable prefix
+                          ""                                # options
+                          ""                                # one   value keywords
+                          "SOURCE;TEST;LINK;INCLUDE_DIR")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
     add_library("${_TARGET}" STATIC)
     add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
-    target_include_directories("${_TARGET}" PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
+    target_include_directories("${_TARGET}" PUBLIC "${CMAKE_CURRENT_LIST_DIR}" ${_ARG_INCLUDE_DIR})
     target_link_libraries("${_TARGET}"
                           PUBLIC  salt::project_settings
                                   "${_ARG_LINK}")
     target_sources("${_TARGET}" PRIVATE "${_ARG_SOURCE}")
     install(TARGETS "${_TARGET}"
             ARCHIVE DESTINATION "salt-${_ARG_NAME}/lib")
-    _salt_install_headers("${_ARG_NAME}")
+    _salt_install_headers("${_ARG_NAME}" ".;${_ARG_INCLUDE_DIR}")
     _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
 endfunction(_salt_static_library)
 
@@ -347,7 +347,7 @@ function(_salt_interface_library _ARG_NAME)
     target_link_libraries("${_TARGET}"
                           INTERFACE salt::project_settings
                                     "${_ARG_LINK}")
-    _salt_install_headers("${_ARG_NAME}")
+    _salt_install_headers("${_ARG_NAME}" ".;${_ARG_INCLUDE_DIR}")
     _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
 endfunction(_salt_interface_library)
 
