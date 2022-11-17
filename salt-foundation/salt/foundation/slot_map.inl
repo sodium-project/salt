@@ -85,7 +85,7 @@ constexpr auto SALT_SLOT_MAP::emplace(Args&&... args) -> emplace_result {
 
 SALT_SLOT_MAP_TEMPLATE
 constexpr auto SALT_SLOT_MAP::erase(iterator it) noexcept -> iterator {
-    auto value_idx = std::ranges::distance(begin(), it);
+    auto value_idx = ranges::distance(begin(), it);
     erase_impl(static_cast<index_type>(value_idx));
     return std::ranges::next(begin(), value_idx);
 }
@@ -149,7 +149,11 @@ constexpr auto SALT_SLOT_MAP::find(key_type key) noexcept -> iterator {
 
 SALT_SLOT_MAP_TEMPLATE
 constexpr bool SALT_SLOT_MAP::operator==(Slot_map const& other) const noexcept {
-    return std::ranges::is_permutation(*this, other);
+#ifdef SALT_LIBCPP_HAS_NO_RANGES
+    return ranges::is_permutation(begin(), end(), other.begin());
+#else
+    return ranges::is_permutation(*this, other);
+#endif
 }
 
 SALT_SLOT_MAP_TEMPLATE

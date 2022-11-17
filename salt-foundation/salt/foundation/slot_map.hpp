@@ -4,10 +4,10 @@
 
 namespace salt {
 
-#if SALT_CLANG_FULL_VER < 140000
+#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VER < 140000)
 // Clang 14.0 gives an error: 'out-of-line definition' when defining member function enabled with
 // concept outside class. That seems a bug since the code should be correct.
-// Related issue from LLVM repo: https://github.com/llvm/llvm-project/issues/56442
+// Related issue from LLVM repo: https://github.com/llvm/llvm-project/issues/56482
 #    define CLANG_ERROR_OUT_OF_LINE_DEFINITION (1)
 #endif
 
@@ -101,7 +101,7 @@ public:
 
     constexpr bool      empty() const noexcept { return begin() == end(); }
     constexpr size_type size () const noexcept {
-        return static_cast<size_type>(std::ranges::distance(begin(), end()));
+        return static_cast<size_type>(ranges::distance(begin(), end()));
     }
 
     static constexpr size_type max_size() noexcept { return free_idx_null - index_type{1}; }

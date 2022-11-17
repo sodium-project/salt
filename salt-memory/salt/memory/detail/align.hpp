@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <climits>
 #include <salt/meta.hpp>
 
 namespace salt::detail {

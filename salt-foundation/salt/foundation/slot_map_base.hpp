@@ -3,6 +3,22 @@
 #include <salt/foundation/zip_iterator.hpp>
 #include <salt/meta.hpp>
 
+#if SALT_TARGET(APPLE)
+#define SALT_LIBCPP_HAS_NO_RANGES (1)
+#else
+#include <ranges>
+#endif
+
+namespace salt::ranges {
+#ifdef SALT_LIBCPP_HAS_NO_RANGES
+using std::distance;
+using std::is_permutation;
+#else
+using std::ranges::distance;
+using std::ranges::is_permutation;
+#endif
+}
+
 namespace salt {
 
 template <typename Container, typename Friend> struct Container_view : private Container {
@@ -14,8 +30,8 @@ template <typename Container, typename Friend> struct Container_view : private C
     constexpr auto cbegin() const noexcept { return begin(); }
     constexpr auto cend  () const noexcept { return end  (); }
 
-    constexpr bool empty () const noexcept { return begin() == end();                      }
-    constexpr auto size  () const noexcept { return std::ranges::distance(begin(), end()); }
+    constexpr bool empty () const noexcept { return begin() == end();                 }
+    constexpr auto size  () const noexcept { return ranges::distance(begin(), end()); }
     // clang-format on
 
     constexpr decltype(auto) operator[](typename Container::size_type idx) noexcept {

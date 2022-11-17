@@ -83,11 +83,11 @@ constexpr void swap(pair<T0, T1>& l, pair<T0, T1>& r) noexcept (
 }
 
 template <typename T0, typename T1>
-constexpr void swap(pair<T0,T1> const& l, pair<T0,T1> const& r) noexcept (
+constexpr void swap(pair<T0, T1> const& l, pair<T0, T1> const& r) noexcept (
     noexcept(l.swap(r))
 ) requires
-    std::is_swappable_v<typename pair<T0,T1>::first_type  const> and
-    std::is_swappable_v<typename pair<T0,T1>::second_type const>
+    std::is_swappable_v<typename pair<T0, T1>::first_type  const> and
+    std::is_swappable_v<typename pair<T0, T1>::second_type const>
 {
     l.swap(r);
 }

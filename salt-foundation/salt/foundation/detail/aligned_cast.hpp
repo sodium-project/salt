@@ -8,11 +8,13 @@ namespace salt::detail {
 using std::assume_aligned;
 #else
 template <std::size_t N, typename T> [[nodiscard]] constexpr T* assume_aligned(T* ptr) {
+    static_assert(N != 0 && (N & (N - 1)) == 0, "assume_aligned<N>(p) requires N to be a power of two");
 #    if __has_builtin(__builtin_assume_aligned)
-    if
-        not consteval return static_cast<T*>(__builtin_assume_aligned(ptr, N));
-    else
+    if consteval {
         return ptr;
+    } else {
+        return static_cast<T*>(__builtin_assume_aligned(ptr, N));
+    }
 #    else
     return ptr;
 #    endif
