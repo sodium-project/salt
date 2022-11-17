@@ -27,10 +27,8 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
         error("Failed to initialize GLFW, error message: '", error_message, "'");
     }
 
-    // GL 4.3 + GLSL 430
-    [[maybe_unused]] char const* glsl_version = "#version 430";
-    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, SALT_OPENGL_VERSION_MAJOR);
+    ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, SALT_OPENGL_VERSION_MINOR);
     ::glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     native_window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.data(), nullptr,

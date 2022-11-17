@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 
+#include <fast_io.h>
 #include <fast_io_device.h>
 #include <salt/foundation/detail/source_location.hpp>
 
@@ -29,7 +30,7 @@ constexpr std::string_view end() noexcept {
 constexpr std::size_t print_reserve_size(fast_io::io_reserve_type_t<char, Color>) {
     using namespace fast_io;
     constexpr auto reserve_size = print_reserve_size(io_reserve_type<char, std::uint8_t>);
-    constexpr auto total_size   = (reserve_size * 3 + 6);
+    constexpr auto total_size   = (reserve_size * 3 + 10);
     return total_size;
 }
 

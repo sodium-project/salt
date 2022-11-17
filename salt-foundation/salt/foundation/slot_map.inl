@@ -150,7 +150,8 @@ constexpr auto SALT_SLOT_MAP::find(key_type key) noexcept -> iterator {
 SALT_SLOT_MAP_TEMPLATE
 constexpr bool SALT_SLOT_MAP::operator==(Slot_map const& other) const noexcept {
 #ifdef SALT_LIBCPP_HAS_NO_RANGES
-    return ranges::is_permutation(begin(), end(), other.begin());
+    return ranges::is_permutation(std::begin(*this), std::end(*this),
+                                  std::begin(other), std::end(other));
 #else
     return ranges::is_permutation(*this, other);
 #endif

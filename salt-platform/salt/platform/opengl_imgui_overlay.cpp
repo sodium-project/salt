@@ -48,7 +48,7 @@ Opengl_imgui_overlay::Opengl_imgui_overlay(Opengl_window const& window) noexcept
 
     // Init
     ImGui_ImplGlfw_InitForOpenGL(window.native_window_, true);
-    ImGui_ImplOpenGL3_Init("#version 430");
+    ImGui_ImplOpenGL3_Init(SALT_GLSL_VERSION);
 }
 
 Opengl_imgui_overlay::~Opengl_imgui_overlay() {

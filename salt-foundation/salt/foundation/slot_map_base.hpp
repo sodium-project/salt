@@ -4,9 +4,9 @@
 #include <salt/meta.hpp>
 
 #if SALT_TARGET(APPLE)
-#define SALT_LIBCPP_HAS_NO_RANGES (1)
+#    define SALT_LIBCPP_HAS_NO_RANGES (1)
 #else
-#include <ranges>
+#    include <ranges>
 #endif
 
 namespace salt::ranges {

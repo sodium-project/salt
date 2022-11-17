@@ -100,7 +100,7 @@ struct [[nodiscard]] Playground_layer final {
     }
 };
 
-void salt::application_main(Application& app) {
+void salt::main(Application& app) {
 #ifdef RUN_IMGUI_DEMO
     show_imgui_demo();
 #endif

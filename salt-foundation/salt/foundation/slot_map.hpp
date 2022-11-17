@@ -1,6 +1,8 @@
 #pragma once
-#include <algorithm>
 #include <salt/foundation/slot_map_base.hpp>
+
+#include <algorithm>
+#include <vector>
 
 namespace salt {
 

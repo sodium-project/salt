@@ -185,7 +185,7 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
                             -S${CMAKE_SOURCE_DIR}/libs/glad
                             -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/output/libs/glad
                             -DGLAD_PROFILE=core
-                            -DGLAD_API="gl=4.6" # API type/version pairs, like "gl=3.2,gles=", no version means latest
+                            -DGLAD_API="gl=${SALT_OPENGL_VERSION_MAJOR}.${SALT_OPENGL_VERSION_MINOR}" # API type/version pairs, like "gl=3.2,gles=3.2", no version means latest
                             -DGLAD_INSTALL=ON
                             ${SALT_CMAKE_ARGUMENTS}
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -246,17 +246,17 @@ install(TARGETS imgui)
 # This target is OpenGL-Windows-specific.
 file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
 [[if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
-    add_library(imgui_opengl_win STATIC)
-    target_include_directories(imgui_opengl_win PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
-    target_sources(imgui_opengl_win PRIVATE
+    add_library(imgui_opengl STATIC)
+    target_include_directories(imgui_opengl PRIVATE "${IMGUI_ROOT}" "${GLFW_ROOT}/include")
+    target_sources(imgui_opengl PRIVATE
                    "${IMGUI_ROOT}/backends/imgui_impl_glfw.cpp"
                    "${IMGUI_ROOT}/backends/imgui_impl_opengl3.cpp")
     set(IMGUI_OPENGL_PRIVATE_HEADERS
         "${IMGUI_ROOT}/backends/imgui_impl_glfw.h"
         "${IMGUI_ROOT}/backends/imgui_impl_opengl3.h")
-    set_target_properties(imgui_opengl_win PROPERTIES
+    set_target_properties(imgui_opengl PROPERTIES
                           PRIVATE_HEADER "${IMGUI_OPENGL_PRIVATE_HEADERS}")
-    install(TARGETS imgui_opengl_win)
+    install(TARGETS imgui_opengl)
 endif()
 ]])
 
@@ -265,19 +265,19 @@ file(APPEND "${CMAKE_BINARY_DIR}/generated/libs/imgui/CMakeLists.txt"
 [[if(SALT_TARGET_GRAPHICS STREQUAL "Metal")
     enable_language(OBJCXX)
 
-    add_library(imgui_metal_macosx STATIC)
-    target_include_directories(imgui_metal_macosx PRIVATE "${IMGUI_ROOT}")
-    target_compile_options(imgui_metal_macosx PRIVATE -fobjc-arc)
-    target_sources(imgui_metal_macosx PRIVATE
+    add_library(imgui_metal STATIC)
+    target_include_directories(imgui_metal PRIVATE "${IMGUI_ROOT}")
+    target_compile_options(imgui_metal PRIVATE -fobjc-arc)
+    target_sources(imgui_metal PRIVATE
                    "${IMGUI_ROOT}/backends/imgui_impl_metal.mm"
                    "${IMGUI_ROOT}/backends/imgui_impl_osx.mm")
     set(IMGUI_METAL_PRIVATE_HEADERS
         "${IMGUI_ROOT}/backends/imgui_impl_metal.h"
         "${IMGUI_ROOT}/backends/imgui_impl_osx.h")
-    set_target_properties(imgui_metal_macosx PROPERTIES
+    set_target_properties(imgui_metal PROPERTIES
                           PRIVATE_HEADER "${IMGUI_METAL_PRIVATE_HEADERS}")
-    target_link_libraries(imgui_metal_macosx PRIVATE "-framework Metal" "-framework AppKit")
-    install(TARGETS imgui_metal_macosx)
+    target_link_libraries(imgui_metal PRIVATE "-framework Metal" "-framework AppKit")
+    install(TARGETS imgui_metal)
 endif()
 ]])
 

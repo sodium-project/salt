@@ -112,6 +112,13 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
 
         salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
+
+        if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
+            set(SALT_OPENGL_VERSION_MAJOR 4 CACHE STRING "[READONLY] The target graphics api version major." FORCE)
+            set(SALT_OPENGL_VERSION_MINOR 6 CACHE STRING "[READONLY] The target graphics api version minor." FORCE)
+            add_definitions("-DSALT_OPENGL_VERSION_MAJOR=${SALT_OPENGL_VERSION_MAJOR}")
+            add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
+        endif()
     elseif(APPLE)
         if(NOT DEFINED CMAKE_OSX_SYSROOT)
             message(FATAL_ERROR "The required variable CMAKE_OSX_SYSROOT does not exist in CMake cache.\n"
@@ -135,6 +142,13 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
             set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
 
             salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
+
+            if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
+                set(SALT_OPENGL_VERSION_MAJOR 4 CACHE STRING "[READONLY] The target graphics api version major." FORCE)
+                set(SALT_OPENGL_VERSION_MINOR 1 CACHE STRING "[READONLY] The target graphics api version minor." FORCE)
+                add_definitions("-DSALT_OPENGL_VERSION_MAJOR=${SALT_OPENGL_VERSION_MAJOR}")
+                add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
+            endif()
         endif()
     endif()
 endif()
@@ -209,7 +223,13 @@ function(salt_macosx_app _NAME)
     endif()
     add_executable("salt_${_NAME}" MACOSX_BUNDLE)
     set_target_properties("salt_${_NAME}" PROPERTIES
-                          MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}")
+                          BUNDLE True
+                          MACOSX_BUNDLE_GUI_IDENTIFIER "com.sodium-project.${_SALT_MACOSX_BUNDLE_NAME}"
+                          MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
+                          MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
+                          MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}"
+                          XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+                          XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
     target_sources("salt_${_NAME}" PRIVATE "${_SALT_MACOSX_APP_SOURCES}")
     target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
     target_link_libraries("salt_${_NAME}" PRIVATE "-framework AppKit")
