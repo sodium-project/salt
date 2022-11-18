@@ -189,9 +189,9 @@ static constexpr inline bool is_block_allocator = block_allocator<Allocator>;
 // in a cache.
 template <block_allocator BlockAllocator, bool Cached = enable_caching>
 class [[nodiscard]] Memory_arena : BlockAllocator, detail::Memory_arena_cache<Cached> {
-    using memory_cache       = detail::Memory_arena_cache<Cached>;
-    using memory_block       = Memory_block;
-    using memory_block_stack = detail::Memory_block_stack;
+    using memory_cache = detail::Memory_arena_cache<Cached>;
+    using memory_block = Memory_block;
+    using memory_stack = detail::Memory_block_stack;
 
 public:
     using allocator_type  = BlockAllocator;
@@ -212,8 +212,9 @@ public:
     }
 
     constexpr Memory_arena(Memory_arena&& other) noexcept
-            : allocator_type{std::move(other)}, memory_cache{std::move(other)},
-              used_blocks_{std::move(other.used_blocks_)} {}
+            : allocator_type{std::move(other)             },
+              memory_cache  {std::move(other)             },
+              used_blocks_  {std::move(other.used_blocks_)} {}
 
     constexpr Memory_arena& operator=(Memory_arena&& other) noexcept = default;
 
@@ -257,7 +258,7 @@ public:
     }
 
     constexpr size_type next_block_size() const noexcept {
-        return memory_cache::empty() ? allocator_type::block_size() - memory_block_stack::offset()
+        return memory_cache::empty() ? allocator_type::block_size() - memory_stack::offset()
                                      : memory_cache::block_size();
     }
 
@@ -266,11 +267,11 @@ public:
     }
 
     static constexpr size_type min_block_size(size_type byte_size) noexcept {
-        return memory_block_stack::offset() + byte_size;
+        return memory_stack::offset() + byte_size;
     }
 
 private:
-    memory_block_stack used_blocks_;
+    memory_stack used_blocks_;
 };
 
 // An allocator that uses a given RawAllocator for allocating the blocks. It calls the
@@ -286,30 +287,31 @@ template <
 >
 // clang-format on
 class [[nodiscard]] Growing_block_allocator : allocator_traits<RawAllocator>::allocator_type {
-    using memory_block = Memory_block;
+    using memory_block  = Memory_block;
+    using raw_allocator = allocator_traits<RawAllocator>;
 
     static_assert(float(Numerator) / Denominator >= 1.0f, "Invalid growth factor");
 
 public:
-    using allocator_type  = typename allocator_traits<RawAllocator>::allocator_type;
-    using size_type       = typename allocator_traits<RawAllocator>::size_type;
-    using difference_type = typename allocator_traits<RawAllocator>::difference_type;
+    using allocator_type  = typename raw_allocator::allocator_type;
+    using size_type       = typename raw_allocator::size_type;
+    using difference_type = typename raw_allocator::difference_type;
 
     constexpr explicit Growing_block_allocator(size_type      block_size,
                                                allocator_type allocator = allocator_type{}) noexcept
             : allocator_type{std::move(allocator)}, block_size_{block_size} {}
 
     constexpr memory_block allocate_block() {
-        auto* memory = allocator_traits<RawAllocator>::allocate_array(allocator(), block_size_, 1,
-                                                                      detail::max_alignment);
+        auto* memory = raw_allocator::allocate_array(
+                        allocator(), block_size_, 1, detail::max_alignment);
         memory_block block{memory, block_size_};
         block_size_ = new_block_size(block_size_);
         return block;
     }
 
     constexpr void deallocate_block(memory_block block) noexcept {
-        allocator_traits<RawAllocator>::deallocate_array(allocator(), block.memory, block.size, 1,
-                                                         detail::max_alignment);
+        raw_allocator::deallocate_array(
+            allocator(), block.memory, block.size, 1, detail::max_alignment);
     }
 
     constexpr size_type block_size() const noexcept {
@@ -342,12 +344,13 @@ private:
 // function of the given RawAllocator.
 template <typename RawAllocator = Default_allocator>
 class [[nodiscard]] Fixed_block_allocator : allocator_traits<RawAllocator>::allocator_type {
-    using memory_block = Memory_block;
+    using memory_block  = Memory_block;
+    using raw_allocator = allocator_traits<RawAllocator>;
 
 public:
-    using allocator_type  = typename allocator_traits<RawAllocator>::allocator_type;
-    using size_type       = typename allocator_traits<RawAllocator>::size_type;
-    using difference_type = typename allocator_traits<RawAllocator>::difference_type;
+    using allocator_type  = typename raw_allocator::allocator_type;
+    using size_type       = typename raw_allocator::size_type;
+    using difference_type = typename raw_allocator::difference_type;
 
     constexpr explicit Fixed_block_allocator(size_type      block_size,
                                              allocator_type allocator = allocator_type{}) noexcept
@@ -355,8 +358,8 @@ public:
 
     constexpr memory_block allocate_block() {
         if (block_size_) {
-            auto memory = allocator_traits<RawAllocator>::allocate_array(allocator(), block_size_,
-                                                                         1, detail::max_alignment);
+            auto memory = raw_allocator::allocate_array(
+                            allocator(), block_size_, 1, detail::max_alignment);
             memory_block block(memory, block_size_);
             block_size_ = 0u;
             return block;
@@ -367,8 +370,8 @@ public:
     constexpr void deallocate_block(memory_block block) noexcept {
         // clang-format off
         detail::debug_check_pointer([&] { return block_size_ == 0u; }, info(), block.memory);
-        allocator_traits<RawAllocator>::deallocate_array(allocator(), block.memory, block.size, 1,
-                                                         detail::max_alignment);
+        raw_allocator::deallocate_array(
+            allocator(), block.memory, block.size, 1, detail::max_alignment);
         block_size_ = block.size;
         // clang-format on
     }

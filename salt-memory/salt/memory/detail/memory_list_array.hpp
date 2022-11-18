@@ -23,6 +23,7 @@ struct [[nodiscard]] Memory_list_array final {
     using access_policy_type = AccessPolicy;
     using memory_list        = MemoryList;
     using size_type          = typename memory_list::size_type;
+    using iterator           = typename memory_list::iterator;
     using const_iterator     = typename memory_list::const_iterator;
 
     constexpr Memory_list_array(Memory_stack& stack, const_iterator begin, size_type max_node_size) noexcept

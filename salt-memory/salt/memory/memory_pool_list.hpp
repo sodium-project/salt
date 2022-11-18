@@ -58,6 +58,7 @@ public:
     using difference_type = typename allocator_type::difference_type;
     using pool_type       = PoolType;
     using bucket_type     = BucketType;
+    using iterator        = typename memory_list_array::iterator;
     using const_iterator  = typename memory_list_array::const_iterator;
 
     template <typename... Args>

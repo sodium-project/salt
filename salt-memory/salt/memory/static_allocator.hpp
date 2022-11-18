@@ -21,9 +21,9 @@ struct [[nodiscard]] Static_allocator final {
     using difference_type = std::ptrdiff_t;
 
     // clang-format off
-    template <std::size_t Size>
-    requires match_size     <Static_allocator_storage<Size>, Size> and
-             match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
+    template <std::size_t Size> requires
+        match_size     <Static_allocator_storage<Size>, Size> and
+        match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
     constexpr explicit Static_allocator(Static_allocator_storage<Size>& storage) noexcept
             : stack_{&storage}, end_{stack_.top() + Size} {}
     // clang-format on
@@ -57,9 +57,9 @@ struct [[nodiscard]] Static_block_allocator final {
     using difference_type = std::ptrdiff_t;
 
     // clang-format off
-    template <std::size_t Size>    
-    requires match_size     <Static_allocator_storage<Size>, Size> and
-             match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
+    template <std::size_t Size> requires
+        match_size     <Static_allocator_storage<Size>, Size> and
+        match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
     constexpr Static_block_allocator(size_type                       block_size,
                                      Static_allocator_storage<Size>& storage) noexcept
             : current_{static_cast<std::byte*>(static_cast<void*>(&storage))},
