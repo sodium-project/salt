@@ -7,7 +7,7 @@ salt_static_library(memory
         TEST
             "salt/memory/detail/align-test.cpp"
             "salt/memory/detail/debug_helpers-test.cpp"
-            "salt/memory/detail/memory_stack-test.cpp"
+            "salt/memory/detail/fixed_memory_stack-test.cpp"
             "salt/memory/detail/memory_list_array-test.cpp"
             "salt/memory/detail/memory_list-test.cpp"
             "salt/memory/static_allocator-test.cpp"

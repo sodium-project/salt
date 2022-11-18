@@ -1,12 +1,12 @@
 #include <catch2/catch.hpp>
 
-#include <salt/memory/detail/memory_stack.hpp>
+#include <salt/memory/detail/fixed_memory_stack.hpp>
 #include <salt/memory/static_allocator.hpp>
 
 using namespace salt;
 using namespace salt::detail;
 
-TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/memory_stack.hpp]") {
+TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/fixed_memory_stack.hpp]") {
     Fixed_memory_stack stack;
     REQUIRE(stack.top() == nullptr);
 

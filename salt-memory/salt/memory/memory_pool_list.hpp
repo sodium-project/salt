@@ -1,7 +1,7 @@
 #pragma once
 #include <salt/memory/detail/align.hpp>
 #include <salt/memory/detail/memory_list_array.hpp>
-#include <salt/memory/detail/memory_stack.hpp>
+#include <salt/memory/detail/fixed_memory_stack.hpp>
 
 #include <salt/memory/debugging.hpp>
 #include <salt/memory/memory_arena.hpp>

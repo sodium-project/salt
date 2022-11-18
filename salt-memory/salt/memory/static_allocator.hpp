@@ -3,7 +3,7 @@
 
 #include <salt/foundation/logger.hpp>
 #include <salt/foundation/uninitialized_storage.hpp>
-#include <salt/memory/detail/memory_stack.hpp>
+#include <salt/memory/detail/fixed_memory_stack.hpp>
 #include <salt/memory/memory_block.hpp>
 
 namespace salt {

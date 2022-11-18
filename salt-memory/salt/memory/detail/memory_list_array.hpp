@@ -3,7 +3,7 @@
 #include <salt/foundation/logger.hpp>
 
 #include <salt/memory/detail/align.hpp>
-#include <salt/memory/detail/memory_stack.hpp>
+#include <salt/memory/detail/fixed_memory_stack.hpp>
 
 namespace salt::detail {
 
@@ -26,7 +26,7 @@ struct [[nodiscard]] Memory_list_array final {
     using iterator           = typename memory_list::iterator;
     using const_iterator     = typename memory_list::const_iterator;
 
-    constexpr Memory_list_array(Memory_stack& stack, const_iterator begin, size_type max_node_size) noexcept
+    constexpr Memory_list_array(Fixed_memory_stack& stack, const_iterator begin, size_type max_node_size) noexcept
             : size_ {access_policy_type::index_from_size(max_node_size) - min_size + 1},
               array_{static_cast<memory_list*>(
                       stack.allocate(begin, size_ * sizeof(memory_list), alignof(memory_list)))} {

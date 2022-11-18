@@ -73,6 +73,4 @@ private:
     std::byte* current_;
 };
 
-using Memory_stack = Fixed_memory_stack;
-
 } // namespace salt::detail
