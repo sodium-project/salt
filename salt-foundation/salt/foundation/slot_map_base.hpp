@@ -6,7 +6,7 @@
 #if SALT_TARGET(APPLE)
 #    define SALT_LIBCPP_HAS_NO_RANGES (1)
 #else
-#    include <ranges>
+#    include <algorithm>
 #endif
 
 namespace salt::ranges {
@@ -17,7 +17,7 @@ using std::is_permutation;
 using std::ranges::distance;
 using std::ranges::is_permutation;
 #endif
-}
+} // namespace salt::ranges
 
 namespace salt {
 

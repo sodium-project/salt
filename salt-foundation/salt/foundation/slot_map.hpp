@@ -6,7 +6,7 @@
 
 namespace salt {
 
-#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VER < 140000)
+#if SALT_TARGET(APPLE) || SALT_CLANG_FULL_VER < 140000
 // Clang 14.0 gives an error: 'out-of-line definition' when defining member function enabled with
 // concept outside class. That seems a bug since the code should be correct.
 // Related issue from LLVM repo: https://github.com/llvm/llvm-project/issues/56482
