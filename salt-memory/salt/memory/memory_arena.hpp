@@ -123,7 +123,7 @@ protected:
 
     // clang-format off
     template <typename BlockAllocator>
-    constexpr void clear(BlockAllocator& allocator) noexcept {
+    constexpr void shrink_to_fit(BlockAllocator& allocator) noexcept {
         Memory_block_stack to_deallocate;
         // Pop from cache and push to temporary stack
         while (!cache_.empty())
@@ -163,7 +163,7 @@ protected:
 
     // clang-format off
     template <typename BlockAllocator>
-    constexpr void clear(BlockAllocator&) noexcept {}
+    constexpr void shrink_to_fit(BlockAllocator&) noexcept {}
     // clang-format on
 };
 
@@ -206,7 +206,7 @@ public:
     }
 
     constexpr ~Memory_arena() {
-        clear();
+        shrink_to_fit();
         while (!used_blocks_.empty())
             allocator_type::deallocate_block(used_blocks_.pop());
     }
@@ -241,8 +241,8 @@ public:
         return used_blocks_.contains(ptr);
     }
 
-    constexpr void clear() noexcept {
-        memory_cache::clear(allocator());
+    constexpr void shrink_to_fit() noexcept {
+        memory_cache::shrink_to_fit(allocator());
     }
 
     constexpr size_type size() const noexcept {
@@ -405,7 +405,7 @@ constexpr auto make_block_allocator(std::size_t block_size, Args&&... args) {
 template <template <typename...> typename Wrapper, typename RawAllocator>
 constexpr auto make_block_allocator(std::size_t  block_size,
                                     RawAllocator allocator = RawAllocator()) {
-    return Wrapper<RawAllocator>(block_size, std::move(allocator));
+    return Wrapper<RawAllocator>{block_size, std::move(allocator)};
 }
 } // namespace detail
 

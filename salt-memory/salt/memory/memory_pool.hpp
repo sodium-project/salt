@@ -114,8 +114,6 @@ public:
     }
 
 private:
-    friend allocator_traits<Memory_pool>;
-
     constexpr auto info() const noexcept {
         return Allocator_info{"salt::memory_pool", this};
     }
@@ -149,10 +147,13 @@ private:
 
     Memory_arena<allocator_type, Cached> arena_;
     memory_list                          list_;
+
+    friend allocator_traits<Memory_pool>;
+    friend composable_traits<Memory_pool>;
 };
 
-template <typename PoolType, typename RawAllocator, bool Cached>
-struct [[nodiscard]] allocator_traits<Memory_pool<PoolType, RawAllocator, Cached>> final {
+template <typename PoolType, raw_allocator RawAllocator>
+struct [[nodiscard]] allocator_traits<Memory_pool<PoolType, RawAllocator>> final {
     using allocator_type  = Memory_pool<PoolType, RawAllocator>;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
@@ -217,6 +218,73 @@ struct [[nodiscard]] allocator_traits<Memory_pool<PoolType, RawAllocator, Cached
     static constexpr size_type max_alignment(allocator_type const& allocator) noexcept {
         return allocator.list_.alignment();
     }
+};
+
+template <typename PoolType, typename BlockOrRawAllocator>
+struct [[nodiscard]] composable_traits<Memory_pool<PoolType, BlockOrRawAllocator>> final {
+    using allocator_type  = Memory_pool<PoolType, BlockOrRawAllocator>;
+    using size_type       = typename allocator_type::size_type;
+    using difference_type = typename allocator_type::difference_type;
+
+    // clang-format off
+    static constexpr void*
+    try_allocate_node(allocator_type& allocator,
+                      size_type       size     ,
+                      size_type       alignment) noexcept
+    {
+        using allocator_traits = allocator_traits<allocator_type>;
+
+        if (size      > allocator_traits::max_node_size(allocator) ||
+            alignment > allocator_traits::max_alignment(allocator))
+            return nullptr;
+        return allocator.try_allocate_node();
+    }
+
+    static constexpr void*
+    try_allocate_array(allocator_type& allocator,
+                       size_type       count    ,
+                       size_type       size     ,
+                       size_type       alignment) noexcept
+    {
+        using allocator_traits = allocator_traits<allocator_type>;
+
+        if (size         > allocator_traits::max_node_size (allocator) ||
+            count * size > allocator_traits::max_array_size(allocator) ||
+            alignment    > allocator_traits::max_alignment (allocator))
+            return nullptr;
+        return allocator.try_allocate_array(count, size);
+    }
+
+    static constexpr bool
+    try_deallocate_node(allocator_type& allocator,
+                        void*           node     ,
+                        size_type       size     ,
+                        size_type       alignment) noexcept
+    {
+        using allocator_traits = allocator_traits<allocator_type>;
+
+        if (size      > allocator_traits::max_node_size(allocator) ||
+            alignment > allocator_traits::max_alignment(allocator))
+            return false;
+        return allocator.try_deallocate_node(node);
+    }
+
+    static constexpr bool
+    try_deallocate_array(allocator_type& allocator,
+                         void*           array    ,
+                         size_type       count    ,
+                         size_type       size     ,
+                         size_type       alignment) noexcept
+    {
+        using allocator_traits = allocator_traits<allocator_type>;
+
+        if (size         > allocator_traits::max_node_size (allocator) ||
+            count * size > allocator_traits::max_array_size(allocator) ||
+            alignment    > allocator_traits::max_alignment (allocator))
+            return false;
+        return allocator.try_deallocate_array(array, count, size);
+    }
+    // clang-format on
 };
 
 } // namespace salt

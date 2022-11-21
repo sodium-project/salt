@@ -152,7 +152,7 @@ TEST_CASE("salt::Memory_arena cached", "[salt-memory/memory_arena.hpp]") {
         REQUIRE(arena.size() == 0u);
         REQUIRE(arena.capacity() == 2u);
 
-        arena.clear();
+        arena.shrink_to_fit();
         REQUIRE(arena.allocator().i == 0u);
         REQUIRE(arena.size() == 0u);
         REQUIRE(arena.capacity() == 0u);
