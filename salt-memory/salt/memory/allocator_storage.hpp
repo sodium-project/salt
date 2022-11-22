@@ -57,7 +57,7 @@ public:
         return *this;
     }
 
-    Allocator_storage(Allocator_storage const&) = default;
+    Allocator_storage(Allocator_storage const&)            = default;
     Allocator_storage& operator=(Allocator_storage const&) = default;
 
     void* allocate_node(std::size_t size, std::size_t alignment) {
@@ -245,7 +245,8 @@ struct [[nodiscard]] Reference_storage_impl<RawAllocator, Reference_stateful> {
 protected:
     constexpr Reference_storage_impl() noexcept : allocator_{nullptr} {}
 
-    constexpr Reference_storage_impl(RawAllocator& allocator) noexcept : allocator_{&allocator} {}
+    constexpr explicit Reference_storage_impl(RawAllocator& allocator) noexcept
+            : allocator_{&allocator} {}
 
     constexpr bool is_valid() const noexcept {
         return allocator_ != nullptr;
@@ -266,7 +267,7 @@ struct [[nodiscard]] Reference_storage_impl<RawAllocator, Reference_stateless> {
 protected:
     constexpr Reference_storage_impl() noexcept = default;
 
-    constexpr Reference_storage_impl(RawAllocator const&) noexcept {}
+    constexpr explicit Reference_storage_impl(RawAllocator const&) noexcept {}
 
     constexpr bool is_valid() const noexcept {
         return true;
@@ -284,7 +285,7 @@ struct [[nodiscard]] Reference_storage_impl<RawAllocator, Reference_shared> {
 protected:
     constexpr Reference_storage_impl() noexcept = default;
 
-    constexpr Reference_storage_impl(RawAllocator const& allocator) noexcept
+    constexpr explicit Reference_storage_impl(RawAllocator const& allocator) noexcept
             : allocator_{allocator} {}
 
     constexpr bool is_valid() const noexcept {
@@ -324,9 +325,10 @@ public:
 
     constexpr Reference_storage() noexcept = default;
 
-    constexpr Reference_storage(allocator_type& allocator) noexcept : storage{allocator} {}
+    constexpr explicit Reference_storage(allocator_type& allocator) noexcept : storage{allocator} {}
 
-    constexpr Reference_storage(allocator_type const& allocator) noexcept : storage{allocator} {}
+    constexpr explicit Reference_storage(allocator_type const& allocator) noexcept
+            : storage{allocator} {}
 
     constexpr Reference_storage(Reference_storage const&) noexcept = default;
 
@@ -613,9 +615,9 @@ template <> class [[nodiscard]] Reference_storage<Any_allocator> {
         using allocator_type    = typename allocator_traits::allocator_type;
         using storage           = Reference_storage_impl<RawAllocator>;
 
-        constexpr Wrapper(RawAllocator& allocator) noexcept : storage{allocator} {}
+        constexpr explicit Wrapper(RawAllocator& allocator) noexcept : storage{allocator} {}
 
-        constexpr Wrapper(RawAllocator const& allocator) noexcept : storage{allocator} {}
+        constexpr explicit Wrapper(RawAllocator const& allocator) noexcept : storage{allocator} {}
 
         constexpr void clone(void* storage) const noexcept override {
             ::new (storage) Wrapper{allocator()};
@@ -665,11 +667,12 @@ template <> class [[nodiscard]] Reference_storage<Any_allocator> {
 
         constexpr bool try_deallocate_array(void* array, size_type count, size_type size,
                                             size_type alignment) noexcept override {
+            // clang-format off
             if constexpr (is_composable_allocator<allocator_type>)
-                return composable_traits::try_deallocate_array(allocator(), array, count, size,
-                                                               alignment);
+                return composable_traits::try_deallocate_array(allocator(), array, count, size, alignment);
             else
                 return false;
+            // clang-format on
         }
 
         constexpr bool is_composable() const noexcept override {
@@ -716,10 +719,10 @@ public:
     }
     // clang-format on
 
-    constexpr Reference_storage(Base_allocator& allocator) noexcept
+    constexpr explicit Reference_storage(Base_allocator& allocator) noexcept
             : Reference_storage{static_cast<Base_allocator const&>(allocator)} {}
 
-    constexpr Reference_storage(Base_allocator const& allocator) noexcept {
+    constexpr explicit Reference_storage(Base_allocator const& allocator) noexcept {
         allocator.clone(&storage_);
     }
 
