@@ -310,26 +310,27 @@ template <raw_allocator RawAllocator>
 struct [[nodiscard]] is_shared_allocator : std::false_type {};
 // clang-format on
 
+template <typename RawAllocator>
+using Reference_storage_impl =
+        detail::Reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
+                                       detail::allocator_reference_t<RawAllocator>>;
+
 template <raw_allocator RawAllocator>
-class [[nodiscard]] Reference_storage
-        : detail::Reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
-                                         detail::allocator_reference_t<RawAllocator>> {
-    using storage =
-            detail::Reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
-                                           detail::allocator_reference_t<RawAllocator>>;
+class [[nodiscard]] Reference_storage : Reference_storage_impl<RawAllocator> {
+    using storage = Reference_storage_impl<RawAllocator>;
 
 public:
     using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
-    Reference_storage() noexcept = default;
+    constexpr Reference_storage() noexcept = default;
 
     constexpr Reference_storage(allocator_type& allocator) noexcept : storage{allocator} {}
 
     constexpr Reference_storage(allocator_type const& allocator) noexcept : storage{allocator} {}
 
-    Reference_storage(Reference_storage const&) noexcept = default;
+    constexpr Reference_storage(Reference_storage const&) noexcept = default;
 
-    Reference_storage& operator=(Reference_storage const&) noexcept = default;
+    constexpr Reference_storage& operator=(Reference_storage const&) noexcept = default;
 
     constexpr explicit operator bool() const noexcept {
         return storage::is_valid();
@@ -340,13 +341,14 @@ public:
     }
 
 protected:
-    ~Reference_storage() = default;
+    constexpr ~Reference_storage() = default;
 
     constexpr bool is_composable() const noexcept {
         return is_composable_allocator<allocator_type>;
     }
 };
 
+#if 0
 template <> class [[nodiscard]] Reference_storage<Any_allocator> {
     struct [[nodiscard]] Base_allocator {
         using size_type       = std::size_t;
@@ -490,7 +492,7 @@ template <> class [[nodiscard]] Reference_storage<Any_allocator> {
         }
 
         constexpr size_type max_size(allocation_type type) const noexcept override {
-            auto&& alloc = reference_storage::allocator();
+            auto&& alloc = self();
             if (type == allocation_type::node_size)
                 return allocator_traits::max_node_size(alloc);
             else if (type == allocation_type::array_size)
@@ -559,6 +561,196 @@ private:
     using default_instantiation = Wrap_allocator<Base_allocator>;
     alignas(default_instantiation) mutable std::byte storage_[sizeof(default_instantiation)];
 };
+#else
+template <> class [[nodiscard]] Reference_storage<Any_allocator> {
+    // clang-format off
+    struct [[nodiscard]] Composable_allocator {
+        using size_type       = std::size_t;
+        using difference_type = std::ptrdiff_t;
+
+        virtual constexpr bool is_composable() const noexcept = 0;
+
+        virtual constexpr void* try_allocate_node (size_type, size_type)            noexcept = 0;
+        virtual constexpr void* try_allocate_array(size_type, size_type, size_type) noexcept = 0;
+
+        virtual constexpr bool try_deallocate_node (void*, size_type, size_type)            noexcept = 0;
+        virtual constexpr bool try_deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
+
+        virtual constexpr ~Composable_allocator() = default;
+    };
+
+    struct [[nodiscard]] Base_allocator : Composable_allocator {
+        using size_type       = typename Composable_allocator::size_type;
+        using difference_type = typename Composable_allocator::difference_type;
+        using is_stateful     = std::true_type;
+
+        virtual constexpr void clone(void* storage) const noexcept = 0;
+
+        virtual constexpr void* allocate_node (size_type, size_type)            = 0;
+        virtual constexpr void* allocate_array(size_type, size_type, size_type) = 0;
+
+        virtual constexpr void deallocate_node (void*, size_type, size_type)            noexcept = 0;
+        virtual constexpr void deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
+
+        virtual constexpr ~Base_allocator() = default;
+
+    protected:
+        enum class allocation_type : std::uint8_t { node, array };
+
+        virtual constexpr size_type max_size(allocation_type) const noexcept = 0;
+    };
+    // clang-format on
+
+    // clang-format off
+    template <raw_allocator RawAllocator>
+    struct [[nodiscard]] Wrapper final
+            : public  Base_allocator,
+              private Reference_storage_impl<RawAllocator>
+    // clang-format on
+    {
+        using allocator_traits  = allocator_traits<RawAllocator>;
+        using composable_traits = composable_traits<RawAllocator>;
+        using allocator_type    = typename allocator_traits::allocator_type;
+        using storage           = Reference_storage_impl<RawAllocator>;
+
+        constexpr Wrapper(RawAllocator& allocator) noexcept : storage{allocator} {}
+
+        constexpr Wrapper(RawAllocator const& allocator) noexcept : storage{allocator} {}
+
+        constexpr void clone(void* storage) const noexcept override {
+            ::new (storage) Wrapper{allocator()};
+        }
+
+        constexpr void* allocate_node(size_type size, size_type alignment) override {
+            return allocator_traits::allocate_node(allocator(), size, alignment);
+        }
+
+        constexpr void* allocate_array(size_type count, size_type size,
+                                       size_type alignment) override {
+            return allocator_traits::allocate_array(allocator(), count, size, alignment);
+        }
+
+        constexpr void deallocate_node(void* node, size_type size,
+                                       size_type alignment) noexcept override {
+            allocator_traits::deallocate_node(allocator(), node, size, alignment);
+        }
+
+        constexpr void deallocate_array(void* array, size_type count, size_type size,
+                                        size_type alignment) noexcept override {
+            allocator_traits::deallocate_array(allocator(), array, count, size, alignment);
+        }
+
+        constexpr void* try_allocate_node(size_type size, size_type alignment) noexcept override {
+            if constexpr (is_composable_allocator<allocator_type>)
+                return composable_traits::try_allocate_node(allocator(), size, alignment);
+            else
+                return nullptr;
+        }
+
+        constexpr void* try_allocate_array(size_type count, size_type size,
+                                           size_type alignment) noexcept override {
+            if constexpr (is_composable_allocator<allocator_type>)
+                return composable_traits::try_allocate_array(allocator(), count, size, alignment);
+            else
+                return nullptr;
+        }
+
+        constexpr bool try_deallocate_node(void* node, size_type size,
+                                           size_type alignment) noexcept override {
+            if constexpr (is_composable_allocator<allocator_type>)
+                return composable_traits::try_deallocate_node(allocator(), node, size, alignment);
+            else
+                return false;
+        }
+
+        constexpr bool try_deallocate_array(void* array, size_type count, size_type size,
+                                            size_type alignment) noexcept override {
+            if constexpr (is_composable_allocator<allocator_type>)
+                return composable_traits::try_deallocate_array(allocator(), array, count, size,
+                                                               alignment);
+            else
+                return false;
+        }
+
+        constexpr bool is_composable() const noexcept override {
+            return is_composable_allocator<allocator_type>;
+        }
+
+        constexpr size_type max_size(allocation_type type) const noexcept override {
+            auto&& alloc = allocator();
+            if (type == allocation_type::node)
+                return allocator_traits::max_node_size(alloc);
+            else if (type == allocation_type::array)
+                return allocator_traits::max_array_size(alloc);
+            return allocator_traits::max_alignment(alloc);
+        }
+
+        constexpr allocator_type& allocator() const noexcept {
+            return storage::allocator();
+        }
+    };
+
+public:
+    using allocator_type  = Base_allocator;
+    using size_type       = typename allocator_type::size_type;
+    using difference_type = typename allocator_type::difference_type;
+
+    // clang-format off
+    template <raw_allocator RawAllocator> requires(
+        not std::derived_from<Reference_storage, std::decay_t<RawAllocator>>)
+    constexpr Reference_storage(RawAllocator&& allocator) noexcept {
+        static_assert(sizeof(Wrapper<RawAllocator>) <=
+                              sizeof(Wrapper<Default_instantiation>),
+                      "requires all instantiations to have certain maximum size");
+        ::new (static_cast<void*>(storage_)) Wrapper<std::remove_cvref_t<RawAllocator>>{
+                std::forward<std::remove_cvref_t<RawAllocator>>(allocator)};
+    }
+
+    template <raw_allocator RawAllocator> requires(
+        not allocator_traits<RawAllocator>::is_stateful::value)
+    constexpr Reference_storage(RawAllocator const& allocator) noexcept {
+        static_assert(sizeof(Wrapper<RawAllocator>) <=
+                              sizeof(Wrapper<Default_instantiation>),
+                      "requires all instantiations to have certain maximum size");
+        ::new (static_cast<void*>(storage_)) Wrapper<RawAllocator>{allocator};
+    }
+    // clang-format on
+
+    constexpr Reference_storage(Base_allocator& allocator) noexcept
+            : Reference_storage{static_cast<Base_allocator const&>(allocator)} {}
+
+    constexpr Reference_storage(Base_allocator const& allocator) noexcept {
+        allocator.clone(&storage_);
+    }
+
+    constexpr Reference_storage(Reference_storage const& other) noexcept {
+        other.allocator().clone(&storage_);
+    }
+
+    constexpr ~Reference_storage() {
+        allocator().~allocator_type();
+    }
+
+    constexpr Reference_storage& operator=(Reference_storage const& other) {
+        allocator().~allocator_type();
+        other.allocator().clone(&storage_);
+        return *this;
+    }
+
+    constexpr bool is_composable() const noexcept {
+        return allocator().is_composable();
+    }
+
+    constexpr allocator_type& allocator() const noexcept {
+        auto memory = static_cast<void*>(&storage_);
+        return *static_cast<allocator_type*>(memory);
+    }
+
+private:
+    using Default_instantiation = Wrapper<Base_allocator>;
+    alignas(Default_instantiation) mutable std::byte storage_[sizeof(Default_instantiation)];
+};
+#endif
 
 template <raw_allocator RawAllocator>
 using Allocator_reference = Allocator_storage<Reference_storage<RawAllocator>, No_mutex>;
