@@ -37,65 +37,97 @@ static constexpr inline bool is_raw_allocator = raw_allocator<Allocator>;
 namespace detail {
 
 // clang-format off
+template <typename Allocator, typename T = typename Allocator::value_type>
+concept has_allocate =
+    requires(Allocator&& allocator, std::size_t size) {
+        { allocator.allocate(size) } -> std::same_as<T*>;
+    };
+
+template <typename Allocator>
+concept has_deallocate =
+    requires(Allocator&& allocator, void* ptr, std::size_t size) {
+        { allocator.deallocate(ptr, size) } -> std::same_as<void>;
+    };
+
 template <typename Allocator>
 concept has_allocate_node =
-    requires(Allocator allocator, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, std::size_t size, std::size_t alignment) {
         { allocator.allocate_node(size, alignment) } -> std::same_as<void*>;
     };
 
 template <typename Allocator>
 concept has_deallocate_node =
-    requires(Allocator allocator, void* node, std::size_t size, std::size_t alignment) {
-        { allocator.deallocate_node(node, size, alignment) } -> std::same_as<void*>;
+    requires(Allocator&& allocator, void* node, std::size_t size, std::size_t alignment) {
+        { allocator.deallocate_node(node, size, alignment) } -> std::same_as<void>;
     };
 
 template <typename Allocator>
 concept has_allocate_array =
-    requires(Allocator allocator, std::size_t count, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, std::size_t count, std::size_t size, std::size_t alignment) {
         { allocator.allocate_array(count, size, alignment) } -> std::same_as<void*>;
     };
 
 template <typename Allocator>
 concept has_deallocate_array =
-    requires(Allocator allocator, void* array, std::size_t count, std::size_t size, std::size_t alignment) {
-        { allocator.deallocate_array(array, count, size, alignment) } -> std::same_as<void*>;
+    requires(Allocator&& allocator, void* array, std::size_t count, std::size_t size, std::size_t alignment) {
+        { allocator.deallocate_array(array, count, size, alignment) } -> std::same_as<void>;
     };
 
 template <typename Allocator>
 concept has_max_node_size =
-    requires(Allocator const allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_node_size() } noexcept -> std::same_as<std::size_t>;
     };
 
 template <typename Allocator>
 concept has_max_array_size =
-    requires(Allocator const allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_array_size() } noexcept -> std::same_as<std::size_t>;
     };
 
 template <typename Allocator>
 concept has_max_alignment =
-    requires(Allocator const allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_alignment() } noexcept -> std::same_as<std::size_t>;
     };
 // clang-format on
 
 } // namespace detail
 
+// clang-format off
+template <typename Allocator>
+concept empty_allocator =
+    std::is_empty_v                <Allocator> and
+    std::is_default_constructible_v<Allocator>;
+template <typename Allocator>
+static constexpr inline bool is_empty_allocator = empty_allocator<Allocator>;
+
+template <typename Allocator>
+concept stateful_allocator =
+    not empty_allocator<Allocator>                and
+    requires { typename Allocator::is_stateful; } and
+    Allocator::is_stateful::value == true;
+template <typename Allocator>
+static constexpr inline bool is_stateful_allocator = stateful_allocator<Allocator>;
+// clang-format on
+
 template <raw_allocator Allocator> struct [[nodiscard]] allocator_traits final {
     using allocator_type  = Allocator;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
-    using is_stateful     = typename allocator_type::is_stateful;
+    using is_stateful     =
+            std::conditional_t<is_stateful_allocator<Allocator>, std::true_type, std::false_type>;
 
     // clang-format off
     static constexpr void*
     allocate_node(allocator_type& allocator,
                   size_type       size     ,
-                  size_type       alignment) requires
-        detail::has_allocate_node<allocator_type>
+                  size_type       alignment)
     {
-        return allocator.allocate_node(size, alignment);
+        if constexpr (detail::has_allocate_node<allocator_type>)
+            return allocator.allocate_node(size, alignment);
+        else if constexpr (detail::has_allocate<allocator_type>)
+            return static_cast<void*>(allocator.allocate(size));
     }
 
     static constexpr void*
@@ -106,7 +138,7 @@ template <raw_allocator Allocator> struct [[nodiscard]] allocator_traits final {
     {
         if constexpr (detail::has_allocate_array<allocator_type>)
             return allocator.allocate_array(count, size, alignment);
-        else if constexpr (detail::has_allocate_node<allocator_type>)
+        else
             return allocate_node(allocator, count * size, alignment);
     }
 
@@ -114,10 +146,12 @@ template <raw_allocator Allocator> struct [[nodiscard]] allocator_traits final {
     deallocate_node(allocator_type& allocator,
                     void*           node     ,
                     size_type       size     ,
-                    size_type       alignment) noexcept requires
-        detail::has_deallocate_node<allocator_type>
+                    size_type       alignment) noexcept
     {
-        allocator.deallocate_node(node, size, alignment);
+        if constexpr (detail::has_deallocate_node<allocator_type>)
+            allocator.deallocate_node(node, size, alignment);
+        else if constexpr (detail::has_deallocate<allocator_type>)
+            allocator.deallocate(node, size);
     }
 
     static constexpr void
@@ -129,7 +163,7 @@ template <raw_allocator Allocator> struct [[nodiscard]] allocator_traits final {
     {
         if constexpr (detail::has_deallocate_array<allocator_type>)
             allocator.deallocate_array(array, count, size, alignment);
-        else if constexpr (detail::has_deallocate_node<allocator_type>)
+        else
             deallocate_node(allocator, array, count * size, alignment);
     }
     // clang-format on
@@ -161,25 +195,25 @@ namespace detail {
 // clang-format off
 template <typename Allocator>
 concept has_try_allocate_node =
-    requires(Allocator allocator, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, std::size_t size, std::size_t alignment) {
         { allocator.try_allocate_node(size, alignment) } -> std::same_as<void*>;
     };
 
 template <typename Allocator>
 concept has_try_deallocate_node =
-    requires(Allocator allocator, void* node, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, void* node, std::size_t size, std::size_t alignment) {
         { allocator.try_deallocate_node(node, size, alignment) } -> std::same_as<bool>;
     };
 
 template <typename Allocator>
 concept has_try_allocate_array =
-    requires(Allocator allocator, std::size_t count, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, std::size_t count, std::size_t size, std::size_t alignment) {
         { allocator.try_allocate_array(count, size, alignment) } -> std::same_as<void*>;
     };
 
 template <typename Allocator>
 concept has_try_deallocate_array =
-    requires(Allocator allocator, void* array, std::size_t count, std::size_t size, std::size_t alignment) {
+    requires(Allocator&& allocator, void* array, std::size_t count, std::size_t size, std::size_t alignment) {
         { allocator.try_deallocate_array(array, count, size, alignment) } -> std::same_as<bool>;
     };
 // clang-format on
@@ -209,7 +243,7 @@ template <raw_allocator Allocator> struct [[nodiscard]] composable_traits final 
     {
         if constexpr (detail::has_try_allocate_array<allocator_type>)
             return allocator.try_allocate_array(count, size, alignment);
-        else if constexpr (detail::has_try_allocate_node<allocator_type>)
+        else
             return try_allocate_node(allocator, count * size, alignment);
     }
 
@@ -232,18 +266,20 @@ template <raw_allocator Allocator> struct [[nodiscard]] composable_traits final 
     {
         if constexpr (detail::has_try_deallocate_array<allocator_type>)
             return allocator.try_deallocate_array(array, count, size, alignment);
-        else if constexpr (detail::has_try_deallocate_node<allocator_type>)
+        else
             return try_deallocate_node(allocator, array, count * size, alignment);
     }
     // clang-format on
 };
 
+// clang-format off
 template <typename Allocator>
 concept composable_allocator =
-    raw_allocator<Allocator>                 and
-    detail::has_try_allocate_node<Allocator> and
+    raw_allocator                  <Allocator> and
+    detail::has_try_allocate_node  <Allocator> and
     detail::has_try_deallocate_node<Allocator>;
 template <typename Allocator>
 static constexpr inline bool is_composable_allocator = composable_allocator<Allocator>;
+// clang-format on
 
 } // namespace salt

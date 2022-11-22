@@ -10,6 +10,7 @@ salt_static_library(memory
             "salt/memory/detail/fixed_memory_stack-test.cpp"
             "salt/memory/detail/memory_list_array-test.cpp"
             "salt/memory/detail/memory_list-test.cpp"
+            "salt/memory/allocator_storage-test.cpp"
             "salt/memory/static_allocator-test.cpp"
             "salt/memory/heap_allocator-test.cpp"
             "salt/memory/memory_arena-test.cpp"
