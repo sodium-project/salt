@@ -27,10 +27,12 @@ class [[nodiscard]] Allocator_storage
     // clang-format on
 
 public:
-    using allocator_type = typename StoragePolicy::allocator_type;
-    using mutex_type     = mutex_storage const;
-    using storage_policy = StoragePolicy;
-    using is_stateful    = typename allocator_traits::is_stateful;
+    using allocator_type  = typename StoragePolicy::allocator_type;
+    using mutex_type      = mutex_storage const;
+    using size_type       = std::size_t;
+    using difference_type = std::ptrdiff_t;
+    using storage_policy  = StoragePolicy;
+    using is_stateful     = typename allocator_traits::is_stateful;
 
     Allocator_storage() = default;
 
@@ -60,50 +62,50 @@ public:
     Allocator_storage(Allocator_storage const&)            = default;
     Allocator_storage& operator=(Allocator_storage const&) = default;
 
-    void* allocate_node(std::size_t size, std::size_t alignment) {
+    void* allocate_node(size_type size, size_type alignment) {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return allocator_traits::allocate_node(alloc, size, alignment);
     }
 
-    void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment) {
+    void* allocate_array(size_type count, size_type size, size_type alignment) {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return allocator_traits::allocate_array(alloc, count, size, alignment);
     }
 
-    void deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept {
+    void deallocate_node(void* ptr, size_type size, size_type alignment) noexcept {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         allocator_traits::deallocate_node(alloc, ptr, size, alignment);
     }
 
-    void deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                          std::size_t alignment) noexcept {
+    void deallocate_array(void* ptr, size_type count, size_type size,
+                          size_type alignment) noexcept {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         allocator_traits::deallocate_array(alloc, ptr, count, size, alignment);
     }
 
-    std::size_t max_node_size() const {
+    size_type max_node_size() const {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return allocator_traits::max_node_size(alloc);
     }
 
-    std::size_t max_array_size() const {
+    size_type max_array_size() const {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return allocator_traits::max_array_size(alloc);
     }
 
-    std::size_t max_alignment() const {
+    size_type max_alignment() const {
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return allocator_traits::max_alignment(alloc);
     }
 
-    auto try_allocate_node(std::size_t size, std::size_t alignment) noexcept requires
+    auto try_allocate_node(size_type size, size_type alignment) noexcept requires
             is_composable_allocator<allocator_type> {
         SALT_ASSERT(is_composable());
         std::lock_guard<mutex_type> lock{*this};
@@ -111,15 +113,15 @@ public:
         return composable_traits::try_allocate_node(alloc, size, alignment);
     }
 
-    auto try_allocate_array(std::size_t count, std::size_t size, std::size_t alignment) noexcept
-            requires is_composable_allocator<allocator_type> {
+    auto try_allocate_array(size_type count, size_type size, size_type alignment) noexcept requires
+            is_composable_allocator<allocator_type> {
         SALT_ASSERT(is_composable());
         std::lock_guard<mutex_type> lock{*this};
         auto&&                      alloc = allocator();
         return composable_traits::try_allocate_array(alloc, count, size, alignment);
     }
 
-    auto try_deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept requires
+    auto try_deallocate_node(void* ptr, size_type size, size_type alignment) noexcept requires
             is_composable_allocator<allocator_type> {
         SALT_ASSERT(is_composable());
         std::lock_guard<mutex_type> lock{*this};
@@ -127,8 +129,8 @@ public:
         return composable_traits::try_deallocate_node(alloc, ptr, size, alignment);
     }
 
-    auto try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                              std::size_t alignment) noexcept requires
+    auto try_deallocate_array(void* ptr, size_type count, size_type size,
+                              size_type alignment) noexcept requires
             is_composable_allocator<allocator_type> {
         SALT_ASSERT(is_composable());
         std::lock_guard<mutex_type> lock{*this};

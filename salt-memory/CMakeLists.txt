@@ -16,6 +16,7 @@ salt_static_library(memory
             "salt/memory/memory_arena-test.cpp"
             "salt/memory/memory_pool-test.cpp"
             "salt/memory/memory_pool_list-test.cpp"
+            "salt/memory/memory_stack-test.cpp"
         LINK
             salt::meta
             salt::foundation)
