@@ -7,6 +7,8 @@
 
 namespace salt {
 
+// A dummy Mutex class that does not lock anything. It is a valid Mutex and can be used to disable
+// locking anywhere a Mutex is requested.
 // clang-format off
 struct [[nodiscard]] No_mutex final {
     constexpr void   lock() noexcept {}

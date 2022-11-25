@@ -16,9 +16,9 @@ using Static_allocator_storage = Uninitialized_storage<Size, detail::max_alignme
 // A stateful allocator,RawAllocator that uses a fixed sized storage for the allocations.
 // Deallocations are not supported, memory cannot be marked as freed.
 struct [[nodiscard]] Static_allocator final {
-    using is_stateful     = std::true_type;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
+    using is_stateful     = std::true_type;
 
     // clang-format off
     template <std::size_t Size> requires

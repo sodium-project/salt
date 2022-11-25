@@ -17,14 +17,14 @@ TEST_CASE("salt::Static_allocator", "[salt-memory/static_allocator.hpp]") {
 
     for (std::size_t i = 0u; i < 10u; ++i) {
         auto node = static_allocator.allocate_node(i, max_alignment);
-        REQUIRE(detail::is_aligned(node, max_alignment));
+        REQUIRE(is_aligned(node, max_alignment));
         static_allocator.deallocate_node(node, i, 1);
     }
 
     std::vector<void*> nodes;
     for (std::size_t i = 0u; i < 10u; ++i) {
         auto node = static_allocator.allocate_node(i, max_alignment);
-        REQUIRE(detail::is_aligned(node, max_alignment));
+        REQUIRE(is_aligned(node, max_alignment));
         nodes.push_back(node);
     }
 

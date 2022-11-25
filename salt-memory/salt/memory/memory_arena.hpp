@@ -212,9 +212,8 @@ public:
     }
 
     constexpr Memory_arena(Memory_arena&& other) noexcept
-            : allocator_type{std::move(other)             },
-              memory_cache  {std::move(other)             },
-              used_blocks_  {std::move(other.used_blocks_)} {}
+            : allocator_type{std::move(other)}, memory_cache{std::move(other)},
+              used_blocks_{std::move(other.used_blocks_)} {}
 
     constexpr Memory_arena& operator=(Memory_arena&& other) noexcept = default;
 
@@ -287,31 +286,31 @@ template <
 >
 // clang-format on
 class [[nodiscard]] Growing_block_allocator : allocator_traits<RawAllocator>::allocator_type {
-    using memory_block  = Memory_block;
-    using raw_allocator = allocator_traits<RawAllocator>;
+    using memory_block     = Memory_block;
+    using allocator_traits = allocator_traits<RawAllocator>;
 
     static_assert(float(Numerator) / Denominator >= 1.0f, "Invalid growth factor");
 
 public:
-    using allocator_type  = typename raw_allocator::allocator_type;
-    using size_type       = typename raw_allocator::size_type;
-    using difference_type = typename raw_allocator::difference_type;
+    using allocator_type  = typename allocator_traits::allocator_type;
+    using size_type       = typename allocator_traits::size_type;
+    using difference_type = typename allocator_traits::difference_type;
 
     constexpr explicit Growing_block_allocator(size_type      block_size,
                                                allocator_type allocator = allocator_type{}) noexcept
             : allocator_type{std::move(allocator)}, block_size_{block_size} {}
 
     constexpr memory_block allocate_block() {
-        auto* memory = raw_allocator::allocate_array(
-                        allocator(), block_size_, 1, detail::max_alignment);
+        auto*        memory = allocator_traits::allocate_array(allocator(), block_size_, 1,
+                                                               detail::max_alignment);
         memory_block block{memory, block_size_};
         block_size_ = new_block_size(block_size_);
         return block;
     }
 
     constexpr void deallocate_block(memory_block block) noexcept {
-        raw_allocator::deallocate_array(
-            allocator(), block.memory, block.size, 1, detail::max_alignment);
+        allocator_traits::deallocate_array(allocator(), block.memory, block.size, 1,
+                                           detail::max_alignment);
     }
 
     constexpr size_type block_size() const noexcept {
@@ -344,13 +343,13 @@ private:
 // function of the given RawAllocator.
 template <typename RawAllocator = Default_allocator>
 class [[nodiscard]] Fixed_block_allocator : allocator_traits<RawAllocator>::allocator_type {
-    using memory_block  = Memory_block;
-    using raw_allocator = allocator_traits<RawAllocator>;
+    using memory_block     = Memory_block;
+    using allocator_traits = allocator_traits<RawAllocator>;
 
 public:
-    using allocator_type  = typename raw_allocator::allocator_type;
-    using size_type       = typename raw_allocator::size_type;
-    using difference_type = typename raw_allocator::difference_type;
+    using allocator_type  = typename allocator_traits::allocator_type;
+    using size_type       = typename allocator_traits::size_type;
+    using difference_type = typename allocator_traits::difference_type;
 
     constexpr explicit Fixed_block_allocator(size_type      block_size,
                                              allocator_type allocator = allocator_type{}) noexcept
@@ -358,8 +357,8 @@ public:
 
     constexpr memory_block allocate_block() {
         if (block_size_) {
-            auto memory = raw_allocator::allocate_array(
-                            allocator(), block_size_, 1, detail::max_alignment);
+            auto         memory = allocator_traits::allocate_array(allocator(), block_size_, 1,
+                                                                   detail::max_alignment);
             memory_block block(memory, block_size_);
             block_size_ = 0u;
             return block;
@@ -370,7 +369,7 @@ public:
     constexpr void deallocate_block(memory_block block) noexcept {
         // clang-format off
         detail::debug_check_pointer([&] { return block_size_ == 0u; }, info(), block.memory);
-        raw_allocator::deallocate_array(
+        allocator_traits::deallocate_array(
             allocator(), block.memory, block.size, 1, detail::max_alignment);
         block_size_ = block.size;
         // clang-format on
@@ -397,7 +396,7 @@ template <typename RawAllocator>
 using default_block_allocator = Growing_block_allocator<RawAllocator>;
 
 template <template <typename...> typename Wrapper, typename BlockAllocator, typename... Args>
-requires salt::is_block_allocator<BlockAllocator>
+requires is_block_allocator<BlockAllocator>
 constexpr auto make_block_allocator(std::size_t block_size, Args&&... args) {
     return BlockAllocator{block_size, std::forward<Args>(args)...};
 }
@@ -423,8 +422,7 @@ make_block_allocator(std::size_t block_size, Args&&... args) {
             block_size, std::forward<Args>(args)...);
 }
 
-template <template <typename...> typename BlockAllocator, typename BlockOrRawAllocator,
-          typename... Args>
+template <template <typename...> typename BlockAllocator, typename BlockOrRawAllocator, typename... Args>
 constexpr block_allocator_type<BlockOrRawAllocator, BlockAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
     return detail::make_block_allocator<BlockAllocator, BlockOrRawAllocator>(

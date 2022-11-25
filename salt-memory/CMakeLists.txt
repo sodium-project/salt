@@ -1,9 +1,10 @@
 salt_static_library(memory
     COMMON
         SOURCE
-            "salt/memory/debugging.cpp"
             "salt/memory/detail/debug_helpers.cpp"
             "salt/memory/detail/memory_list.cpp"
+            "salt/memory/debugging.cpp"
+            "salt/memory/temporary_allocator.cpp"
         TEST
             "salt/memory/detail/align-test.cpp"
             "salt/memory/detail/debug_helpers-test.cpp"
@@ -17,6 +18,7 @@ salt_static_library(memory
             "salt/memory/memory_pool-test.cpp"
             "salt/memory/memory_pool_list-test.cpp"
             "salt/memory/memory_stack-test.cpp"
+            "salt/memory/temporary_allocator-test.cpp"
         LINK
             salt::meta
             salt::foundation)

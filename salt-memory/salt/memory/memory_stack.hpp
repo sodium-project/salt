@@ -47,6 +47,11 @@ struct [[nodiscard]] Memory_stack_leak_handler {
 
 } // namespace detail
 
+// A stateful RawAllocator that provides stack-like (LIFO) allocations. It uses a Memory_arena with
+// a given BlockOrRawAllocator defaulting to Growing_block_allocator to allocate huge blocks and
+// saves a marker to the current top. Allocation simply moves this marker by the appropriate number
+// of bytes and returns the pointer at the old marker position, deallocation is not directly
+// supported, only setting the marker to a previously queried position.
 template <typename BlockOrRawAllocator = Default_allocator>
 struct Memory_stack : detail::Default_leak_detector<detail::Memory_stack_leak_handler> {
     using allocator_type  = block_allocator_type<BlockOrRawAllocator>;
@@ -153,6 +158,9 @@ private:
     friend composable_traits<Memory_stack>;
 };
 
+// Simple utility that automatically unwinds a `Stack` to a previously saved location. A `Stack` is
+// anything that provides a `marker`, a `top()` function returning a `marker` and an `unwind()`
+// function to unwind to a `marker`, like a Memory_stack
 template <typename Stack = Memory_stack<>> struct [[nodiscard]] Memory_stack_unwinder final {
     using stack_type  = Stack;
     using marker_type = typename stack_type::marker;

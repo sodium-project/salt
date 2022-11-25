@@ -15,12 +15,16 @@ concept storage_constructible =
 
 } // namespace detail
 
+// A RawAllocator that stores another allocator.
+// NOTE:
+// * StoragePolicy defines the allocator type being stored and how it is stored.
+// * Mutex controls synchronization of the access.
 template <typename StoragePolicy, typename Mutex>
 class [[nodiscard]] Allocator_storage
         : StoragePolicy,
           detail::Mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>> {
     // clang-format off
-    using allocator_traits  = allocator_traits<typename StoragePolicy::allocator_type>;
+    using allocator_traits  = allocator_traits <typename StoragePolicy::allocator_type>;
     using composable_traits = composable_traits<typename StoragePolicy::allocator_type>;
     using mutex_storage     = detail::Mutex_storage<
             detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
@@ -168,6 +172,8 @@ public:
 struct [[nodiscard]] Any_allocator final {};
 using any_allocator = Any_allocator;
 
+// A StoragePolicy that stores the allocator directly.
+// It embeds the allocator inside it, i.e. moving the storage policy will move the allocator.
 // clang-format off
 template <raw_allocator RawAllocator> requires(not std::same_as<RawAllocator, Any_allocator>)
 struct [[nodiscard]] Direct_storage : allocator_traits<RawAllocator>::allocator_type {
@@ -318,6 +324,13 @@ using Reference_storage_impl =
         detail::Reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
                                        detail::allocator_reference_t<RawAllocator>>;
 
+// A StoragePolicy that stores a reference to an allocator.
+// For stateful allocators it only stores a pointer to an allocator.
+// For stateless allocators it does not store anything.
+// For allocators that are already shared it will store the allocator type directly.
+// NOTE:
+//  It does not take ownership over the allocator in the stateful case, the user has to ensure
+//   that the allocator object stays valid. In the other cases the lifetime does not matter.
 template <raw_allocator RawAllocator>
 class [[nodiscard]] Reference_storage : Reference_storage_impl<RawAllocator> {
     using storage = Reference_storage_impl<RawAllocator>;
@@ -352,6 +365,8 @@ protected:
     }
 };
 
+// Specialization of the class template Reference_storage that is type-erased. It is triggered by
+// the tag type Any_allocator. The specialization can store a reference to any allocator type.
 #if 0
 template <> class [[nodiscard]] Reference_storage<Any_allocator> {
     struct [[nodiscard]] Base_allocator {

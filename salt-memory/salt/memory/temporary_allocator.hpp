@@ -141,7 +141,7 @@ struct [[nodiscard]] Temporary_stack_initializer {
         Defer_create() noexcept {}
     } defer_create;
 
-    Temporary_stack_initializer(Defer_create) noexcept {}
+    explicit Temporary_stack_initializer(Defer_create) noexcept {}
 
     Temporary_stack_initializer(std::size_t size = default_stack_size);
 

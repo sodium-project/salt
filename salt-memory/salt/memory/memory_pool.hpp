@@ -15,7 +15,7 @@ struct Memory_pool_leak_handler {
 };
 } // namespace detail
 
-// It uses a memory_arena with a given BlockOrRawAllocator defaulting to Growing_block_allocator,
+// It uses a Memory_arena with a given BlockOrRawAllocator defaulting to Growing_block_allocator,
 // subdivides them in small nodes of given size and puts them onto a free list. Allocation and
 // deallocation simply remove or add nodes from this list and are thus fast. The way the list is
 // maintained can be controlled via the PoolType which is either Node_pool, Array_pool. This kind
