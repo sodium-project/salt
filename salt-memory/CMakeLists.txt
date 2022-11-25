@@ -18,6 +18,7 @@ salt_static_library(memory
             "salt/memory/memory_pool-test.cpp"
             "salt/memory/memory_pool_list-test.cpp"
             "salt/memory/memory_stack-test.cpp"
+            "salt/memory/std_allocator-test.cpp"
             "salt/memory/temporary_allocator-test.cpp"
         LINK
             salt::meta
