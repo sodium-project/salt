@@ -80,7 +80,7 @@ public:
     constexpr Std_allocator() noexcept requires(not is_stateful_allocator)
             : allocator_reference{allocator_type{}} {}
 
-    constexpr Std_allocator(allocator_reference const& allocator) noexcept
+    constexpr explicit Std_allocator(allocator_reference const& allocator) noexcept
             : allocator_reference{allocator} {}
 
     // clang-format off
