@@ -57,36 +57,51 @@ protected:
 template <> struct [[nodiscard]] Mutex_storage<No_mutex> {
     Mutex_storage() noexcept = default;
 
-    constexpr void   lock() const noexcept {}
+    constexpr void lock() const noexcept {}
     constexpr void unlock() const noexcept {}
 
 protected:
     ~Mutex_storage() = default;
 };
 
+template <typename Mutex> struct [[nodiscard]] Dummy_guard final {
+    using mutex_type = Mutex;
+
+    constexpr explicit Dummy_guard(Mutex&) noexcept {}
+
+    constexpr Dummy_guard(Mutex&, std::adopt_lock_t) noexcept {}
+
+    constexpr ~Dummy_guard() {}
+
+private:
+    Dummy_guard(Dummy_guard const&)            = delete;
+    Dummy_guard& operator=(Dummy_guard const&) = delete;
+};
+
 template <typename Allocator, typename Mutex> struct [[nodiscard]] Locked_allocator {
-    Locked_allocator(Allocator& allocator, Mutex& mutex) noexcept
+
+    constexpr Locked_allocator(Allocator& allocator, Mutex& mutex) noexcept
             : allocator_{&allocator}, mutex_{&mutex} {}
 
-    ~Locked_allocator() {
+    constexpr ~Locked_allocator() {
         if (mutex_)
             mutex_->unlock();
     }
 
     // clang-format off
-    Locked_allocator(Locked_allocator&& other) noexcept
+    constexpr Locked_allocator(Locked_allocator&& other) noexcept
             : allocator_{std::exchange(other.allocator_, nullptr)},
               mutex_    {std::exchange(other.mutex_    , nullptr)} {}
     // clang-format on
 
     Locked_allocator& operator=(Locked_allocator&& other) noexcept = delete;
 
-    Allocator& operator*() const noexcept {
+    constexpr Allocator& operator*() const noexcept {
         SALT_ASSERT(allocator_);
         return *allocator_;
     }
 
-    Allocator* operator->() const noexcept {
+    constexpr Allocator* operator->() const noexcept {
         SALT_ASSERT(allocator_);
         return allocator_;
     }
@@ -97,10 +112,20 @@ private:
 };
 
 template <typename Allocator, typename Mutex>
-Locked_allocator<Allocator, Mutex> lock_allocator(Allocator& allocator, Mutex& mutex) {
+constexpr Locked_allocator<Allocator, Mutex> lock_allocator(Allocator& allocator, Mutex& mutex) {
     return {allocator, mutex};
 }
 
 } // namespace detail
+
+using No_mutex_storage = detail::Mutex_storage<No_mutex>;
+
+template <typename Allocator, typename Mutex>
+using mutex_storage_for = detail::Mutex_storage<detail::mutex_for<Allocator, Mutex>>;
+
+template <typename Mutex, typename MutexStorage>
+using lock_guard_for =
+        std::conditional_t<std::same_as<Mutex, No_mutex>, detail::Dummy_guard<MutexStorage>,
+                           std::lock_guard<MutexStorage>>;
 
 } // namespace salt

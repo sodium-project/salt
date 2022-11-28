@@ -1,41 +1,29 @@
 #pragma once
+
+#include <salt/meta.hpp>
 #include <salt/memory/threading.hpp>
 
 namespace salt {
-
-namespace detail {
-
-// clang-format off
-template <typename Storage, typename Allocator>
-concept storage_constructible =
-    requires(Allocator&& allocator) {
-        new Storage{std::forward<Allocator>(allocator)};
-    };
-// clang-format on
-
-} // namespace detail
 
 // A RawAllocator that stores another allocator.
 // NOTE:
 // * StoragePolicy defines the allocator type being stored and how it is stored.
 // * Mutex controls synchronization of the access.
 template <typename StoragePolicy, typename Mutex>
-class [[nodiscard]] Allocator_storage
-        : StoragePolicy,
-          detail::Mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>> {
-    // clang-format off
+class [[nodiscard]] Allocator_storage : StoragePolicy,
+                                        mutex_storage_for<typename StoragePolicy::allocator_type, Mutex> {
+    template <typename MutexStorage>
+    using lock_guard        = lock_guard_for   <Mutex, MutexStorage>;
     using allocator_traits  = allocator_traits <typename StoragePolicy::allocator_type>;
     using composable_traits = composable_traits<typename StoragePolicy::allocator_type>;
-    using mutex_storage     = detail::Mutex_storage<
-            detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
-    // clang-format on
+    using mutex_storage     = mutex_storage_for<typename StoragePolicy::allocator_type, Mutex>;
+    using storage_policy    = StoragePolicy;
 
 public:
     using allocator_type  = typename StoragePolicy::allocator_type;
     using mutex_type      = mutex_storage const;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using storage_policy  = StoragePolicy;
     using is_stateful     = typename allocator_traits::is_stateful;
 
     Allocator_storage() = default;
@@ -43,122 +31,112 @@ public:
     // clang-format off
     template <typename Allocator> requires(
         // use this to prevent constructor being chosen instead of move
-        not std::is_base_of_v<Allocator_storage, typename std::decay_t<Allocator>>
-        and detail::storage_constructible<StoragePolicy, Allocator>)
-    Allocator_storage(Allocator&& allocator)
+        not base_of<Allocator_storage, std::decay_t<Allocator>>
+        and only_constructible<StoragePolicy, Allocator>)
+    constexpr Allocator_storage(Allocator&& allocator) noexcept
             : storage_policy{std::forward<Allocator>(allocator)} {}
 
     template <typename OtherPolicy> requires
         requires(Allocator_storage<OtherPolicy, Mutex> const& other) { new storage_policy{other.allocator()}; }
-    Allocator_storage(Allocator_storage<OtherPolicy, Mutex> const& other) noexcept
+    constexpr Allocator_storage(Allocator_storage<OtherPolicy, Mutex> const& other) noexcept
             : storage_policy{other.allocator()} {}
     // clang-format on
 
-    Allocator_storage(Allocator_storage&& other) noexcept
+    constexpr Allocator_storage(Allocator_storage&& other) noexcept
             : storage_policy{std::move(other)}, mutex_storage{std::move(other)} {}
 
-    Allocator_storage& operator=(Allocator_storage&& other) noexcept {
+    constexpr Allocator_storage& operator=(Allocator_storage&& other) noexcept {
         storage_policy::operator=(std::move(other));
         mutex_storage:: operator=(std::move(other));
         return *this;
     }
 
-    Allocator_storage(Allocator_storage const&)            = default;
+    Allocator_storage(Allocator_storage const&) = default;
     Allocator_storage& operator=(Allocator_storage const&) = default;
 
-    void* allocate_node(size_type size, size_type alignment) {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr void* allocate_node(size_type size, size_type alignment) {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return allocator_traits::allocate_node(alloc, size, alignment);
     }
 
-    void* allocate_array(size_type count, size_type size, size_type alignment) {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr void* allocate_array(size_type count, size_type size, size_type alignment) {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return allocator_traits::allocate_array(alloc, count, size, alignment);
     }
 
-    void deallocate_node(void* ptr, size_type size, size_type alignment) noexcept {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr void deallocate_node(void* ptr, size_type size, size_type alignment) noexcept {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         allocator_traits::deallocate_node(alloc, ptr, size, alignment);
     }
 
-    void deallocate_array(void* ptr, size_type count, size_type size,
-                          size_type alignment) noexcept {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr void deallocate_array(void* ptr, size_type count, size_type size,
+                                    size_type alignment) noexcept {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         allocator_traits::deallocate_array(alloc, ptr, count, size, alignment);
     }
 
-    size_type max_node_size() const {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr size_type max_node_size() const noexcept {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return allocator_traits::max_node_size(alloc);
     }
 
-    size_type max_array_size() const {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr size_type max_array_size() const noexcept {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return allocator_traits::max_array_size(alloc);
     }
 
-    size_type max_alignment() const {
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr size_type max_alignment() const noexcept {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return allocator_traits::max_alignment(alloc);
     }
 
-    auto try_allocate_node(size_type size, size_type alignment) noexcept requires
-            is_composable_allocator<allocator_type> {
-        SALT_ASSERT(is_composable());
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr auto try_allocate_node(size_type size, size_type alignment) noexcept
+            requires is_composable_allocator<allocator_type> {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return composable_traits::try_allocate_node(alloc, size, alignment);
     }
 
-    auto try_allocate_array(size_type count, size_type size, size_type alignment) noexcept requires
-            is_composable_allocator<allocator_type> {
-        SALT_ASSERT(is_composable());
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr auto try_allocate_array(size_type count, size_type size, size_type alignment) noexcept
+            requires is_composable_allocator<allocator_type> {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return composable_traits::try_allocate_array(alloc, count, size, alignment);
     }
 
-    auto try_deallocate_node(void* ptr, size_type size, size_type alignment) noexcept requires
-            is_composable_allocator<allocator_type> {
-        SALT_ASSERT(is_composable());
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr auto try_deallocate_node(void* ptr, size_type size, size_type alignment) noexcept
+            requires is_composable_allocator<allocator_type> {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return composable_traits::try_deallocate_node(alloc, ptr, size, alignment);
     }
 
-    auto try_deallocate_array(void* ptr, size_type count, size_type size,
-                              size_type alignment) noexcept requires
-            is_composable_allocator<allocator_type> {
-        SALT_ASSERT(is_composable());
-        std::lock_guard<mutex_type> lock{*this};
-        auto&&                      alloc = allocator();
+    constexpr auto try_deallocate_array(void* ptr, size_type count, size_type size,
+                                        size_type alignment) noexcept
+            requires is_composable_allocator<allocator_type> {
+        lock_guard<mutex_type> lock{*this};
+        auto&&                 alloc = allocator();
         return composable_traits::try_deallocate_array(alloc, ptr, count, size, alignment);
     }
 
-    auto allocator() noexcept -> decltype(std::declval<storage_policy>().allocator()) {
+    constexpr decltype(auto) allocator() noexcept {
+        return storage_policy::allocator();
+    }
+    constexpr decltype(auto) allocator() const noexcept {
         return storage_policy::allocator();
     }
 
-    auto allocator() const noexcept -> decltype(std::declval<storage_policy const>().allocator()) {
-        return storage_policy::allocator();
-    }
-
-    auto lock() noexcept
-            -> decltype(detail::lock_allocator(std::declval<storage_policy>().allocator(),
-                                               std::declval<mutex_type&>())) {
+    constexpr decltype(auto) lock() noexcept {
         return detail::lock_allocator(allocator(), static_cast<mutex_type&>(*this));
     }
-
-    auto lock() const noexcept
-            -> decltype(detail::lock_allocator(std::declval<storage_policy const>().allocator(),
-                                               std::declval<mutex_type&>())) {
+    constexpr decltype(auto) lock() const noexcept {
         return detail::lock_allocator(allocator(), static_cast<mutex_type&>(*this));
     }
 
@@ -168,7 +146,7 @@ public:
 };
 
 // Tag type that enables type-erasure in Reference_storage.
-// It can be used everywhere a allocator_reference is used internally.
+// It can be used anywhere the Allocator_reference is used internally.
 struct [[nodiscard]] Any_allocator final {};
 using any_allocator = Any_allocator;
 
@@ -215,7 +193,7 @@ template <raw_allocator RawAllocator, typename Mutex = std::mutex>
 using Thread_safe_allocator = Allocator_storage<Direct_storage<RawAllocator>, Mutex>;
 
 // TODO:
-//  Try to use the concepts
+//  Try to rewrite it using the concept.
 // clang-format off
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] is_shared_allocator;
@@ -330,7 +308,7 @@ using Reference_storage_impl =
 // For allocators that are already shared it will store the allocator type directly.
 // NOTE:
 //  It does not take ownership over the allocator in the stateful case, the user has to ensure
-//   that the allocator object stays valid. In the other cases the lifetime does not matter.
+//  that the allocator object stays valid. In the other cases the lifetime does not matter.
 template <raw_allocator RawAllocator>
 class [[nodiscard]] Reference_storage : Reference_storage_impl<RawAllocator> {
     using storage = Reference_storage_impl<RawAllocator>;

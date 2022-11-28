@@ -47,4 +47,15 @@ concept has_data = requires(Container c0, Container const c1) {
     requires noexcept(c1.data());
 };
 
+// clang-format off
+template <typename T, typename... Args>
+concept only_constructible =
+    requires(Args&&... args) {
+        new T{std::forward<Args>(args)...};
+    };
+// clang-format on
+
+template <typename Base, typename Derived>
+concept base_of = std::is_base_of_v<Base, Derived>;
+
 } // namespace salt
