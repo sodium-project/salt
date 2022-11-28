@@ -1,9 +1,8 @@
 #pragma once
 
+#include <salt/config/memory_support.hpp>
 #include <salt/memory/memory_block.hpp>
 #include <salt/memory/memory_stack.hpp>
-
-#define SALT_MEMORY_TEMPORARY_STACK_MODE (2)
 
 #if SALT_MEMORY_TEMPORARY_STACK_MODE >= 2
 #    include <atomic>

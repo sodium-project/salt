@@ -1,5 +1,7 @@
-#include <salt/memory/default_allocator.hpp>
 #include <salt/memory/temporary_allocator.hpp>
+
+#include <salt/foundation/fast_terminate.hpp>
+#include <salt/memory/default_allocator.hpp>
 
 #include <new>
 #include <type_traits>
@@ -206,11 +208,10 @@ Temporary_stack_initializer::Temporary_stack_initializer(std::size_t) {}
 
 Temporary_stack_initializer::~Temporary_stack_initializer() {}
 
-Temporary_stack& temporary_stack(std::size_t size) {
-    (void)size;
-    // FOONATHAN_MEMORY_UNREACHABLE("get_temporary_stack() called but stack is disabled by "
-    //                              "FOONATHAN_MEMORY_TEMPORARY_STACK == 0");
-    std::abort();
+Temporary_stack& temporary_stack(std::size_t) {
+    SALT_ASSERT("temporary_stack(std::size_t) called but stack is disabled by "
+                "SALT_MEMORY_TEMPORARY_STACK_MODE == 0");
+    fast_terminate();
 }
 #endif
 
