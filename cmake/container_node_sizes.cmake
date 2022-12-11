@@ -35,7 +35,7 @@ get_align_of<TEST_TYPE> alignment;
     )
     # Parse the align_of<..., ##> in the compiler error output.
     # string(REGEX MATCH "align_of<.*,[ ]*([0-9]+)[ul ]*>" _ALIGNMENT_MATCHED ${_ALIGNMENT_OUTPUT})
-    string(REGEX MATCH "'?align_of'? [\[].*[,|; ].*([0-9]+)\]" _ALIGNMENT_MATCHED ${_ALIGNMENT_OUTPUT})
+    string(REGEX MATCH "'?align_of'? [\[].*[,|; ]([0-9]+)\]" _ALIGNMENT_MATCHED ${_ALIGNMENT_OUTPUT})
 
     if(_ALIGNMENT_MATCHED)
         set(${_OUT} ${CMAKE_MATCH_1} PARENT_SCOPE)
@@ -127,8 +127,10 @@ template <
     std::size_t alignment,
     std::size_t size,
     bool        is_node_type = false
-> requires (not is_node_type)
-struct node_size {};
+>
+struct node_size {
+    static_assert(!is_node_type, "Expected to fail");
+};
 
 template <typename T, typename State = empty, bool get_size = true, typename InitialType = T>
 struct dummy_allocator :
@@ -292,18 +294,21 @@ function(salt_get_container_node_size _CONTAINER _TYPES _ALIGNMENTS_OUT _NODE_SI
             compile_result_unused
             ${CMAKE_BINARY_DIR}
             ${_CONTAINERS_NODE_SIZE_SOURCE_PATH}
-            COMPILE_DEFINITIONS "-D${_CONTAINER}=1 -DTEST_TYPE=${TYPE}"
+            COMPILE_DEFINITIONS "-D${_CONTAINER}=1" "-DTEST_TYPE=${TYPE}"
             OUTPUT_VARIABLE _CONTAINERS_NODE_SIZE_OUTPUT
             CXX_STANDARD 20
             CXX_STANDARD_REQUIRED TRUE
         )
 
         if(NOT _CONTAINERS_NODE_SIZE_OUTPUT)
-	        message(FATAL_ERROR "Unable to determine node size of C++ container ${container} holding type ${type}")
+	        message(FATAL_ERROR
+                    "Unable to determine node size of C++ container ${_CONTAINER} holding type ${TYPE}"
+                    "${_CONTAINERS_NODE_SIZE_OUTPUT}")
         endif()
         # Parse the node_size<##, ##, true> in the compiler error output.
         string(
             REGEX MATCH "node_size<[ ]*([0-9]+)[ul ]*,[ ]*([0-9]+)[ul ]*,[ ]*true[ ]*>"
+            #REGEX MATCH "'?node_size'? [\[].*[=] ([0-9]+)[,|;].*[=] ([0-9]+)[,|;].*[=] (true)\]"
             _CONTAINERS_NODE_SIZE_MATCHED
             ${_CONTAINERS_NODE_SIZE_OUTPUT})
 
@@ -314,7 +319,9 @@ function(salt_get_container_node_size _CONTAINER _TYPES _ALIGNMENTS_OUT _NODE_SI
                 list(APPEND _NODE_SIZES ${CMAKE_MATCH_2})
             endif()
         else()
-            message(FATAL_ERROR "Unable to determine node size of C++ container ${container} holding type ${type}")
+            message(FATAL_ERROR
+                    "Unable to determine node size of C++ container ${_CONTAINER} holding type ${TYPE}"
+                    "${_CONTAINERS_NODE_SIZE_OUTPUT}")
         endif()
     endforeach()
 
@@ -345,16 +352,23 @@ function(salt_configure_containers_node_size _FILE_OUT)
         shared_ptr_stateless shared_ptr_stateful
 	)
 
+    string(APPEND NODE_SIZE_CONTENTS "\
+
+#include <type_traits>
+#include <cstddef>")
     foreach(CONTAINER IN LISTS _CONTAINER_TYPES)
         string(TOUPPER "${CONTAINER}_container" _CONTAINER_NAME)
         salt_get_container_node_size("${_CONTAINER_NAME}" "${_TYPES}" _ALIGNMENTS _NODE_SIZES)
+        salt_debug_message(
+                "Node size [container = ${_CONTAINER_NAME} types = <${_TYPES}>, alignments = ${_ALIGNMENTS}, node sizes = ${_NODE_SIZES}]")
 
         # Generate the contents for this container type
 	    string(APPEND NODE_SIZE_CONTENTS "\
 
 namespace detail {
-    template <std::size_t Alignment>
-    struct [[nodiscard]] ${CONTAINER}_node_size;
+
+template <std::size_t Alignment>
+struct [[nodiscard]] ${CONTAINER}_node_size;
 ")
 
         list(LENGTH _ALIGNMENTS _N_ALIGNMENTS)
@@ -366,15 +380,16 @@ namespace detail {
             # Generate content for this alignment/node size in this container
             string(APPEND NODE_SIZE_CONTENTS "\
 
-    template <>
-    struct [[nodiscard]] ${CONTAINER}_node_size<${ALIGNMENT}>
-    : std::integral_constant<std::size_t, ${NODE_SIZE}>
-    {};
+template <>
+struct [[nodiscard]] ${CONTAINER}_node_size<${ALIGNMENT}>
+: std::integral_constant<std::size_t, ${NODE_SIZE}>
+{};
 ")
         endforeach()
 
         # End contents for this container type
         string(APPEND NODE_SIZE_CONTENTS "\
+
 } // namespace detail
 
 template <typename T>
@@ -385,7 +400,9 @@ struct [[nodiscard]] ${CONTAINER}_node_size
 ")
     endforeach()
 
-    # Finally, write the file.  As a reminder, configure_file() will
+    salt_debug_message("Configuring file: ${_FILE_OUT}")
+
+    # Finally, write the file. As a reminder, configure_file() will
     # substitute in any CMake variables wrapped in @VAR@ in the inpout
     # file and write them to the output file; and will only rewrite
     # the file and update its timestamp if the contents have changed.

@@ -1,6 +1,6 @@
 # Generate containers_node_size.hpp if necessary
-if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/salt/memory/detail/containers_node_size.hpp)
-    salt_configure_containers_node_size(${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.hpp)
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.inl)
+    salt_configure_containers_node_size(${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.inl)
 endif()
 
 salt_static_library(memory
@@ -25,6 +25,8 @@ salt_static_library(memory
             "salt/memory/memory_stack-test.cpp"
             "salt/memory/std_allocator-test.cpp"
             "salt/memory/temporary_allocator-test.cpp"
+        INCLUDE_DIR
+            "${CMAKE_CURRENT_BINARY_DIR}"
         LINK
             salt::meta
             salt::foundation)
