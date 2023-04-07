@@ -17,7 +17,7 @@ project(salt CXX)
 
 include("cmake/project_settings.cmake")
 include("cmake/bootstrap.cmake")
-include("cmake/container_node_sizes.cmake")
+include("cmake/std_compatibility.cmake")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Libraries.

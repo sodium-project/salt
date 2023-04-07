@@ -1,6 +1,6 @@
 # Generate containers_node_size.hpp if necessary
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.inl)
-    salt_configure_containers_node_size(${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.inl)
+    salt_configure_containers(${CMAKE_CURRENT_BINARY_DIR}/salt/memory/detail/containers_node_size.inl)
 endif()
 
 salt_static_library(memory
