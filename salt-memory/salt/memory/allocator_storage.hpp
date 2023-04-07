@@ -147,7 +147,11 @@ public:
 
 // Tag type that enables type-erasure in Reference_storage.
 // It can be used anywhere the Allocator_reference is used internally.
-struct [[nodiscard]] Any_allocator final {};
+struct [[nodiscard]] Any_allocator final {    
+    using allocator_type  = Any_allocator;
+    using size_type       = std::size_t;
+    using difference_type = std::ptrdiff_t;
+};
 using any_allocator = Any_allocator;
 
 // A StoragePolicy that stores the allocator directly.

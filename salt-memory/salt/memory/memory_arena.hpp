@@ -391,25 +391,27 @@ private:
     size_type block_size_;
 };
 
-namespace detail {
 template <typename RawAllocator>
-using default_block_allocator = Growing_block_allocator<RawAllocator>;
+using Default_block_allocator = Growing_block_allocator<RawAllocator>;
+
+namespace detail {
 
 template <template <typename...> typename Wrapper, typename BlockAllocator, typename... Args>
 requires is_block_allocator<BlockAllocator>
-constexpr auto make_block_allocator(std::size_t block_size, Args&&... args) {
+constexpr auto make_block_allocator_impl(std::size_t block_size, Args&&... args) {
     return BlockAllocator{block_size, std::forward<Args>(args)...};
 }
 
 template <template <typename...> typename Wrapper, typename RawAllocator>
-constexpr auto make_block_allocator(std::size_t  block_size,
-                                    RawAllocator allocator = RawAllocator()) {
+constexpr auto make_block_allocator_impl(std::size_t  block_size,
+                                         RawAllocator allocator = RawAllocator()) {
     return Wrapper<RawAllocator>{block_size, std::move(allocator)};
 }
+
 } // namespace detail
 
 template <typename BlockOrRawAllocator,
-          template <typename...> typename BlockAllocator = detail::default_block_allocator>
+          template <typename...> typename BlockAllocator = Default_block_allocator>
 using block_allocator_type =
         std::conditional_t<is_block_allocator<BlockOrRawAllocator>, BlockOrRawAllocator,
                            BlockAllocator<BlockOrRawAllocator>>;
@@ -418,14 +420,14 @@ using block_allocator_type =
 template <typename BlockOrRawAllocator, typename... Args>
 constexpr block_allocator_type<BlockOrRawAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
-    return detail::make_block_allocator<detail::default_block_allocator, BlockOrRawAllocator>(
+    return detail::make_block_allocator_impl<Default_block_allocator, BlockOrRawAllocator>(
             block_size, std::forward<Args>(args)...);
 }
 
 template <template <typename...> typename BlockAllocator, typename BlockOrRawAllocator, typename... Args>
 constexpr block_allocator_type<BlockOrRawAllocator, BlockAllocator>
 make_block_allocator(std::size_t block_size, Args&&... args) {
-    return detail::make_block_allocator<BlockAllocator, BlockOrRawAllocator>(
+    return detail::make_block_allocator_impl<BlockAllocator, BlockOrRawAllocator>(
             block_size, std::forward<Args>(args)...);
 }
 // clang-format on
