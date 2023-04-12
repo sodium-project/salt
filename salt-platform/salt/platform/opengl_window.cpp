@@ -24,21 +24,23 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
     char const* error_message = nullptr;
     if (!::glfwInit()) {
         ::glfwGetError(&error_message);
-        error("Failed to initialize GLFW, error message: '", error_message, "'");
+        error("Failed to initialize GLFW, error message: '", std::string_view{error_message}, "'");
     }
 
     ::glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, SALT_OPENGL_VERSION_MAJOR);
     ::glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, SALT_OPENGL_VERSION_MINOR);
     ::glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    native_window_ = ::glfwCreateWindow(int(size_.width), int(size_.height), title_.data(), nullptr,
-                                        nullptr);
+    int const width  = static_cast<int>(size_.width);
+    int const height = static_cast<int>(size_.height);
+    native_window_   = ::glfwCreateWindow(width, height, title_.data(), nullptr, nullptr);
     if (!native_window_) {
         ::glfwGetError(&error_message);
-        error("Failed to create Window, error message: '", error_message, "'");
-    } else {
-        trace("Window created");
+        error("Failed to create Window, error message: '", std::string_view{error_message}, "'");
     }
+
+    trace("Window created");
+
     ::glfwSetWindowPos(native_window_, position_.x, position_.y);
     ::glfwMakeContextCurrent(native_window_);
     ::glfwSetFramebufferSizeCallback(native_window_, framebuffer_size_callback);
@@ -51,7 +53,7 @@ Opengl_window::Opengl_window(Size size, Position position) noexcept
         trace("Failed to initialize GLAD");
     }
 
-    trace("Window size => {width:", size_.width, ", height:", size_.height, "}");
+    trace("Window size => {width:", width, ", height:", height, "}");
     trace("Window position => {x:", position_.x, ", y:", position_.y, "}");
 
     // Set GLFW callbacks

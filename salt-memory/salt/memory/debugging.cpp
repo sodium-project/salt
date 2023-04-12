@@ -1,17 +1,21 @@
 #include <salt/memory/debugging.hpp>
 
 #include <salt/foundation/logger.hpp>
-
 namespace salt {
+
+constexpr void print_define(fast_io::io_reserve_type_t<char, Allocator_info>,
+                            fast_io::output_stream auto stream, Allocator_info const& info) {
+    using namespace fast_io::mnp;
+    print(stream, "Allocator ", info.name, " (at ", pointervw(info.allocator), ") ");
+}
 
 namespace {
 
 void default_leak_handler(Allocator_info const& info, std::ptrdiff_t amount) noexcept {
     if (amount > 0)
-        error("Allocator ", info.name, " (at ", info.allocator, ") leaked ", amount, " bytes");
+        error(info, "leaked ", amount, " bytes");
     else
-        error("Allocator ", info.name, " (at ", info.allocator, ") has deallocated ", amount,
-              " bytes more than ever allocated (it's amazing you're able to see this message!)");
+        error(info, "has deallocated ", amount, " bytes more than ever allocated");
 }
 
 std::atomic<leak_handler> internal_leak_handler(default_leak_handler);
@@ -29,8 +33,8 @@ leak_handler get_leak_handler() {
 namespace {
 
 void default_invalid_ptr_handler(Allocator_info const& info, const void* ptr) noexcept {
-    error("Deallocation function of allocator ", info.name, " (at", info.allocator,
-          ") received invalid pointer ", ptr);
+    using namespace fast_io::mnp;
+    error("Deallocation function of ", info, "received invalid pointer ", pointervw(ptr));
 }
 
 std::atomic<invalid_pointer_handler> internal_invalid_ptr_handler(default_invalid_ptr_handler);
@@ -49,8 +53,9 @@ namespace {
 
 void default_buffer_overflow_handler(const void* memory, std::size_t node_size,
                                      const void* ptr) noexcept {
-    error("Buffer overflow at address ", ptr, " detected, corresponding memory block", memory,
-          " has only size ", node_size);
+    using namespace fast_io::mnp;
+    error("Buffer overflow at address ", pointervw(ptr), " detected, corresponding memory block",
+          pointervw(memory), " has only size ", node_size);
 }
 
 std::atomic<buffer_overflow_handler>
