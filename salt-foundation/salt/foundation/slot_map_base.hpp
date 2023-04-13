@@ -21,7 +21,8 @@ using std::ranges::is_permutation;
 
 namespace salt {
 
-template <typename Container, typename Friend> struct Container_view : private Container {
+template <typename Container, typename Friend>
+struct [[nodiscard]] Container_view : private Container {
     friend Friend;
     using Container::begin;
     using Container::end;
@@ -42,14 +43,16 @@ template <typename Container, typename Friend> struct Container_view : private C
     }
 };
 
-template <std::unsigned_integral I> struct Key final {
+template <std::unsigned_integral I>
+struct Key final {
     using index_type = I;
 
     index_type     idx;
     constexpr auto operator<=>(Key const&) const noexcept = default;
 };
 
-template <typename Key, typename Value> struct Emplace_result final {
+template <typename Key, typename Value>
+struct Emplace_result final {
     Key    key;
     Value& ref;
 };
