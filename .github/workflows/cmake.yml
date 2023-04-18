@@ -36,13 +36,12 @@ jobs:
           sudo apt-add-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
           sudo apt update
           sudo apt install -y ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }} libc++-dev libc++abi-dev
-          clang --version
 
       - name: Configure
         env:
           CC: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
           CXX: ${{ matrix.compiler.exe }}-${{ matrix.compiler.version }}
-        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -S . -B ${{github.workspace}}/build -G Ninja
+        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build -G Ninja
 
       - name: Build
         # Build your program with the given configuration
