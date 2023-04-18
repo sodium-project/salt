@@ -27,7 +27,7 @@ jobs:
       - name: Get CMake and Ninja
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: 3.26.3
+          cmakeVersion: 3.26.1
           ninjaVersion: 1.11.1
 
       - name: Install compiler
