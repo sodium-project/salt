@@ -22,6 +22,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Let CMake know where to find custom modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+# Verify CMAKE_MODULE_PATH
+message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Detect and initialize the target platform.
