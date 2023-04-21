@@ -58,52 +58,52 @@ struct [[nodiscard]] Zip_iterator final {
     }
 
     constexpr bool operator==(Zip_iterator const& other) const noexcept {
-        bool const is_equal_first  = first_  == other.first_;
-        bool const is_equal_second = second_ == other.second_;
+        [[maybe_unused]] bool const is_equal_first  = first_  == other.first_;
+        [[maybe_unused]] bool const is_equal_second = second_ == other.second_;
         SALT_ASSERT(is_equal_first == is_equal_second);
         return is_equal_first;
     }
 
 #if defined(SALT_CLANG_FULL_VERSION) && SALT_TARGET(APPLE) // Fuck you Apple
     constexpr bool operator<(Zip_iterator const& other) const noexcept {
-        bool const is_less_first  = first_  < other.first_;
-        bool const is_less_second = second_ < other.second_;
+        [[maybe_unused]] bool const is_less_first  = first_  < other.first_;
+        [[maybe_unused]] bool const is_less_second = second_ < other.second_;
         SALT_ASSERT(is_less_first == is_less_second);
         return is_less_first;
     }
 
     constexpr bool operator>(Zip_iterator const& other) const noexcept {
-        bool const is_greater_first  = first_  > other.first_;
-        bool const is_greater_second = second_ > other.second_;
+        [[maybe_unused]] bool const is_greater_first  = first_  > other.first_;
+        [[maybe_unused]] bool const is_greater_second = second_ > other.second_;
         SALT_ASSERT(is_greater_first == is_greater_second);
         return is_greater_first;
     }
 
     constexpr bool operator<=(Zip_iterator const& other) const noexcept {
-        bool const is_less_eq_first  = first_  <= other.first_;
-        bool const is_less_eq_second = second_ <= other.second_;
+        [[maybe_unused]] bool const is_less_eq_first  = first_  <= other.first_;
+        [[maybe_unused]] bool const is_less_eq_second = second_ <= other.second_;
         SALT_ASSERT(is_less_eq_first == is_less_eq_second);
         return is_less_eq_first;
     }
 
     constexpr bool operator>=(Zip_iterator const& other) const noexcept {
-        bool const is_greater_eq_first  = first_  >= other.first_;
-        bool const is_greater_eq_second = second_ >= other.second_;
+        [[maybe_unused]] bool const is_greater_eq_first  = first_  >= other.first_;
+        [[maybe_unused]] bool const is_greater_eq_second = second_ >= other.second_;
         SALT_ASSERT(is_greater_eq_first == is_greater_eq_second);
         return is_greater_eq_first;
     }
 #else
     constexpr std::weak_ordering operator<=>(Zip_iterator const& other) const noexcept {
-        auto const order_first  = std::weak_order(first_ , other.first_);
-        auto const order_second = std::weak_order(second_, other.second_);
+        [[maybe_unused]] auto const order_first  = std::weak_order(first_ , other.first_);
+        [[maybe_unused]] auto const order_second = std::weak_order(second_, other.second_);
         SALT_ASSERT(order_first == order_second);
         return order_first;
     }
 #endif
 
     constexpr difference_type operator-(Zip_iterator const& other) const noexcept {
-        auto const distance_first  = first_  - other.first_;
-        auto const distance_second = second_ - other.second_;
+        [[maybe_unused]] auto const distance_first  = first_  - other.first_;
+        [[maybe_unused]] auto const distance_second = second_ - other.second_;
         SALT_ASSERT(distance_first == distance_second);
         return distance_first;
     }
