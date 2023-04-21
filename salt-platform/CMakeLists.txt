@@ -3,20 +3,13 @@ find_package(glad REQUIRED)
 find_package(imgui REQUIRED)
 
 salt_static_library(platform
-    WINDOWS
+    COMMON
         SOURCE
             "salt/platform/opengl_window.cpp"
             "salt/platform/opengl_imgui_overlay.cpp"
         LINK
             glad::glad
             glfw::glfw
-            imgui::imgui
-            salt::events
-            salt::foundation
-    MACOSX
-        SOURCE
-            "salt/platform/metal_window.cpp"
-        LINK
             imgui::imgui
             salt::events
             salt::foundation)

@@ -2,17 +2,17 @@
 
 namespace salt {
 
-template <std::integral T> constexpr bool is_pow2(T const value) noexcept {
+template <std::integral I> constexpr bool is_pow2(I value) noexcept {
     return value && !((value) & (value - 1));
 }
 
 template <typename T, std::size_t Size>
-concept sized = requires {
+concept match_size = requires {
     requires sizeof(T) == Size;
 };
 
 template <typename T, std::size_t Alignment>
-concept aligned = requires {
+concept match_alignment = requires {
     requires alignof(T) == Alignment;
 };
 
@@ -46,5 +46,16 @@ concept has_data = requires(Container c0, Container const c1) {
     requires noexcept(c0.data());
     requires noexcept(c1.data());
 };
+
+// clang-format off
+template <typename T, typename... Args>
+concept only_constructible =
+    requires(Args&&... args) {
+        new T{std::forward<Args>(args)...};
+    };
+// clang-format on
+
+template <typename Base, typename Derived>
+concept base_of = std::is_base_of_v<Base, Derived>;
 
 } // namespace salt

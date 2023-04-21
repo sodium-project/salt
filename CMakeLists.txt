@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.23)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Set cmake export compile commands.
@@ -13,10 +13,11 @@ if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS AND
   message(STATUS "CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
 endif()
 
-project(salt CXX)
+project(salt LANGUAGES CXX)
 
 include("cmake/project_settings.cmake")
 include("cmake/bootstrap.cmake")
+include("cmake/std_compatibility.cmake")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Libraries.
@@ -27,6 +28,7 @@ add_subdirectory("salt-core")
 add_subdirectory("salt-events")
 add_subdirectory("salt-foundation")
 add_subdirectory("salt-math")
+add_subdirectory("salt-memory")
 add_subdirectory("salt-meta")
 add_subdirectory("salt-platform")
 

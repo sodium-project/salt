@@ -8,8 +8,8 @@
 namespace salt {
 
 struct [[nodiscard]] Command_line_args final {
-    int    argc = 0;
-    char** argv = nullptr;
+    int  const         argc = 0;
+    char const* const* argv = nullptr;
 
     std::string_view operator[](std::size_t idx) const noexcept {
         // TODO:

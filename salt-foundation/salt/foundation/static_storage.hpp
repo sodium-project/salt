@@ -7,25 +7,28 @@ template <typename T, std::size_t Size, std::size_t Alignment>
 struct [[nodiscard]] Static_storage final {
     // clang-format off
     template <typename... Args> requires std::constructible_from<T, Args...>
-    explicit Static_storage(std::in_place_t,
-                            Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
+    constexpr explicit Static_storage(std::in_place_t, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<T, Args...>
+    ) {
         storage_.template construct<T>(std::forward<Args>(args)...);
     }
-    // clang-format on
 
-    ~Static_storage() {
+    constexpr ~Static_storage() {
         storage_.template destruct<T>();
     }
 
+    constexpr
     Static_storage(Static_storage const& other) noexcept(std::is_nothrow_copy_constructible_v<T>) {
         storage_.template construct<T>(*other);
     }
 
+    constexpr
     Static_storage(Static_storage&& other) noexcept(std::is_nothrow_move_constructible_v<T>) {
         storage_.template construct<T>(std::move(*other));
     }
+    // clang-format on
 
-    Static_storage&
+    constexpr Static_storage&
     operator=(Static_storage const& other) noexcept(std::is_nothrow_copy_assignable_v<T>) {
         if (this != std::addressof(other)) {
             // clang-format off
@@ -36,7 +39,7 @@ struct [[nodiscard]] Static_storage final {
         return *this;
     }
 
-    Static_storage&
+    constexpr Static_storage&
     operator=(Static_storage&& other) noexcept(std::is_nothrow_move_assignable_v<T>) {
         if (this != std::addressof(other)) {
             // clang-format off
@@ -48,16 +51,16 @@ struct [[nodiscard]] Static_storage final {
     }
 
     // clang-format off
-    auto get()       noexcept { return storage_.template get<T>(); }
-    auto get() const noexcept { return storage_.template get<T>(); }
+    constexpr auto get()       noexcept { return storage_.template get<T>(); }
+    constexpr auto get() const noexcept { return storage_.template get<T>(); }
     // clang-format on
 
     // clang-format off
-    T* operator->() noexcept { return  get(); }
-    T& operator* () noexcept { return *get(); }
+    constexpr T* operator->() noexcept { return  get(); }
+    constexpr T& operator* () noexcept { return *get(); }
 
-    T const* operator->() const noexcept { return  get(); }
-    T const& operator* () const noexcept { return *get(); }
+    constexpr T const* operator->() const noexcept { return  get(); }
+    constexpr T const& operator* () const noexcept { return *get(); }
     // clang-format on
 
 private:

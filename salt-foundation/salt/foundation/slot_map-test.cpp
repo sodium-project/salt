@@ -400,7 +400,13 @@ TEST_CASE("salt::Slot_map", "[salt-utils/slot_map.hpp]") {
         for (auto v : values) {
             keys.push_back(map.insert(v));
         }
-        REQUIRE(std::ranges::is_permutation(map.keys(), keys));
-        REQUIRE(std::ranges::is_permutation(map.values(), values));
+
+#ifdef SALT_LIBCPP_HAS_NO_RANGES
+        REQUIRE(salt::ranges::is_permutation(map.keys().begin(), map.keys().end(), keys.begin()));
+        REQUIRE(salt::ranges::is_permutation(map.values().begin(), map.values().end(), values.begin()));
+#else
+        REQUIRE(salt::ranges::is_permutation(map.keys(), keys));
+        REQUIRE(salt::ranges::is_permutation(map.values(), values));
+#endif
     }
 }

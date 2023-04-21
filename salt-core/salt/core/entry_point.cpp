@@ -9,13 +9,13 @@ int main(int argc, char* argv[]) {
     SetConsoleMode(handle, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
     auto app = salt::Application({argc, argv});
-    salt::application_main(app);
+    salt::main(app);
     app.run();
 }
 #elif SALT_TARGET(MACOSX)
 int main(int argc, char const* argv[]) {
     auto app = salt::Application({argc, argv});
-    salt::application_main(app);
+    salt::main(app);
     app.run();
     return EXIT_SUCCESS;
 }

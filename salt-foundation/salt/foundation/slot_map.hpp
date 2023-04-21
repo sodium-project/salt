@@ -1,45 +1,10 @@
 #pragma once
-#include <algorithm>
 #include <salt/foundation/slot_map_base.hpp>
 
+#include <algorithm>
+#include <vector>
+
 namespace salt {
-
-#if SALT_CLANG_FULL_VER < 140000
-// Clang 14.0 gives an error: 'out-of-line definition' when defining member function enabled with
-// concept outside class. That seems a bug since the code should be correct.
-// Related issue from LLVM repo: https://github.com/llvm/llvm-project/issues/56442
-#    define CLANG_ERROR_OUT_OF_LINE_DEFINITION (1)
-#endif
-
-#ifdef CLANG_ERROR_OUT_OF_LINE_DEFINITION
-#    define REQUIRES_HAS_RESERVE(SLOT_MAP)                                                         \
-        requires detail::has_reserve<SLOT_MAP> {                                                   \
-            values_.reserve(size);                                                                 \
-            indices_.reserve(size);                                                                \
-            keys_.reserve(size);                                                                   \
-        }
-#    define REQUIRES_HAS_CAPACITY(SLOT_MAP)                                                        \
-        requires detail::has_capacity<SLOT_MAP> {                                                  \
-            auto capacity = max_size();                                                            \
-            if (auto value_capacity = values_.capacity(); value_capacity < capacity)               \
-                capacity = value_capacity;                                                         \
-            if (auto idx_capacity = indices_.capacity(); idx_capacity < capacity)                  \
-                capacity = idx_capacity;                                                           \
-            if (auto key_capacity = keys_.capacity(); key_capacity < capacity)                     \
-                capacity = key_capacity;                                                           \
-            return capacity;                                                                       \
-        }
-#    define REQUIRES_HAS_SHRINK_TO_FIT(SLOT_MAP)                                                   \
-        requires detail::has_shrink_to_fit<SLOT_MAP> {                                             \
-            values_.shrink_to_fit();                                                               \
-            indices_.shrink_to_fit();                                                              \
-            keys_.shrink_to_fit();                                                                 \
-        }
-#else
-#    define REQUIRES_HAS_RESERVE(SLOT_MAP)       requires detail::has_reserve<SLOT_MAP>
-#    define REQUIRES_HAS_CAPACITY(SLOT_MAP)      requires detail::has_capacity<SLOT_MAP>
-#    define REQUIRES_HAS_SHRINK_TO_FIT(SLOT_MAP) requires detail::has_shrink_to_fit<SLOT_MAP>
-#endif
 
 /// @see https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0661r0.pdf
 // clang-format off
@@ -80,47 +45,37 @@ public:
     using typename base::size_type;
 
     using value_type      = T;
+    using pointer         = T*;
+    using const_pointer   = T const*;
     using reference       = T&;
     using const_reference = T const&;
-
-    using const_iterator = Zip_iterator<const_key_iterator, const_value_iterator>;
-    using iterator       = Zip_iterator<const_key_iterator, value_iterator>;
-
+    using const_iterator  = Zip_iterator<const_key_iterator, const_value_iterator>;
+    using iterator        = Zip_iterator<const_key_iterator, value_iterator>;
     using difference_type = std::iter_difference_t<iterator>;
     using emplace_result  = Emplace_result<key_type, value_type>;
 
     // clang-format off
-    constexpr iterator begin() noexcept { return {keys().begin(), values().begin()}; }
-    constexpr iterator end  () noexcept { return {keys().end  (), values().end  ()}; }
-
-    constexpr const_iterator begin() const noexcept { return {keys().begin(), values().begin()}; }
-    constexpr const_iterator end  () const noexcept { return {keys().end  (), values().end  ()}; }
-
-    constexpr const_iterator cbegin() const noexcept { return begin(); }
-    constexpr const_iterator cend  () const noexcept { return end  (); }
-
-    constexpr bool      empty() const noexcept { return begin() == end(); }
-    constexpr size_type size () const noexcept {
-        return static_cast<size_type>(std::ranges::distance(begin(), end()));
-    }
-
     static constexpr size_type max_size() noexcept { return free_idx_null - index_type{1}; }
+
+    constexpr iterator begin() noexcept;
+    constexpr iterator end() noexcept;
+
+    constexpr const_iterator begin() const noexcept;
+    constexpr const_iterator end() const noexcept;
+
+    constexpr const_iterator cbegin() const noexcept;
+    constexpr const_iterator cend() const noexcept;
+
+    constexpr size_type size() const noexcept;
+
+    constexpr bool empty() const noexcept;
+    constexpr void clear() noexcept;
     // clang-format on
 
-    constexpr void      reserve(size_type size) REQUIRES_HAS_RESERVE(Slot_map);
-    constexpr void      shrink_to_fit() REQUIRES_HAS_SHRINK_TO_FIT(Slot_map);
-    constexpr size_type capacity() const noexcept REQUIRES_HAS_CAPACITY(Slot_map);
-
-    constexpr void clear() noexcept;
-
-    [[nodiscard]] constexpr key_type
-    insert(value_type const& value) requires std::copy_constructible<value_type> {
-        return emplace(value).key;
-    }
-    [[nodiscard]] constexpr key_type
-    insert(value_type&& value) requires std::move_constructible<value_type> {
-        return emplace(std::move(value)).key;
-    }
+    [[nodiscard]] constexpr key_type insert(value_type const& value)
+        requires std::copy_constructible<value_type>;
+    [[nodiscard]] constexpr key_type insert(value_type&& value)
+        requires std::move_constructible<value_type>;
 
     // clang-format off
     template <typename... Args> requires std::constructible_from<value_type, Args&&...>
@@ -128,40 +83,32 @@ public:
     // clang-format on
 
     constexpr iterator erase(iterator it) noexcept;
-    constexpr void     erase(key_type key) noexcept {
-            erase_impl(index(key));
-    }
+    constexpr void     erase(key_type key) noexcept;
 
     constexpr value_type pop(key_type key) noexcept;
     constexpr void       swap(Slot_map& other) noexcept;
 
-    constexpr iterator access(key_type key) noexcept {
-        return std::ranges::next(begin(), index(key));
-    };
-    constexpr const_iterator access(key_type key) const noexcept {
-        return std::ranges::next(begin(), index(key));
-    }
+    constexpr iterator       access(key_type key) noexcept;
+    constexpr const_iterator access(key_type key) const noexcept;
 
     constexpr iterator       find(key_type key) noexcept;
     constexpr const_iterator find(key_type key) const noexcept;
 
-    constexpr T& operator[](key_type key) noexcept {
-        return values_[index(key)];
-    }
-    constexpr T const& operator[](key_type key) const noexcept {
-        return values_[index(key)];
-    }
+    // clang-format off
+    constexpr pointer       data() noexcept       requires detail::has_data<Slot_map>;
+    constexpr const_pointer data() const noexcept requires detail::has_data<Slot_map>;
 
-    constexpr value_type* data() noexcept requires detail::has_data<Slot_map> {
-        return values_.data();
-    }
-    constexpr value_type const* data() const noexcept requires detail::has_data<Slot_map> {
-        return values_.data();
-    }
+    constexpr size_type capacity() const noexcept requires detail::has_capacity<Slot_map>;
 
-    constexpr bool contains(key_type key) const noexcept {
-        return find(key) != end();
-    };
+    constexpr void shrink_to_fit() requires detail::has_shrink_to_fit<Slot_map>;
+
+    constexpr void reserve(size_type size) requires detail::has_reserve<Slot_map>;
+    // clang-format on
+
+    constexpr T&       operator[](key_type key) noexcept;
+    constexpr T const& operator[](key_type key) const noexcept;
+
+    constexpr bool contains(key_type key) const noexcept;
 
     using base::keys;
     using base::values;

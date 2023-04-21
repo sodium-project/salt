@@ -2,26 +2,28 @@ SALT_DISABLE_WARNING_PUSH
 SALT_DISABLE_WARNING_MICROSOFT_TEMPLATE
 
 // clang-format off
-#define SALT_SLOT_MAP_TEMPLATE                                                                     \
+#define SLOT_MAP_TEMPLATE                                                                     \
     template <typename T,                                                                          \
               std::unsigned_integral KeyType,                                                      \
               template <typename...> typename ValueContainer,                                      \
               template <typename...> typename KeyContainer>                                        \
     requires slottable<T, KeyType, ValueContainer, KeyContainer>
 // clang-format on
-#define SALT_SLOT_MAP Slot_map<T, KeyType, ValueContainer, KeyContainer>
+#define SLOT_MAP Slot_map<T, KeyType, ValueContainer, KeyContainer>
 
-#ifndef CLANG_ERROR_OUT_OF_LINE_DEFINITION
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::reserve(size_type size) REQUIRES_HAS_RESERVE(SALT_SLOT_MAP) {
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::reserve(size_type size)
+    requires detail::has_reserve<Slot_map>
+{
     values_.reserve(size);
     indices_.reserve(size);
     keys_.reserve(size);
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr auto SALT_SLOT_MAP::capacity() const noexcept -> size_type
-        REQUIRES_HAS_CAPACITY(SALT_SLOT_MAP) {
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::capacity() const noexcept -> size_type
+    requires detail::has_capacity<Slot_map>
+{
     auto capacity = max_size();
 
     if (auto value_capacity = values_.capacity(); value_capacity < capacity) {
@@ -37,16 +39,57 @@ constexpr auto SALT_SLOT_MAP::capacity() const noexcept -> size_type
     return capacity;
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::shrink_to_fit() REQUIRES_HAS_SHRINK_TO_FIT(SALT_SLOT_MAP) {
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::shrink_to_fit()
+    requires detail::has_shrink_to_fit<Slot_map>
+{
     values_.shrink_to_fit();
     indices_.shrink_to_fit();
     keys_.shrink_to_fit();
 }
-#endif
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::clear() noexcept {
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::begin() noexcept -> iterator {
+    return {keys().begin(), values().begin()};
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::end() noexcept -> iterator {
+    return {keys().end(), values().end()};
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::begin() const noexcept -> const_iterator {
+    return {keys().begin(), values().begin()};
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::end() const noexcept -> const_iterator {
+    return {keys().end(), values().end()};
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::cbegin() const noexcept -> const_iterator {
+    return begin();
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::cend() const noexcept -> const_iterator {
+    return end();
+}
+
+SLOT_MAP_TEMPLATE
+constexpr bool SLOT_MAP::empty() const noexcept {
+    return begin() == end();
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::size() const noexcept -> size_type {
+    return static_cast<size_type>(ranges::distance(begin(), end()));
+}
+
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::clear() noexcept {
     values_.clear();
     // Push all objects into free indices list
     for (auto key : keys_) {
@@ -55,10 +98,24 @@ constexpr void SALT_SLOT_MAP::clear() noexcept {
     keys_.clear();
 }
 
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::insert(value_type const& value) -> key_type
+    requires std::copy_constructible<value_type>
+{
+    return emplace(value).key;
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::insert(value_type&& value) -> key_type
+    requires std::move_constructible<value_type>
+{
+    return emplace(std::move(value)).key;
+}
+
 // clang-format off
-SALT_SLOT_MAP_TEMPLATE
+SLOT_MAP_TEMPLATE
 template <typename... Args> requires std::constructible_from<T, Args&&...>
-constexpr auto SALT_SLOT_MAP::emplace(Args&&... args) -> emplace_result {
+constexpr auto SLOT_MAP::emplace(Args&&... args) -> emplace_result {
     index_type value_idx = static_cast<index_type>(values_.size());
 
     if (free_idx_ == free_idx_null) {
@@ -77,21 +134,36 @@ constexpr auto SALT_SLOT_MAP::emplace(Args&&... args) -> emplace_result {
     free_idx_                = free_idx_next;
 
     return {
-            .key = key,
-            .ref = ref,
+        .key = key,
+        .ref = ref,
     };
 }
 // clang-format on
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr auto SALT_SLOT_MAP::erase(iterator it) noexcept -> iterator {
-    auto value_idx = std::ranges::distance(begin(), it);
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::erase(iterator it) noexcept -> iterator {
+    auto value_idx = ranges::distance(begin(), it);
     erase_impl(static_cast<index_type>(value_idx));
     return std::ranges::next(begin(), value_idx);
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr auto SALT_SLOT_MAP::pop(key_type key) noexcept -> value_type {
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::erase(key_type key) noexcept {
+    erase_impl(index(key));
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::access(key_type key) noexcept -> iterator {
+    return std::ranges::next(begin(), index(key));
+};
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::access(key_type key) const noexcept -> const_iterator {
+    return std::ranges::next(begin(), index(key));
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::pop(key_type key) noexcept -> value_type {
     auto value_idx = index(key);
     auto temp      = std::exchange(values_[value_idx], values_.back());
 
@@ -100,15 +172,44 @@ constexpr auto SALT_SLOT_MAP::pop(key_type key) noexcept -> value_type {
     return temp;
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::erase_impl(index_type value_idx) noexcept {
+SLOT_MAP_TEMPLATE
+constexpr T& SLOT_MAP::operator[](key_type key) noexcept {
+    return values_[index(key)];
+}
+
+SLOT_MAP_TEMPLATE
+constexpr T const& SLOT_MAP::operator[](key_type key) const noexcept {
+    return values_[index(key)];
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::data() noexcept -> pointer
+    requires detail::has_data<Slot_map>
+{
+    return values_.data();
+}
+
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::data() const noexcept -> const_pointer
+    requires detail::has_data<Slot_map>
+{
+    return values_.data();
+}
+
+SLOT_MAP_TEMPLATE
+constexpr bool SLOT_MAP::contains(key_type key) const noexcept {
+    return find(key) != end();
+};
+
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::erase_impl(index_type value_idx) noexcept {
     std::ranges::swap(values_[value_idx], values_.back());
     values_.pop_back();
     erase_index_and_key(value_idx);
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::erase_index_and_key(index_type value_idx) noexcept {
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::erase_index_and_key(index_type value_idx) noexcept {
     auto back_key  = keys_.back();
     auto erase_key = std::exchange(keys_[value_idx], back_key);
     keys_.pop_back();
@@ -117,8 +218,8 @@ constexpr void SALT_SLOT_MAP::erase_index_and_key(index_type value_idx) noexcept
     indices_[erase_key.idx] = std::exchange(free_idx_, erase_key.idx);
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void SALT_SLOT_MAP::swap(SALT_SLOT_MAP& other) noexcept {
+SLOT_MAP_TEMPLATE
+constexpr void SLOT_MAP::swap(SLOT_MAP& other) noexcept {
     std::ranges::swap(values_, other.values_);
     std::ranges::swap(indices_, other.indices_);
     std::ranges::swap(keys_, other.keys_);
@@ -135,29 +236,34 @@ constexpr void SALT_SLOT_MAP::swap(SALT_SLOT_MAP& other) noexcept {
     }                                                                                              \
     return end();
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr auto SALT_SLOT_MAP::find(key_type key) const noexcept -> const_iterator {
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::find(key_type key) const noexcept -> const_iterator {
     SALT_SLOT_MAP_FIND(key);
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr auto SALT_SLOT_MAP::find(key_type key) noexcept -> iterator {
+SLOT_MAP_TEMPLATE
+constexpr auto SLOT_MAP::find(key_type key) noexcept -> iterator {
     SALT_SLOT_MAP_FIND(key);
 }
 
 #undef SALT_SLOT_MAP_FIND
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr bool SALT_SLOT_MAP::operator==(Slot_map const& other) const noexcept {
-    return std::ranges::is_permutation(*this, other);
+SLOT_MAP_TEMPLATE
+constexpr bool SLOT_MAP::operator==(Slot_map const& other) const noexcept {
+#ifdef SALT_LIBCPP_HAS_NO_RANGES
+    return ranges::is_permutation(std::begin(*this), std::end(*this), std::begin(other),
+                                  std::end(other));
+#else
+    return ranges::is_permutation(*this, other);
+#endif
 }
 
-SALT_SLOT_MAP_TEMPLATE
-constexpr void swap(SALT_SLOT_MAP& l, SALT_SLOT_MAP& r) noexcept {
+SLOT_MAP_TEMPLATE
+constexpr void swap(SLOT_MAP& l, SLOT_MAP& r) noexcept {
     l.swap(r);
 }
 
 SALT_DISABLE_WARNING_POP
 
-#undef SALT_SLOT_MAP_TEMPLATE
-#undef SALT_SLOT_MAP
+#undef SLOT_MAP_TEMPLATE
+#undef SLOT_MAP

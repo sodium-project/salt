@@ -8,11 +8,13 @@ struct [[nodiscard]] Zip_iterator final {
     // clang-format off
     using value_type       = cxx23::pair<std::iter_value_t<Iter0>, std::iter_value_t<Iter1>>;
     using reference        = cxx23::pair<std::iter_reference_t<Iter0>, std::iter_reference_t<Iter1>>;
-    using rvalue_reference = cxx23::pair<std::iter_rvalue_reference_t<Iter0>,
-                                         std::iter_rvalue_reference_t<Iter1>>;
-    using difference_type  = std::common_type_t<std::iter_difference_t<Iter0>,
-                                                std::iter_difference_t<Iter1>>;
+    using rvalue_reference = cxx23::pair<std::iter_rvalue_reference_t<Iter0>, std::iter_rvalue_reference_t<Iter1>>;
+    using difference_type  = std::common_type_t<std::iter_difference_t<Iter0>, std::iter_difference_t<Iter1>>;
     // clang-format on
+
+#if defined(SALT_CLANG_FULL_VERSION) && SALT_TARGET(APPLE) // Fuck you Apple
+    using iterator_category = std::random_access_iterator_tag;
+#endif
 
     constexpr Zip_iterator(Iter0 first = {}, Iter1 second = {}) noexcept
             : first_{first}, second_{second} {}
@@ -56,44 +58,74 @@ struct [[nodiscard]] Zip_iterator final {
     }
 
     constexpr bool operator==(Zip_iterator const& other) const noexcept {
-        bool const is_equal_first  = first_ == other.first_;
+        bool const is_equal_first  = first_  == other.first_;
         bool const is_equal_second = second_ == other.second_;
         SALT_ASSERT(is_equal_first == is_equal_second);
         return is_equal_first;
     }
 
+#if defined(SALT_CLANG_FULL_VERSION) && SALT_TARGET(APPLE) // Fuck you Apple
+    constexpr bool operator<(Zip_iterator const& other) const noexcept {
+        bool const is_less_first  = first_  < other.first_;
+        bool const is_less_second = second_ < other.second_;
+        SALT_ASSERT(is_less_first == is_less_second);
+        return is_less_first;
+    }
+
+    constexpr bool operator>(Zip_iterator const& other) const noexcept {
+        bool const is_greater_first  = first_  > other.first_;
+        bool const is_greater_second = second_ > other.second_;
+        SALT_ASSERT(is_greater_first == is_greater_second);
+        return is_greater_first;
+    }
+
+    constexpr bool operator<=(Zip_iterator const& other) const noexcept {
+        bool const is_less_eq_first  = first_  <= other.first_;
+        bool const is_less_eq_second = second_ <= other.second_;
+        SALT_ASSERT(is_less_eq_first == is_less_eq_second);
+        return is_less_eq_first;
+    }
+
+    constexpr bool operator>=(Zip_iterator const& other) const noexcept {
+        bool const is_greater_eq_first  = first_  >= other.first_;
+        bool const is_greater_eq_second = second_ >= other.second_;
+        SALT_ASSERT(is_greater_eq_first == is_greater_eq_second);
+        return is_greater_eq_first;
+    }
+#else
     constexpr std::weak_ordering operator<=>(Zip_iterator const& other) const noexcept {
-        auto const order_first  = std::weak_order(first_, other.first_);
+        auto const order_first  = std::weak_order(first_ , other.first_);
         auto const order_second = std::weak_order(second_, other.second_);
         SALT_ASSERT(order_first == order_second);
         return order_first;
     }
+#endif
 
     constexpr difference_type operator-(Zip_iterator const& other) const noexcept {
-        auto const distance_first  = first_ - other.first_;
+        auto const distance_first  = first_  - other.first_;
         auto const distance_second = second_ - other.second_;
         SALT_ASSERT(distance_first == distance_second);
         return distance_first;
     }
 
     constexpr Zip_iterator operator+(difference_type d) const noexcept {
-        auto temp = *this;
+        auto temp    = *this;
         return temp += d;
     }
 
     constexpr Zip_iterator operator-(difference_type d) const noexcept {
-        auto temp = *this;
+        auto temp    = *this;
         return temp -= d;
     }
 
     constexpr Zip_iterator& operator+=(difference_type d) noexcept {
-        first_ += d;
+        first_  += d;
         second_ += d;
         return *this;
     }
 
     constexpr Zip_iterator& operator-=(difference_type d) noexcept {
-        first_ -= d;
+        first_  -= d;
         second_ -= d;
         return *this;
     }
@@ -111,10 +143,10 @@ struct [[nodiscard]] Zip_iterator final {
     }
 
     friend constexpr void iter_swap(Zip_iterator l, Zip_iterator r) noexcept (
-        noexcept(std::ranges::iter_swap(l.first_, r.first_)) and
+        noexcept(std::ranges::iter_swap(l.first_ , r.first_)) and
         noexcept(std::ranges::iter_swap(l.second_, r.second_))
     ) {
-        std::ranges::iter_swap(l.first_, r.first_);
+        std::ranges::iter_swap(l.first_ , r.first_);
         std::ranges::iter_swap(l.second_, r.second_);
     }
     // clang-format on

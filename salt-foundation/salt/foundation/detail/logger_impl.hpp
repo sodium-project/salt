@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 
+#include <fast_io.h>
 #include <fast_io_device.h>
 #include <salt/foundation/detail/source_location.hpp>
 
@@ -29,13 +30,13 @@ constexpr std::string_view end() noexcept {
 constexpr std::size_t print_reserve_size(fast_io::io_reserve_type_t<char, Color>) {
     using namespace fast_io;
     constexpr auto reserve_size = print_reserve_size(io_reserve_type<char, std::uint8_t>);
-    constexpr auto total_size   = (reserve_size * 3 + 6);
+    constexpr auto total_size   = (reserve_size * 3 + 10);
     return total_size;
 }
 
 template <std::contiguous_iterator Iter>
 constexpr Iter print_reserve_define(fast_io::io_reserve_type_t<std::iter_value_t<Iter>, Color>,
-                                    Iter it, Color const& color) {
+                                    Iter it, Color color) {
     using namespace fast_io;
     *(it = details::non_overlapped_copy_n("\033[38;2", sizeof "\033[38;2" - 1, it))  = ';';
     *(it = print_reserve_define(io_reserve_type<char, std::uint8_t>, ++it, color.r)) = ';';
@@ -45,31 +46,30 @@ constexpr Iter print_reserve_define(fast_io::io_reserve_type_t<std::iter_value_t
 }
 
 } // namespace color
-
 namespace log_level {
 
 struct [[nodiscard]] Trace final {
     color::Color color;
-    constexpr    operator std::string_view() const noexcept {
-           return "[TRACE]";
+    constexpr operator std::string_view() const noexcept {
+        return "[TRACE]";
     }
 };
 struct [[nodiscard]] Debug final {
     color::Color color;
-    constexpr    operator std::string_view() const noexcept {
-           return "[DEBUG]";
+    constexpr operator std::string_view() const noexcept {
+        return "[DEBUG]";
     }
 };
 struct [[nodiscard]] Warning final {
     color::Color color;
-    constexpr    operator std::string_view() const noexcept {
-           return "[WARNING]";
+    constexpr operator std::string_view() const noexcept {
+        return "[WARNING]";
     }
 };
 struct [[nodiscard]] Error final {
     color::Color color;
-    constexpr    operator std::string_view() const noexcept {
-           return "[ERROR]";
+    constexpr operator std::string_view() const noexcept {
+        return "[ERROR]";
     }
 };
 

@@ -7,6 +7,9 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
     if(SALT_TARGET_OS STREQUAL "Windows")
         target_link_libraries(glad::glad
                               INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glad/lib/glad.lib")
+    elseif(SALT_TARGET_OS STREQUAL "MacOSX")
+        target_link_libraries(glad::glad
+                              INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glad/lib/libglad.a")
     endif()
     target_include_directories(glad::glad
                                INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glad/include")

@@ -112,6 +112,13 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
 
         salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
+
+        if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
+            set(SALT_OPENGL_VERSION_MAJOR 4 CACHE STRING "[READONLY] The target graphics api version major." FORCE)
+            set(SALT_OPENGL_VERSION_MINOR 6 CACHE STRING "[READONLY] The target graphics api version minor." FORCE)
+            add_definitions("-DSALT_OPENGL_VERSION_MAJOR=${SALT_OPENGL_VERSION_MAJOR}")
+            add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
+        endif()
     elseif(APPLE)
         if(NOT DEFINED CMAKE_OSX_SYSROOT)
             message(FATAL_ERROR "The required variable CMAKE_OSX_SYSROOT does not exist in CMake cache.\n"
@@ -135,6 +142,13 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
             set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
 
             salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
+
+            if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
+                set(SALT_OPENGL_VERSION_MAJOR 4 CACHE STRING "[READONLY] The target graphics api version major." FORCE)
+                set(SALT_OPENGL_VERSION_MINOR 1 CACHE STRING "[READONLY] The target graphics api version minor." FORCE)
+                add_definitions("-DSALT_OPENGL_VERSION_MAJOR=${SALT_OPENGL_VERSION_MAJOR}")
+                add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
+            endif()
         endif()
     endif()
 endif()
@@ -180,14 +194,14 @@ function(salt_common_app _NAME)
         message(FATAL_ERROR "Target '${_NAME}' has no sources.\n"
                             "Perhaps you have forgotten to provide the SOURCES argument?")
     endif()
-    add_executable("salt_${_NAME}")
-    target_sources("salt_${_NAME}" PRIVATE "${_SALT_COMMON_APP_SOURCES}")
-    target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
+    add_executable(salt_${_NAME})
+    target_sources(salt_${_NAME} PRIVATE "${_SALT_COMMON_APP_SOURCES}")
+    target_link_libraries(salt_${_NAME} PRIVATE salt::project_settings)
     if(_SALT_COMMON_APP_LINK)
-        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_COMMON_APP_LINK}")
+        target_link_libraries(salt_${_NAME} PRIVATE "${_SALT_COMMON_APP_LINK}")
     endif()
-    install(TARGETS "salt_${_NAME}"
-            RUNTIME DESTINATION "salt-${_NAME}")
+    install(TARGETS salt_${_NAME}
+            RUNTIME DESTINATION salt-${_NAME})
 endfunction(salt_common_app)
 
 function(salt_macosx_app _NAME)
@@ -207,17 +221,23 @@ function(salt_macosx_app _NAME)
     if(NOT _SALT_MACOSX_BUNDLE_NAME)
         set(_SALT_MACOSX_BUNDLE_NAME "${_NAME}")
     endif()
-    add_executable("salt_${_NAME}" MACOSX_BUNDLE)
-    set_target_properties("salt_${_NAME}" PROPERTIES
-                          MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}")
-    target_sources("salt_${_NAME}" PRIVATE "${_SALT_MACOSX_APP_SOURCES}")
-    target_link_libraries("salt_${_NAME}" PRIVATE salt::project_settings)
-    target_link_libraries("salt_${_NAME}" PRIVATE "-framework AppKit")
+    add_executable(salt_${_NAME} MACOSX_BUNDLE)
+    set_target_properties(salt_${_NAME} PROPERTIES
+                          BUNDLE True
+                          MACOSX_BUNDLE_GUI_IDENTIFIER "com.sodium-project.${_SALT_MACOSX_BUNDLE_NAME}"
+                          MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
+                          MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
+                          MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}"
+                          XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+                          XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+    target_sources(salt_${_NAME} PRIVATE "${_SALT_MACOSX_APP_SOURCES}")
+    target_link_libraries(salt_${_NAME} PRIVATE salt::project_settings)
+    target_link_libraries(salt_${_NAME} PRIVATE " -framework AppKit")
     if(_SALT_MACOSX_APP_LINK)
-        target_link_libraries("salt_${_NAME}" PRIVATE "${_SALT_MACOSX_APP_LINK}")
+        target_link_libraries(salt_${_NAME} PRIVATE "${_SALT_MACOSX_APP_LINK}")
     endif()
-    install(TARGETS "salt_${_NAME}"
-            BUNDLE DESTINATION "salt-${_NAME}")
+    install(TARGETS salt_${_NAME}
+            BUNDLE DESTINATION salt-${_NAME})
 endfunction(salt_macosx_app)
 
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
@@ -225,24 +245,28 @@ endfunction(salt_macosx_app)
 macro(_salt_unit_tests _ARG_NAME _TESTS_SOURCE)
     if(NOT "${_TESTS_SOURCE}" STREQUAL "")
         find_package(Catch2 REQUIRED)
-        set(_TESTS "salt_${_ARG_NAME}_tests")
-        add_executable("${_TESTS}")
-        target_sources("${_TESTS}" PRIVATE "${_TESTS_SOURCE}")
-        target_link_libraries("${_TESTS}"
+        set(_TESTS salt_${_ARG_NAME}_tests)
+        add_executable(${_TESTS})
+        target_sources(${_TESTS} PRIVATE "${_TESTS_SOURCE}")
+        target_link_libraries(${_TESTS}
                               PRIVATE Catch2::Catch2
-                                      "salt::${_ARG_NAME}")
-        install(TARGETS "${_TESTS}"
-                RUNTIME DESTINATION "salt-${_ARG_NAME}/bin")
-        add_test(NAME "${_ARG_NAME}" COMMAND "${_TESTS}")
+                                      salt::${_ARG_NAME})
+        install(TARGETS ${_TESTS}
+                RUNTIME DESTINATION salt-${_ARG_NAME}/bin)
+        add_test(NAME ${_ARG_NAME} COMMAND ${_TESTS})
     endif()
 endmacro(_salt_unit_tests)
 
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
 # it unless you know what you are doing.
-macro(_salt_install_headers _ARG_NAME)
-    install(DIRECTORY   "${CMAKE_CURRENT_LIST_DIR}/salt"
-            DESTINATION "salt-${_ARG_NAME}/include"
-            FILES_MATCHING PATTERN "*.hpp")
+macro(_salt_install_headers _ARG_NAME _ARG_DIRS)
+    foreach(DIR IN ITEMS ${_ARG_DIRS})
+        install(DIRECTORY   ${CMAKE_CURRENT_LIST_DIR}/salt/
+                DESTINATION salt-${_ARG_NAME}/include
+                FILES_MATCHING
+                    PATTERN "*.hpp"
+                    PATTERN "*.h")
+    endforeach()
 endmacro(_salt_install_headers)
 
 # salt_metal_library(<name>
@@ -277,28 +301,28 @@ endfunction(salt_metal_library)
 
 # salt_static_library(<name>
 #     <WINDOWS|APPLE|MACOSX|COMMON>
-#          <SOURCE|TEST|LINK> items...
-#         [<SOURCE|TEST|LINK> items...]...
+#          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
+#         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...
 #     [<WINDOWS|APPLE|MACOSX|COMMON>
-#          <SOURCE|TEST|LINK> items...
-#         [<SOURCE|TEST|LINK> items...]...]...)
+#          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
+#         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...]...)
 function(_salt_static_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
-                          _ARG                  # variable prefix
-                          ""                    # options
-                          ""                    # one   value keywords
-                          "SOURCE;TEST;LINK")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                      # start at the 1st argument
+                          _ARG                              # variable prefix
+                          ""                                # options
+                          ""                                # one   value keywords
+                          "SOURCE;TEST;LINK;INCLUDE_DIR")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
-    add_library("${_TARGET}" STATIC)
-    add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
-    target_include_directories("${_TARGET}" PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
-    target_link_libraries("${_TARGET}"
+    add_library(${_TARGET} STATIC)
+    add_library(salt::${_ARG_NAME} ALIAS ${_TARGET})
+    target_include_directories(${_TARGET} PUBLIC "${CMAKE_CURRENT_LIST_DIR}" ${_ARG_INCLUDE_DIR})
+    target_link_libraries(${_TARGET}
                           PUBLIC  salt::project_settings
                                   "${_ARG_LINK}")
-    target_sources("${_TARGET}" PRIVATE "${_ARG_SOURCE}")
-    install(TARGETS "${_TARGET}"
-            ARCHIVE DESTINATION "salt-${_ARG_NAME}/lib")
-    _salt_install_headers("${_ARG_NAME}")
+    target_sources(${_TARGET} PRIVATE "${_ARG_SOURCE}")
+    install(TARGETS ${_TARGET}
+            ARCHIVE DESTINATION salt-${_ARG_NAME}/lib)
+    _salt_install_headers("${_ARG_NAME}" ".;${_ARG_INCLUDE_DIR}")
     _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
 endfunction(_salt_static_library)
 
@@ -337,13 +361,13 @@ function(_salt_interface_library _ARG_NAME)
                           ""             # one   value keywords
                           "TEST;LINK")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
-    add_library("${_TARGET}" INTERFACE)
-    add_library("salt::${_ARG_NAME}" ALIAS "${_TARGET}")
-    target_include_directories("${_TARGET}" INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
-    target_link_libraries("${_TARGET}"
+    add_library(${_TARGET} INTERFACE)
+    add_library(salt::${_ARG_NAME} ALIAS ${_TARGET})
+    target_include_directories(${_TARGET} INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
+    target_link_libraries(${_TARGET}
                           INTERFACE salt::project_settings
-                                    "${_ARG_LINK}")
-    _salt_install_headers("${_ARG_NAME}")
+                                    ${_ARG_LINK})
+    _salt_install_headers("${_ARG_NAME}" ".")
     _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
 endfunction(_salt_interface_library)
 

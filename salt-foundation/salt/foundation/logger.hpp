@@ -3,6 +3,7 @@
 #include <salt/meta.hpp>
 
 #include <salt/foundation/detail/logger_impl.hpp>
+#include <salt/foundation/fast_terminate.hpp>
 
 namespace salt {
 
@@ -83,13 +84,13 @@ template <typename... Args> struct [[maybe_unused]] error final {
     error(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<Console>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
                               location);
-        std::abort();
+        fast_terminate();
     }
     [[noreturn]] constexpr explicit
     error(File, Args&&... args, source_location location = source_location::current()) noexcept {
         logger<File>().log(log_level::error, std::forward_as_tuple(std::move(args)...),
                            location);
-        std::abort();
+        fast_terminate();
     }
 };
 // clang-format on
