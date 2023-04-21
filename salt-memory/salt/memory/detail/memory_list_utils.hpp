@@ -34,8 +34,7 @@ inline void store_int(void* address, std::uintptr_t value) noexcept {
 #elif __has_cpp_attribute(msvc::forceinline)
 [[msvc::forceinline]]
 #endif
-inline std::uintptr_t
-to_int(std::byte* ptr) noexcept {
+inline std::uintptr_t to_int(std::byte* ptr) noexcept {
     return reinterpret_cast<std::uintptr_t>(ptr);
 }
 

@@ -26,10 +26,13 @@ struct [[nodiscard]] Memory_list_array final {
     using iterator           = typename memory_list::iterator;
     using const_iterator     = typename memory_list::const_iterator;
 
-    constexpr Memory_list_array(Fixed_memory_stack& stack, const_iterator begin, size_type max_node_size) noexcept
+    constexpr Memory_list_array(Fixed_memory_stack& stack,
+                                const_iterator      begin,
+                                size_type           max_node_size) noexcept
             : size_ {access_policy_type::index_from_size(max_node_size) - min_size + 1},
               array_{static_cast<memory_list*>(
-                      stack.allocate(begin, size_ * sizeof(memory_list), alignof(memory_list)))} {
+                      stack.allocate(begin, size_ * sizeof(memory_list), alignof(memory_list)))}
+    {
         SALT_ASSERT(array_);
         for (size_type i = 0u; i < size_; ++i) {
             auto node_size = access_policy_type::size_from_index(i + min_size);
@@ -67,7 +70,7 @@ struct [[nodiscard]] Memory_list_array final {
     }
 
 private:
-    static constexpr size_type min_size =
+    static constexpr size_type min_size   =
             access_policy_type::index_from_size(memory_list::min_size);
 
     size_type    size_;

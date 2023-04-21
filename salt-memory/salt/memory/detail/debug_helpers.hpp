@@ -62,8 +62,8 @@ constexpr void debug_check_pointer([[maybe_unused]] Predicate             predic
 
 template <std::predicate Predicate>
 constexpr void debug_check_double_free([[maybe_unused]] Predicate             predicate,
-                                       [[maybe_unused]] Allocator_info const& info,
-                                       [[maybe_unused]] void*                 ptr) {
+                                       [[maybe_unused]] Allocator_info const& info     ,
+                                       [[maybe_unused]] void*                 ptr      ) {
 #if SALT_MEMORY_DEBUG_DOUBLE_FREE
     debug_check_pointer(predicate, info, ptr);
 #endif
