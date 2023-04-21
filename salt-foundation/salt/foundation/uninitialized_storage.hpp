@@ -17,7 +17,7 @@ struct [[nodiscard]] Uninitialized_storage final {
         std::is_nothrow_constructible_v<T, Args...>
     ) {
         auto const storage = get<T>();
-        ::new (storage) T{std::forward<Args>(args)...};
+        std::ranges::construct_at(storage, std::forward<Args>(args)...);
         return *storage;
     }
     // clang-format on

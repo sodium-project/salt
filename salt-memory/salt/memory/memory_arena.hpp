@@ -32,7 +32,8 @@ struct [[nodiscard]] Memory_block_stack final {
     constexpr void push(memory_block block) noexcept {
         SALT_ASSERT(block.size >= sizeof(Node));
         SALT_ASSERT(is_aligned(block.memory, max_alignment));
-        auto* next = ::new (block.memory) Node{head_, block.size - offset()};
+        auto* next = std::ranges::construct_at(static_cast<Node*>(block.memory), head_,
+                                               block.size - offset());
         head_      = next;
     }
 
@@ -397,7 +398,7 @@ using Default_block_allocator = Growing_block_allocator<RawAllocator>;
 namespace detail {
 
 template <template <typename...> typename Wrapper, typename BlockAllocator, typename... Args>
-requires is_block_allocator<BlockAllocator>
+    requires is_block_allocator<BlockAllocator>
 constexpr auto make_block_allocator_impl(std::size_t block_size, Args&&... args) {
     return BlockAllocator{block_size, std::forward<Args>(args)...};
 }

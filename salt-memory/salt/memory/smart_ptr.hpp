@@ -14,11 +14,11 @@ constexpr auto allocate_unique(Allocator_reference<RawAllocator> allocator, Args
         -> std::unique_ptr<T, Deleter<T, RawAllocator>> {
     using raw_ptr = std::unique_ptr<T, Deallocator<T, RawAllocator>>;
 
-    auto memory = allocator.allocate_node(sizeof(T), alignof(T));
+    auto* memory = allocator.allocate_node(sizeof(T), alignof(T));
     // raw_ptr deallocates memory in case of constructor exception
     raw_ptr result{static_cast<T*>(memory), {allocator}};
     // call constructor
-    ::new (memory) T(std::forward<Args>(args)...);
+    std::ranges::construct_at(static_cast<T*>(memory), std::forward<Args>(args)...);
     // pass ownership to return value using a deleter that calls destructor
     return {result.release(), {allocator}};
 }
@@ -26,7 +26,7 @@ constexpr auto allocate_unique(Allocator_reference<RawAllocator> allocator, Args
 template <typename T, typename... Args>
 constexpr void construct(T* first, T* last, Args&&... args) {
     for (; first != last; ++first) {
-        ::new (static_cast<void*>(first)) T(std::forward<Args>(args)...);
+        std::ranges::construct_at(first, std::forward<Args>(args)...);
     }
 }
 

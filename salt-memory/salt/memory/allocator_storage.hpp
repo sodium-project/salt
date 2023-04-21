@@ -631,7 +631,7 @@ template <> class [[nodiscard]] Reference_storage<Any_allocator> {
         constexpr explicit Wrapper(RawAllocator const& allocator) noexcept : storage{allocator} {}
 
         constexpr void clone(void* storage) const noexcept override {
-            ::new (storage) Wrapper{allocator()};
+            std::ranges::construct_at(static_cast<Wrapper*>(storage), allocator());
         }
 
         constexpr void* allocate_node(size_type size, size_type alignment) override {
@@ -716,8 +716,9 @@ public:
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
-        ::new (static_cast<void*>(storage_)) Wrapper<std::remove_cvref_t<RawAllocator>>{
-                std::forward<std::remove_cvref_t<RawAllocator>>(allocator)};
+        std::ranges::construct_at(
+                reinterpret_cast<Wrapper<std::remove_cvref_t<RawAllocator>>*>(storage_),
+                            std::forward<std::remove_cvref_t<RawAllocator>>  (allocator));
     }
 
     template <raw_allocator RawAllocator> requires(
@@ -726,7 +727,7 @@ public:
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
-        ::new (static_cast<void*>(storage_)) Wrapper<RawAllocator>{allocator};
+        std::ranges::construct_at(reinterpret_cast<Wrapper<RawAllocator>*>(storage_), allocator);
     }
     // clang-format on
 
