@@ -37,16 +37,16 @@ static constexpr inline bool is_raw_allocator = raw_allocator<Allocator>;
 namespace detail {
 
 // clang-format off
-template <typename Allocator, typename T = typename Allocator::value_type>
+template <typename Allocator>
 concept has_allocate =
     requires(Allocator&& allocator, std::size_t size) {
-        { allocator.allocate(size) } -> std::same_as<T*>;
+        { allocator.allocate(size) };
     };
 
 template <typename Allocator>
 concept has_deallocate =
     requires(Allocator&& allocator, void* ptr, std::size_t size) {
-        { allocator.deallocate(ptr, size) } -> std::same_as<void>;
+        { allocator.deallocate(ptr, size) };
     };
 
 template <typename Allocator>
@@ -111,7 +111,7 @@ template <typename Allocator>
 static constexpr inline bool is_stateful_allocator = stateful_allocator<Allocator>;
 // clang-format on
 
-template <raw_allocator Allocator> struct [[nodiscard]] allocator_traits final {
+template <typename Allocator> struct [[nodiscard]] allocator_traits final {
     using allocator_type  = Allocator;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
@@ -220,7 +220,7 @@ concept has_try_deallocate_array =
 
 } // namespace detail
 
-template <raw_allocator Allocator> struct [[nodiscard]] composable_traits final {
+template <typename Allocator> struct [[nodiscard]] composable_traits final {
     using allocator_type  = typename allocator_traits<Allocator>::allocator_type;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;

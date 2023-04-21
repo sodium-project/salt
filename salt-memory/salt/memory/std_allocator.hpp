@@ -33,8 +33,9 @@ concept any_reference = std::same_as<AllocatorReference, Any_allocator_reference
 
 } // namespace detail
 
-template <raw_allocator RawAllocator> struct [[nodiscard]] propagation_traits final {
-    // clang-format off
+// clang-format off
+template <raw_allocator RawAllocator>
+struct [[nodiscard]] propagation_traits final {
     using propagate_on_container_swap            =
             std::conditional_t<detail::propagate_on_container_swap<RawAllocator>, std::true_type,
                                std::false_type>;
@@ -44,13 +45,16 @@ template <raw_allocator RawAllocator> struct [[nodiscard]] propagation_traits fi
     using propagate_on_container_copy_assignment =
             std::conditional_t<detail::propagate_on_container_copy_assignment<RawAllocator>,
                                std::true_type, std::false_type>;
-    // clang-format on
 
     template <typename Allocator>
     static constexpr Allocator select_on_container_copy_construction(Allocator const& allocator) {
         return allocator;
     }
 };
+// clang-format on
+
+template <typename Derived, typename Base>
+concept not_derived_from = not std::derived_from<Derived, Base>;
 
 template <typename T, raw_allocator RawAllocator>
 class [[nodiscard]] Std_allocator : protected Allocator_reference<RawAllocator> {
@@ -75,7 +79,6 @@ public:
             typename propagation_traits::propagate_on_container_move_assignment;
     using propagate_on_container_copy_assignment =
             typename propagation_traits::propagate_on_container_move_assignment;
-    // clang-format on
 
     constexpr Std_allocator() noexcept requires(not is_stateful_allocator)
             : allocator_reference{allocator_type{}} {}
@@ -83,14 +86,13 @@ public:
     constexpr explicit Std_allocator(allocator_reference const& allocator) noexcept
             : allocator_reference{allocator} {}
 
-    // clang-format off
-    template <typename Allocator> requires(
-        not std::is_base_of_v<Std_allocator, Allocator>)
-    constexpr Std_allocator(Allocator& allocator) noexcept : allocator_reference{allocator} {}
+    template <typename Allocator> requires not_derived_from<Allocator, Std_allocator>
+    constexpr Std_allocator(Allocator& allocator) noexcept
+            : allocator_reference{allocator} {}
 
-    template <typename Allocator> requires(
-        not std::is_base_of_v<Std_allocator, Allocator>)
-    constexpr Std_allocator(Allocator const& allocator) noexcept : allocator_reference{allocator} {}
+    template <typename Allocator> requires not_derived_from<Allocator, Std_allocator>
+    constexpr Std_allocator(Allocator const& allocator) noexcept
+            : allocator_reference{allocator} {}
     // clang-format on
 
     template <typename U>
@@ -136,6 +138,7 @@ public:
                                      Std_allocator<T2, Allocator> const&) noexcept;
 
 private:
+    // clang-format off
 #if __has_cpp_attribute(__gnu__::__always_inline__)
     [[__gnu__::__always_inline__]]
 #elif __has_cpp_attribute(msvc::forceinline)
@@ -186,6 +189,7 @@ private:
 
     template <typename U, raw_allocator OtherRawAllocator>
     friend class Std_allocator;
+    // clang-format on
 };
 
 template <typename T, typename U, typename Allocator>
@@ -200,7 +204,23 @@ constexpr bool operator==(Std_allocator<T, Allocator> const& lhs,
         return true;
 }
 
+// clang-format off
 template <typename T>
 using Std_any_allocator = Std_allocator<T, Any_allocator>;
+
+template <typename T, raw_allocator RawAllocator>
+auto make_std_allocator(RawAllocator&& allocator) noexcept
+        -> Std_allocator<T, typename std::decay_t<RawAllocator>>
+{
+    return {std::forward<RawAllocator>(allocator)};
+}
+
+template <typename T, raw_allocator RawAllocator>
+auto make_std_any_allocator(RawAllocator&& allocator) noexcept
+        -> Std_any_allocator<T>
+{
+    return {std::forward<RawAllocator>(allocator)};
+}
+// clang-format on
 
 } // namespace salt

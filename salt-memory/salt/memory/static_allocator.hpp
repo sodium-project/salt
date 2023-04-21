@@ -15,7 +15,7 @@ using Static_allocator_storage = Uninitialized_storage<Size, detail::max_alignme
 
 // A stateful allocator,RawAllocator that uses a fixed sized storage for the allocations.
 // Deallocations are not supported, memory cannot be marked as freed.
-struct [[nodiscard]] Static_allocator final {
+struct [[nodiscard]] Static_allocator {
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
     using is_stateful     = std::true_type;
@@ -52,7 +52,7 @@ private:
 
 // An allocator that allocates the blocks from a fixed size storage. Deallocations are only allowed
 // in reversed order which is guaranteed by Memory_arena.
-struct [[nodiscard]] Static_block_allocator final {
+struct [[nodiscard]] Static_block_allocator {
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
 
@@ -62,8 +62,10 @@ struct [[nodiscard]] Static_block_allocator final {
         match_alignment<Static_allocator_storage<Size>, detail::max_alignment>
     constexpr Static_block_allocator(size_type                       block_size,
                                      Static_allocator_storage<Size>& storage) noexcept
-            : current_{static_cast<std::byte*>(static_cast<void*>(&storage))},
-              end_{current_ + Size}, block_size_{block_size} {
+            : current_   {static_cast<std::byte*>(static_cast<void*>(&storage))},
+              end_       {current_ + Size},
+              block_size_{block_size}
+    {
         SALT_ASSERT(block_size <= Size);
         SALT_ASSERT(Size % block_size == 0u);
     }
@@ -99,7 +101,7 @@ struct [[nodiscard]] Static_block_allocator final {
         current_ -= block_size_;
     }
 
-    constexpr size_type next_block_size() const noexcept {
+    constexpr size_type block_size() const noexcept {
         return block_size_;
     }
 

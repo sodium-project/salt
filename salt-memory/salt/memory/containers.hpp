@@ -85,13 +85,13 @@ namespace detail {
 
 // clang-format off
 template <typename T, typename StdAllocator>
-struct [[nodiscard]] shared_ptr_node_size final
+struct [[nodiscard]] shared_ptr_node_size_impl
 {
     static_assert(sizeof(T) != sizeof(T), "Unsupported allocator type");
 };
 
 template <typename T, typename RawAllocator>
-struct [[nodiscard]] shared_ptr_node_size<T, Std_allocator<T, RawAllocator>> final
+struct [[nodiscard]] shared_ptr_node_size_impl<T, Std_allocator<T, RawAllocator>>
         : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
                            shared_ptr_stateful_node_size<T>,
                            shared_ptr_stateless_node_size<T>>::type
@@ -103,10 +103,10 @@ struct [[nodiscard]] shared_ptr_node_size<T, Std_allocator<T, RawAllocator>> fin
 } // namespace detail
 
 template <typename T, typename Allocator>
-struct [[nodiscard]] shared_ptr_node_size final : detail::shared_ptr_node_size<T, Allocator> {};
+struct [[nodiscard]] shared_ptr_node_size : detail::shared_ptr_node_size_impl<T, Allocator> {};
 
-template <typename T, raw_allocator RawAllocator>
-struct [[nodiscard]] allocate_shared_node_size final
+template <typename T, typename RawAllocator>
+struct [[nodiscard]] allocate_shared_node_size
         : shared_ptr_node_size<T, Std_allocator<T, RawAllocator>> {};
 
 } // namespace salt::memory

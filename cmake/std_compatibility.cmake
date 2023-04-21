@@ -367,7 +367,7 @@ function(salt_configure_containers _FILE_OUT)
 namespace detail {
 
 template <std::size_t Alignment>
-struct [[nodiscard]] ${CONTAINER}_node_size;
+struct [[nodiscard]] ${CONTAINER}_node_size_impl;
 ")
 
         list(LENGTH _ALIGNMENTS _N_ALIGNMENTS)
@@ -380,7 +380,7 @@ struct [[nodiscard]] ${CONTAINER}_node_size;
             string(APPEND CONTAINERS_CONTENT "\
 
 template <>
-struct [[nodiscard]] ${CONTAINER}_node_size<${ALIGNMENT}>
+struct [[nodiscard]] ${CONTAINER}_node_size_impl<${ALIGNMENT}>
 : std::integral_constant<std::size_t, ${NODE_SIZE}>
 {};
 ")
@@ -394,7 +394,7 @@ struct [[nodiscard]] ${CONTAINER}_node_size<${ALIGNMENT}>
 template <typename T>
 struct [[nodiscard]] ${CONTAINER}_node_size
 : std::integral_constant<std::size_t,
-       detail::${CONTAINER}_node_size<alignof(T)>::value + sizeof(T)>
+       detail::${CONTAINER}_node_size_impl<alignof(T)>::value + sizeof(T)>
 {};
 ")
     endforeach()

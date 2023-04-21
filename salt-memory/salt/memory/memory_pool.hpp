@@ -49,8 +49,9 @@ public:
     constexpr ~Memory_pool() {}
 
     constexpr Memory_pool(Memory_pool&& other) noexcept
-            : leak_detector{std::move(other)}, arena_{std::move(other.arena_)},
-              list_{std::move(other.list_)} {}
+            : leak_detector{std::move(other)       },
+              arena_       {std::move(other.arena_)},
+              list_        {std::move(other.list_) } {}
 
     constexpr Memory_pool& operator=(Memory_pool&& other) noexcept = default;
 

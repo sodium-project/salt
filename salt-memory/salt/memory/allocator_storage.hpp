@@ -1,23 +1,29 @@
 #pragma once
 
-#include <salt/meta.hpp>
 #include <salt/memory/threading.hpp>
+#include <salt/meta.hpp>
 
 namespace salt {
 
-// A RawAllocator that stores another allocator.
+// An Allocator_storage that stores another allocator.
 // NOTE:
 // * StoragePolicy defines the allocator type being stored and how it is stored.
 // * Mutex controls synchronization of the access.
+// clang-format off
 template <typename StoragePolicy, typename Mutex>
-class [[nodiscard]] Allocator_storage : StoragePolicy,
-                                        mutex_storage_for<typename StoragePolicy::allocator_type, Mutex> {
+class [[nodiscard]] Allocator_storage
+        : StoragePolicy,
+          mutex_storage_for<typename StoragePolicy::allocator_type, Mutex>
+// clang-format on
+{
+    // clang-format off
     template <typename MutexStorage>
     using lock_guard        = lock_guard_for   <Mutex, MutexStorage>;
     using allocator_traits  = allocator_traits <typename StoragePolicy::allocator_type>;
     using composable_traits = composable_traits<typename StoragePolicy::allocator_type>;
     using mutex_storage     = mutex_storage_for<typename StoragePolicy::allocator_type, Mutex>;
     using storage_policy    = StoragePolicy;
+    // clang-format on
 
 public:
     using allocator_type  = typename StoragePolicy::allocator_type;
@@ -31,7 +37,7 @@ public:
     // clang-format off
     template <typename Allocator> requires(
         // use this to prevent constructor being chosen instead of move
-        not base_of<Allocator_storage, std::decay_t<Allocator>>
+        not std::derived_from <std::decay_t<Allocator>, Allocator_storage>
         and only_constructible<StoragePolicy, Allocator>)
     constexpr Allocator_storage(Allocator&& allocator) noexcept
             : storage_policy{std::forward<Allocator>(allocator)} {}
@@ -47,11 +53,11 @@ public:
 
     constexpr Allocator_storage& operator=(Allocator_storage&& other) noexcept {
         storage_policy::operator=(std::move(other));
-        mutex_storage:: operator=(std::move(other));
+        mutex_storage::operator=(std::move(other));
         return *this;
     }
 
-    Allocator_storage(Allocator_storage const&) = default;
+    Allocator_storage(Allocator_storage const&)            = default;
     Allocator_storage& operator=(Allocator_storage const&) = default;
 
     constexpr void* allocate_node(size_type size, size_type alignment) {
@@ -98,21 +104,24 @@ public:
     }
 
     constexpr auto try_allocate_node(size_type size, size_type alignment) noexcept
-            requires is_composable_allocator<allocator_type> {
+        requires composable_allocator<allocator_type>
+    {
         lock_guard<mutex_type> lock{*this};
         auto&&                 alloc = allocator();
         return composable_traits::try_allocate_node(alloc, size, alignment);
     }
 
     constexpr auto try_allocate_array(size_type count, size_type size, size_type alignment) noexcept
-            requires is_composable_allocator<allocator_type> {
+        requires composable_allocator<allocator_type>
+    {
         lock_guard<mutex_type> lock{*this};
         auto&&                 alloc = allocator();
         return composable_traits::try_allocate_array(alloc, count, size, alignment);
     }
 
     constexpr auto try_deallocate_node(void* ptr, size_type size, size_type alignment) noexcept
-            requires is_composable_allocator<allocator_type> {
+        requires composable_allocator<allocator_type>
+    {
         lock_guard<mutex_type> lock{*this};
         auto&&                 alloc = allocator();
         return composable_traits::try_deallocate_node(alloc, ptr, size, alignment);
@@ -120,7 +129,8 @@ public:
 
     constexpr auto try_deallocate_array(void* ptr, size_type count, size_type size,
                                         size_type alignment) noexcept
-            requires is_composable_allocator<allocator_type> {
+        requires composable_allocator<allocator_type>
+    {
         lock_guard<mutex_type> lock{*this};
         auto&&                 alloc = allocator();
         return composable_traits::try_deallocate_array(alloc, ptr, count, size, alignment);
@@ -147,7 +157,7 @@ public:
 
 // Tag type that enables type-erasure in Reference_storage.
 // It can be used anywhere the Allocator_reference is used internally.
-struct [[nodiscard]] Any_allocator final {    
+struct [[nodiscard]] Any_allocator final {
     using allocator_type  = Any_allocator;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -166,7 +176,8 @@ struct [[nodiscard]] Direct_storage : allocator_traits<RawAllocator>::allocator_
     constexpr Direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(std::move(allocator)) {}
 
-    constexpr Direct_storage(Direct_storage&& other) noexcept : allocator_type(std::move(other)) {}
+    constexpr Direct_storage(Direct_storage&& other) noexcept
+            : allocator_type(std::move(other)) {}
 
     constexpr Direct_storage& operator=(Direct_storage&& other) noexcept {
         allocator_type::operator=(std::move(other));
@@ -322,7 +333,8 @@ public:
 
     constexpr Reference_storage() noexcept = default;
 
-    constexpr explicit Reference_storage(allocator_type& allocator) noexcept : storage{allocator} {}
+    constexpr explicit Reference_storage(allocator_type& allocator) noexcept
+            : storage{allocator} {}
 
     constexpr explicit Reference_storage(allocator_type const& allocator) noexcept
             : storage{allocator} {}
@@ -699,7 +711,7 @@ public:
 
     // clang-format off
     template <raw_allocator RawAllocator> requires(
-        not std::derived_from<Reference_storage, std::decay_t<RawAllocator>>)
+        not std::derived_from<std::decay_t<RawAllocator>, Reference_storage>)
     constexpr Reference_storage(RawAllocator&& allocator) noexcept {
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
@@ -760,5 +772,21 @@ using Allocator_reference = Allocator_storage<Reference_storage<RawAllocator>, N
 using Any_reference_storage = Reference_storage<Any_allocator>;
 
 using Any_allocator_reference = Allocator_storage<Any_reference_storage, No_mutex>;
+
+// clang-format off
+template <raw_allocator RawAllocator>
+auto make_allocator_reference(RawAllocator&& allocator) noexcept
+        -> Allocator_reference<typename std::decay_t<RawAllocator>>
+{
+    return {std::forward<RawAllocator>(allocator)};
+}
+
+template <raw_allocator RawAllocator>
+auto make_any_allocator_reference(RawAllocator&& allocator) noexcept
+        -> Any_allocator_reference
+{
+    return {std::forward<RawAllocator>(allocator)};
+}
+// clang-format on
 
 } // namespace salt
