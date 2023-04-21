@@ -52,3 +52,44 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
         run: ctest --timeout 30 -C Debug -j4
+
+  windows:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:      
+        os: [windows-latest]
+        compiler:
+          - { pkg: clang, exe: 'clang++', version: 16 }
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get CMake and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.26.1
+          ninjaVersion: 1.11.1
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: ${{ matrix.compiler.version }}
+
+      - name: Configure
+        env:
+          CC: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
+          CXX: ${{ matrix.compiler.exe }}-${{ matrix.compiler.version }}
+        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build -G Ninja
+
+      - name: Build
+        # Build your program with the given configuration
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Run tests
+        working-directory: build
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: ctest --timeout 30 -C Debug -j4
