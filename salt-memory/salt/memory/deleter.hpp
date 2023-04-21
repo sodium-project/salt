@@ -17,7 +17,7 @@ struct [[nodiscard]] Deallocator final : Allocator_reference<RawAllocator> {
 
     constexpr Deallocator() noexcept = default;
 
-    constexpr Deallocator(Allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit Deallocator(Allocator_reference<RawAllocator> allocator) noexcept
             : Allocator_reference<RawAllocator>{allocator} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {
@@ -70,7 +70,7 @@ struct [[nodiscard]] Deleter : Allocator_reference<RawAllocator> {
 
     constexpr Deleter() noexcept = default;
 
-    constexpr Deleter(Allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit Deleter(Allocator_reference<RawAllocator> allocator) noexcept
             : Allocator_reference<RawAllocator>{allocator} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {

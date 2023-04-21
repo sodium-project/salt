@@ -87,11 +87,11 @@ public:
             : allocator_reference{allocator} {}
 
     template <typename Allocator> requires not_derived_from<Allocator, Std_allocator>
-    constexpr Std_allocator(Allocator& allocator) noexcept
+    constexpr explicit Std_allocator(Allocator& allocator) noexcept
             : allocator_reference{allocator} {}
 
     template <typename Allocator> requires not_derived_from<Allocator, Std_allocator>
-    constexpr Std_allocator(Allocator const& allocator) noexcept
+    constexpr explicit Std_allocator(Allocator const& allocator) noexcept
             : allocator_reference{allocator} {}
     // clang-format on
 

@@ -39,7 +39,7 @@ public:
         // use this to prevent constructor being chosen instead of move
         not std::derived_from <std::decay_t<Allocator>, Allocator_storage>
         and only_constructible<StoragePolicy, Allocator>)
-    constexpr Allocator_storage(Allocator&& allocator) noexcept
+    constexpr explicit Allocator_storage(Allocator&& allocator) noexcept
             : storage_policy{std::forward<Allocator>(allocator)} {}
 
     template <typename OtherPolicy> requires
@@ -173,7 +173,7 @@ struct [[nodiscard]] Direct_storage : allocator_traits<RawAllocator>::allocator_
 
     Direct_storage() = default;
 
-    constexpr Direct_storage(allocator_type&& allocator) noexcept
+    constexpr explicit Direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(std::move(allocator)) {}
 
     constexpr Direct_storage(Direct_storage&& other) noexcept
@@ -712,7 +712,7 @@ public:
     // clang-format off
     template <raw_allocator RawAllocator> requires(
         not std::derived_from<std::decay_t<RawAllocator>, Reference_storage>)
-    constexpr Reference_storage(RawAllocator&& allocator) noexcept {
+    constexpr explicit Reference_storage(RawAllocator&& allocator) noexcept {
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
@@ -722,7 +722,7 @@ public:
 
     template <raw_allocator RawAllocator> requires(
         not allocator_traits<RawAllocator>::is_stateful::value)
-    constexpr Reference_storage(RawAllocator const& allocator) noexcept {
+    constexpr explicit Reference_storage(RawAllocator const& allocator) noexcept {
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
