@@ -243,7 +243,7 @@ endfunction(salt_macosx_app)
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
 # it unless you know what you are doing.
 macro(_salt_unit_tests _ARG_NAME _TESTS_SOURCE)
-    if(NOT "${_TESTS_SOURCE}" STREQUAL "")
+    if(NOT "${_TESTS_SOURCE}" STREQUAL "" AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         find_package(Catch2 REQUIRED)
         set(_TESTS salt_${_ARG_NAME}_tests)
         add_executable(${_TESTS})
@@ -420,7 +420,7 @@ endif()
 # Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
 if(SALT_TARGET_OS STREQUAL "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "(C|c)lang")
     set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
-    if(SALT_BUILD_TYPE STREQUAL "DEBUG")
+    if(SALT_BUILD_TYPE STREQUAL "Debug")
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
         string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")        
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

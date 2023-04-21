@@ -55,7 +55,7 @@ struct [[nodiscard]] Fixed_memory_stack final {
                                        std::size_t fence_size = debug_fence_size) noexcept {
         shift(fence_size, debug_magic::fence_memory);
         shift(align_offset, debug_magic::alignment_memory);
-        auto memory = shift_top(size);
+        auto* memory = shift_top(size);
         shift(fence_size, debug_magic::fence_memory);
         return memory;
     }
