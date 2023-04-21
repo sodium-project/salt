@@ -80,8 +80,8 @@ jobs:
 
       - name: Configure
         env:
-          CC: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
-          CXX: ${{ matrix.compiler.exe }}-${{ matrix.compiler.version }}
+          CC: ${{ matrix.compiler.pkg }}
+          CXX: ${{ matrix.compiler.exe }}
         run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build -G Ninja
 
       - name: Build
