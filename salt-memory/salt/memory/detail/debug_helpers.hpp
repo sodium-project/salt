@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <utility>
 
 #include <salt/config/memory_support.hpp>
 #include <salt/meta.hpp>
