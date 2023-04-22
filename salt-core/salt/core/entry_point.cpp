@@ -19,4 +19,10 @@ int main(int argc, char const* argv[]) {
     app.run();
     return EXIT_SUCCESS;
 }
+#else
+int main(int argc, char* argv[]) {
+    auto app = salt::Application({argc, argv});
+    salt::main(app);
+    app.run();
+}
 #endif
