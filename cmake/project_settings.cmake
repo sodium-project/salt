@@ -204,7 +204,7 @@ endif()
 #-----------------------------------------------------------------------------------------------------------------------
 
 function(salt_common_app _NAME)
-    if(NOT SALT_TARGET_OS STREQUAL "Windows")
+    if(NOT (SALT_TARGET_OS STREQUAL "Windows" OR SALT_TARGET_OS STREQUAL "Linux"))
         message("Target '${_NAME}' is ignored because the target OS is set to '${SALT_TARGET_OS}'.")
         return()
     endif()
