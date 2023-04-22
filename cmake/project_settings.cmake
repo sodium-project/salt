@@ -337,7 +337,7 @@ function(_salt_static_library _ARG_NAME)
                           "SOURCE;TEST;LINK;INCLUDE_DIR")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
     add_library(${_TARGET} STATIC)
-    add_library(salt::${_ARG_NAME} ALIAS ${_TARGET})
+    add_library("salt::${_ARG_NAME}" ALIAS ${_TARGET})
     target_include_directories(${_TARGET} PUBLIC "${CMAKE_CURRENT_LIST_DIR}" ${_ARG_INCLUDE_DIR})
     target_link_libraries(${_TARGET}
                           PUBLIC  salt::project_settings
@@ -391,7 +391,7 @@ function(_salt_interface_library _ARG_NAME)
                           "TEST;LINK")   # multi value keywords
     set(_TARGET "salt_${_ARG_NAME}")
     add_library(${_TARGET} INTERFACE)
-    add_library(salt::${_ARG_NAME} ALIAS ${_TARGET})
+    add_library("salt::${_ARG_NAME}" ALIAS ${_TARGET})
     target_include_directories(${_TARGET} INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
     target_link_libraries(${_TARGET}
                           INTERFACE salt::project_settings
