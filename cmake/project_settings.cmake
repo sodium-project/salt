@@ -323,10 +323,10 @@ function(salt_metal_library _ARG_NAME)
 endfunction(salt_metal_library)
 
 # salt_static_library(<name>
-#     <WINDOWS|APPLE|MACOSX|COMMON>
+#     <WINDOWS|APPLE|MACOSX|LINUX|COMMON>
 #          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
 #         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...
-#     [<WINDOWS|APPLE|MACOSX|COMMON>
+#     [<WINDOWS|APPLE|MACOSX|LINUX|COMMON>
 #          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
 #         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...]...)
 function(_salt_static_library _ARG_NAME)
@@ -350,11 +350,11 @@ function(_salt_static_library _ARG_NAME)
 endfunction(_salt_static_library)
 
 function(salt_static_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
-                          _ARG                             # variable prefix
-                          ""                               # options
-                          ""                               # one   value keywords
-                          "WINDOWS;APPLE;MACOSX;COMMON")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                           # start at the 1st argument
+                          _ARG                                   # variable prefix
+                          ""                                     # options
+                          ""                                     # one   value keywords
+                          "WINDOWS;APPLE;MACOSX;LINUX;COMMON")   # multi value keywords
     if (SALT_TARGET_OS STREQUAL "MacOSX")
         if (_ARG_APPLE OR _ARG_MACOSX OR _ARG_COMMON)
             _salt_static_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
@@ -367,14 +367,20 @@ function(salt_static_library _ARG_NAME)
         else()
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
         endif()
+    elseif(SALT_TARGET_OS STREQUAL "Linux")
+        if (_ARG_LINUX OR _ARG_COMMON)
+            _salt_static_library(${_ARG_NAME} ${_ARG_LINUX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Linux.")
+        endif()
     endif()
 endfunction(salt_static_library)
 
 # salt_interface_library(<name>
-#     <WINDOWS|APPLE|MACOSX|COMMON>
+#     <WINDOWS|APPLE|MACOSX|LINUX|COMMON>
 #          <TEST|LINK> items...
 #         [<TEST|LINK> items...]...
-#     [<WINDOWS|APPLE|MACOSX|COMMON>
+#     [<WINDOWS|APPLE|MACOSX|LINUX|COMMON>
 #          <TEST|LINK> items...
 #         [<TEST|LINK> items...]...]...)
 function(_salt_interface_library _ARG_NAME)
@@ -395,11 +401,11 @@ function(_salt_interface_library _ARG_NAME)
 endfunction(_salt_interface_library)
 
 function(salt_interface_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
-                          _ARG                             # variable prefix
-                          ""                               # options
-                          ""                               # one   value keywords
-                          "WINDOWS;APPLE;MACOSX;COMMON")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                           # start at the 1st argument
+                          _ARG                                   # variable prefix
+                          ""                                     # options
+                          ""                                     # one   value keywords
+                          "WINDOWS;APPLE;MACOSX;LINUX;COMMON")   # multi value keywords
     if (SALT_TARGET_OS STREQUAL "MacOSX")
         if (DEFINED _ARG_APPLE OR DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
             _salt_interface_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
@@ -411,6 +417,12 @@ function(salt_interface_library _ARG_NAME)
             _salt_interface_library(${_ARG_NAME} ${_ARG_WINDOWS} ${_ARG_COMMON})
         else()
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
+        endif()
+    elseif(SALT_TARGET_OS STREQUAL "Linux")
+        if (_ARG_LINUX OR _ARG_COMMON)
+            _salt_static_library(${_ARG_NAME} ${_ARG_LINUX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Linux.")
         endif()
     endif()
 endfunction(salt_interface_library)
