@@ -18,8 +18,6 @@ jobs:
         os: [ubuntu-latest]
         compiler:
           - { pkg: clang, exe: 'clang++', version: 16 }
-      build:
-        folder: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
 
     runs-on: ${{ matrix.os }}
 
@@ -48,11 +46,11 @@ jobs:
         env:
           CC: ${{matrix.compiler.pkg}}-${{matrix.compiler.version}}
           CXX: ${{matrix.compiler.exe}}-${{matrix.compiler.version}}
-        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{build.folder}} -G Ninja
+        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} -G Ninja
 
       - name: Build
         # Build your program with the given configuration
-        run: cmake --build ${{build.folder}} --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} --config ${{env.BUILD_TYPE}}
 
   windows:
     timeout-minutes: 15
@@ -62,8 +60,6 @@ jobs:
         os: [windows-latest]
         compiler:
           - { pkg: clang, exe: 'clang++', version: 16 }
-      build:
-        folder: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
 
     runs-on: ${{ matrix.os }}
 
@@ -85,8 +81,8 @@ jobs:
         env:
           CC: ${{ matrix.compiler.pkg }}
           CXX: ${{ matrix.compiler.exe }}
-        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{build.folder}} -G Ninja
+        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} -G Ninja
 
       - name: Build
         # Build your program with the given configuration
-        run: cmake --build ${{build.folder}} --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} --config ${{env.BUILD_TYPE}}
