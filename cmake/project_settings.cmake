@@ -150,6 +150,29 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
                 add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
             endif()
         endif()
+    elseif(UNIX)
+        if(NOT CMAKE_SYSTEM_VERSION)
+            set(CMAKE_SYSTEM_VERSION ${CMAKE_HOST_SYSTEM_VERSION} CACHE STRING "The version of the target platform." FORCE)
+        endif()
+
+        if(NOT CMAKE_SYSTEM_PROCESSOR)
+            set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_HOST_SYSTEM_PROCESSOR} CACHE STRING "The target architecture." FORCE)
+        endif()
+        # Get the correct target architecture.
+        salt_set_target_architecture(SALT_TARGET_CPU)
+
+        set(SALT_TARGET_VENDOR   GNU              CACHE STRING "[READONLY] The target vendor."       FORCE)
+        set(SALT_TARGET_OS       Linux            CACHE STRING "[READONLY] The current platform."    FORCE)
+        set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
+
+        salt_add_graphics_definitions(${SALT_TARGET_GRAPHICS})
+
+        if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
+            set(SALT_OPENGL_VERSION_MAJOR 4 CACHE STRING "[READONLY] The target graphics api version major." FORCE)
+            set(SALT_OPENGL_VERSION_MINOR 6 CACHE STRING "[READONLY] The target graphics api version minor." FORCE)
+            add_definitions("-DSALT_OPENGL_VERSION_MAJOR=${SALT_OPENGL_VERSION_MAJOR}")
+            add_definitions("-DSALT_OPENGL_VERSION_MINOR=${SALT_OPENGL_VERSION_MINOR}")
+        endif()
     endif()
 endif()
 
