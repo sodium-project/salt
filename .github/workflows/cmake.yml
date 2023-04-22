@@ -47,7 +47,7 @@ jobs:
         env:
           CC: ${{matrix.compiler.pkg}}-${{matrix.compiler.version}}
           CXX: ${{matrix.compiler.exe}}-${{matrix.compiler.version}}
-        run: cmake --trace -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} -G Ninja
+        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} -G Ninja
 
       - name: Build
         # Build your program with the given configuration
