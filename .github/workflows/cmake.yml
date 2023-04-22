@@ -41,6 +41,7 @@ jobs:
         run: |
             sudo apt update
             sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+            sudo apt install libgl-dev
 
       - name: Configure
         env:
