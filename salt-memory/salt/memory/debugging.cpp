@@ -1,6 +1,8 @@
 #include <salt/memory/debugging.hpp>
-
 #include <salt/foundation/logger.hpp>
+
+#include <atomic>
+
 namespace salt {
 
 constexpr void print_define(fast_io::io_reserve_type_t<char, Allocator_info>,
