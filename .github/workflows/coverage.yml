@@ -63,12 +63,12 @@ jobs:
       working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
       run: |
         OBJECT_FILES=$(find ./salt-*/ -type f -executable)
-        llvm-cov-${{matrix.compiler.version}} export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
+        llvm-cov-${{matrix.compiler.version}} export --format=lcov -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.lcov
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         token: ${{secrets.CODECOV_TOKEN}}
-        files: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}/coverage.txt
+        files: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}/coverage.lcov
         name: salt
         fail_ci_if_error: true
