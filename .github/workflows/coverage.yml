@@ -1,0 +1,74 @@
+name: coverage
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  codecov:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:      
+        os: [ubuntu-latest]
+        compiler:
+          - { pkg: clang, exe: 'clang++', version: 16 }
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: 3.26.1
+        ninjaVersion: 1.11.1
+
+    - name: Install compiler
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo apt-add-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
+        sudo apt update
+        sudo apt install -y ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }} libc++-dev libc++abi-dev
+
+    - name: Install dependencies
+      run: |
+          sudo apt update
+          sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+          sudo apt install libgl-dev
+
+    - name: Configure
+      env:
+        CC: ${{ matrix.compiler.pkg }}
+        CXX: ${{ matrix.compiler.exe }}
+      run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSALT_ENABLE_COVERAGE=ON -DSALT_GRAPHICS=OpenGL -B ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} -G Ninja
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}} --config ${{env.BUILD_TYPE}}
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
+      run: ctest --timeout 30 -C Debug -j4
+
+    - name: Index the raw profile
+        working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
+        run: llvm-profdata merge --output=coverage.profdata */default.profraw
+
+    - name: Create a line-oriented coverage report
+        working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
+        run: |
+          OBJECT_FILES=$(find ./salt-*/ -type f -executable)
+          llvm-cov export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
+        files: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}/coverage.txt
+        name: salt
+        fail_ci_if_error: true
