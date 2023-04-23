@@ -32,8 +32,9 @@ TEST_CASE("salt::to_string", "[salt-foundation/to_string.hpp]") {
     SECTION("it produces a source location as std::string") {
         using Catch::Matchers::Contains;
 
-        auto const expected_location = std::string{"to_string-test.cpp:36:50:C_A_T_C_H_T_E_S_T_0"};
+        auto const expected_file     = std::string{"to_string-test.cpp:37:50:"};
+        auto const expected_function = std::string{"C_A_T_C_H_T_E_S_T_0"};
         auto const location          = to_string(salt::source_location::current());
-        REQUIRE_THAT(location, Contains(expected_location));
+        REQUIRE_THAT(location, Contains(expected_file) && Contains(expected_function));
     }
 }
