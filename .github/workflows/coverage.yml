@@ -56,14 +56,14 @@ jobs:
       run: ctest --timeout 30 -C Debug -j4
 
     - name: Index the raw profile
-        working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
-        run: llvm-profdata merge --output=coverage.profdata */default.profraw
+      working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
+      run: llvm-profdata merge --output=coverage.profdata */default.profraw
 
     - name: Create a line-oriented coverage report
-        working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
-        run: |
-          OBJECT_FILES=$(find ./salt-*/ -type f -executable)
-          llvm-cov export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
+      working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
+      run: |
+        OBJECT_FILES=$(find ./salt-*/ -type f -executable)
+        llvm-cov export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
