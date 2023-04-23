@@ -596,7 +596,7 @@ endif()
 #-----------------------------------------------------------------------------------------------------------------------
 
 if(NOT SALT_TARGET_OS STREQUAL "Windows")
-    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
+    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            NO )
     option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO )
     option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
     option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
