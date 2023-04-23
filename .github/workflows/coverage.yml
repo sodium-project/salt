@@ -57,13 +57,13 @@ jobs:
 
     - name: Index the raw profile
       working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
-      run: llvm-profdata merge --output=coverage.profdata */default.profraw
+      run: llvm-profdata-${{matrix.compiler.version}} merge --output=coverage.profdata */default.profraw
 
     - name: Create a line-oriented coverage report
       working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
       run: |
         OBJECT_FILES=$(find ./salt-*/ -type f -executable)
-        llvm-cov export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
+        llvm-cov-${{matrix.compiler.version}} export --format=text -instr-profile=coverage.profdata --object=${OBJECT_FILES} > coverage.txt
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
