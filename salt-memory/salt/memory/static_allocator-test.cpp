@@ -3,8 +3,8 @@
 #include <salt/memory/static_allocator.hpp>
 
 TEST_CASE("salt::Static_allocator", "[salt-memory/static_allocator.hpp]") {
-    salt::Static_allocator_storage<256> storage;
-    salt::Static_allocator              static_allocator{storage};
+    salt::Static_allocator_storage<1024> storage;
+    salt::Static_allocator               static_allocator{storage};
 
     auto ptr = static_allocator.allocate_node(sizeof(char), alignof(char));
     REQUIRE(salt::detail::is_aligned(ptr, alignof(char)));
