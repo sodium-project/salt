@@ -31,7 +31,7 @@ jobs:
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo apt-add-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
         sudo apt update
-        sudo apt install -y ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }} libc++-dev libc++abi-dev
+        sudo apt install -y llvm-${{matrix.compiler.version}} ${{matrix.compiler.pkg}}-${{matrix.compiler.version}} libc++-dev libc++abi-dev
 
     - name: Install dependencies
       run: |
