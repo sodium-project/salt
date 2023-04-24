@@ -58,22 +58,23 @@ jobs:
     - name: Index the raw profile
       working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
       run: |
-        find ./salt-*/ -type f -name default.profraw -print
         llvm-profdata-${{matrix.compiler.version}} merge --output=coverage.profdata */default.profraw
 
     - name: Create a line-oriented coverage report
       working-directory: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}
       run: |
-        object_files=$(find ./salt-*/ -type f -executable -not -path "./salt-playground/*")
+        object_files=$(find ./salt-*/ -type f -executable -not -path "./salt-playground/*")        
+        echo "$object_files"
         object_list=$("$object_files")
+        echo "$object_list"
         objects=$(for object in ${object_list}; do echo "-object=${object} "; done)
         echo "$objects"
-        llvm-cov-${{matrix.compiler.version}} export -format=lcov -instr-profile=coverage.profdata ${objects} > coverage.lcov
+    #    llvm-cov-${{matrix.compiler.version}} export -format=lcov -instr-profile=coverage.profdata ${objects} > coverage.lcov
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{secrets.CODECOV_TOKEN}}
-        files: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}/coverage.lcov
-        name: salt
-        fail_ci_if_error: true
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     token: ${{secrets.CODECOV_TOKEN}}
+    #     files: ${{github.workspace}}/build/${{matrix.os}}-${{env.BUILD_TYPE}}/coverage.lcov
+    #     name: salt
+    #     fail_ci_if_error: true
