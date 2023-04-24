@@ -1,5 +1,4 @@
 #include <salt/core/entry_point.hpp>
-
 #include <salt/core/application.hpp>
 
 #if SALT_TARGET(WINDOWS)
@@ -19,7 +18,7 @@ int main(int argc, char const* argv[]) {
     app.run();
     return EXIT_SUCCESS;
 }
-#else
+#elif SALT_TARGET(LINUX)
 int main(int argc, char* argv[]) {
     auto app = salt::Application({argc, argv});
     salt::main(app);
