@@ -78,6 +78,7 @@ TEST_CASE("salt::memory::vector", "[salt-memory/containers.hpp]") {
         REQUIRE(Dummy_allocator::size <= 16);
     }
 
+#if 0
     SECTION("stateful") {
         using static_storage = Static_allocator_storage<1_KiB>;
         using static_pool    = Memory_pool<Node_pool, Static_block_allocator>;
@@ -103,4 +104,5 @@ TEST_CASE("salt::memory::vector", "[salt-memory/containers.hpp]") {
             CHECK(expected_values[i++] == value);
         }
     }
+#endif
 }

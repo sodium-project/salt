@@ -39,7 +39,7 @@ public:
         // use this to prevent constructor being chosen instead of move
         not std::derived_from <std::decay_t<Allocator>, Allocator_storage>
         and only_constructible<StoragePolicy, Allocator>)
-    constexpr explicit Allocator_storage(Allocator&& allocator) noexcept
+    constexpr Allocator_storage(Allocator&& allocator) noexcept
             : storage_policy{std::forward<Allocator>(allocator)} {}
 
     template <typename OtherPolicy> requires
@@ -173,7 +173,7 @@ struct [[nodiscard]] Direct_storage : allocator_traits<RawAllocator>::allocator_
 
     Direct_storage() = default;
 
-    constexpr explicit Direct_storage(allocator_type&& allocator) noexcept
+    constexpr Direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(std::move(allocator)) {}
 
     constexpr Direct_storage(Direct_storage&& other) noexcept
@@ -631,7 +631,7 @@ template <> class [[nodiscard]] Reference_storage<Any_allocator> {
         constexpr explicit Wrapper(RawAllocator const& allocator) noexcept : storage{allocator} {}
 
         constexpr void clone(void* storage) const noexcept override {
-            ::new (storage) Wrapper{allocator()};
+            std::ranges::construct_at(static_cast<Wrapper*>(storage), allocator());
         }
 
         constexpr void* allocate_node(size_type size, size_type alignment) override {
@@ -712,28 +712,29 @@ public:
     // clang-format off
     template <raw_allocator RawAllocator> requires(
         not std::derived_from<std::decay_t<RawAllocator>, Reference_storage>)
-    constexpr explicit Reference_storage(RawAllocator&& allocator) noexcept {
+    constexpr Reference_storage(RawAllocator&& allocator) noexcept {
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
-        ::new (static_cast<void*>(storage_)) Wrapper<std::remove_cvref_t<RawAllocator>>{
-                std::forward<std::remove_cvref_t<RawAllocator>>(allocator)};
+        std::ranges::construct_at(
+                reinterpret_cast<Wrapper<std::remove_cvref_t<RawAllocator>>*>(storage_),
+                            std::forward<std::remove_cvref_t<RawAllocator>>  (allocator));
     }
 
     template <raw_allocator RawAllocator> requires(
         not allocator_traits<RawAllocator>::is_stateful::value)
-    constexpr explicit Reference_storage(RawAllocator const& allocator) noexcept {
+    constexpr Reference_storage(RawAllocator const& allocator) noexcept {
         static_assert(sizeof(Wrapper<RawAllocator>) <=
                               sizeof(Wrapper<Default_instantiation>),
                       "requires all instantiations to have certain maximum size");
-        ::new (static_cast<void*>(storage_)) Wrapper<RawAllocator>{allocator};
+        std::ranges::construct_at(reinterpret_cast<Wrapper<RawAllocator>*>(storage_), allocator);
     }
     // clang-format on
 
-    constexpr explicit Reference_storage(Base_allocator& allocator) noexcept
+    constexpr Reference_storage(Base_allocator& allocator) noexcept
             : Reference_storage{static_cast<Base_allocator const&>(allocator)} {}
 
-    constexpr explicit Reference_storage(Base_allocator const& allocator) noexcept {
+    constexpr Reference_storage(Base_allocator const& allocator) noexcept {
         allocator.clone(&storage_);
     }
 

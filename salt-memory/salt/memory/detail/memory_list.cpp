@@ -190,9 +190,22 @@ Memory_list::Memory_list(Memory_list&& other) noexcept
 }
 
 Memory_list& Memory_list::operator=(Memory_list&& other) noexcept {
+    auto begin = list::xor_get_next(begin_node(), nullptr);
+    auto end   = list::xor_get_next(end_node(), nullptr);
+
     Memory_list tmp{std::move(other)};
     auto        tmp_begin = list::xor_get_next(tmp.begin_node(), nullptr);
     auto        tmp_end   = list::xor_get_next(tmp.end_node(), nullptr);
+
+    if (!empty()) {
+        list::xor_set_next(tmp.begin_node(), nullptr, begin);
+        list::xor_exchange(begin, begin_node(), tmp.begin_node());
+        list::xor_exchange(end, end_node(), tmp.end_node());
+        list::xor_set_next(tmp.end_node(), end, nullptr);
+    } else {
+        list::xor_set_next(tmp.begin_node(), nullptr, tmp.end_node());
+        list::xor_set_next(tmp.end_node(), tmp.begin_node(), nullptr);
+    }
 
     if (!tmp.empty()) {
         list::xor_set_next(begin_node(), nullptr, tmp_begin);

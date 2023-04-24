@@ -28,19 +28,18 @@ private:
 };
 
 TEST_CASE("salt::Temporary_allocator", "[salt-memory/temporary_allocator.hpp]") {
-    using namespace salt;
-    using namespace salt::detail;
 
     SECTION("test temporary allocator") {
-        Temporary_allocator allocator;
+        salt::Temporary_allocator allocator;
 
         auto ptr = allocator.allocate(sizeof(char), alignof(char));
-        REQUIRE(is_aligned(ptr, alignof(char)));
-        REQUIRE_FALSE(is_aligned(ptr, max_alignment));
+        INFO("ptr = " << ptr << ", max_alignment = " << salt::detail::max_alignment);
+        REQUIRE(salt::detail::is_aligned(ptr, alignof(char)));
+        REQUIRE_FALSE(salt::detail::is_aligned(ptr, salt::detail::max_alignment));
     }
 
     SECTION("test temporary vector") {
-        Temporary_allocator allocator;
+        salt::Temporary_allocator allocator;
 
         Stack_vector<Dummy> v{allocator};
         v.emplace_back();

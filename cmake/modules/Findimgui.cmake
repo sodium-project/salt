@@ -7,7 +7,7 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
         target_link_libraries(imgui::imgui
                               INTERFACE "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/imgui.lib"
                                         "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/imgui_opengl.lib")
-    elseif(SALT_TARGET_OS STREQUAL "MacOSX")
+    elseif(SALT_TARGET_OS STREQUAL "MacOSX" OR SALT_TARGET_OS STREQUAL "Linux")
         target_link_libraries(imgui::imgui
                               INTERFACE "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/libimgui.a"
                                         "${CMAKE_BINARY_DIR}/output/libs/imgui/lib/libimgui_opengl.a")

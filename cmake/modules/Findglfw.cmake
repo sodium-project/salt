@@ -11,6 +11,9 @@ if(SALT_TARGET_GRAPHICS STREQUAL "OpenGL")
         target_link_libraries(glfw::glfw INTERFACE "-framework Cocoa" "-framework IOKit")
         target_link_libraries(glfw::glfw
                               INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glfw/lib/libglfw3.a")
+    elseif(SALT_TARGET_OS STREQUAL "Linux")
+        target_link_libraries(glfw::glfw
+                            INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glfw/lib/libglfw3.a")
     endif()
     target_link_libraries(glfw::glfw INTERFACE ${GLFW_LIBRARIES})
     target_include_directories(glfw::glfw INTERFACE "${CMAKE_BINARY_DIR}/output/libs/glfw/include")
