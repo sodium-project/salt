@@ -10,7 +10,7 @@ function generate_cmake_presets($os, $arch, $graphics) {
     }
 
     $description = ""
-    if ($graphics -eq "DirectX") {
+    if ($graphics -ne "OpenGL") {
         $description = "This configuration is temporarily unsupported."
     }
     $presets = @"
@@ -65,6 +65,7 @@ Add-Content -Path $cmake_presets -Value @"
     "configurePresets": [
 $(generate_cmake_presets "windows" "x86_64" "OpenGL")
 $(generate_cmake_presets "windows" "x86_64" "DirectX")
+$(generate_cmake_presets "windows" "x86_64" "Vulkan")
         {
             "name":        "base",
             "description": "For more information: http://aka.ms/cmakepresetsvs",
