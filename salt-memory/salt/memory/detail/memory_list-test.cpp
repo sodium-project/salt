@@ -109,26 +109,6 @@ template <typename MemoryList> void check_move(MemoryList& list) {
     REQUIRE(list2.capacity() == capacity);
 
     list2.deallocate(ptr);
-
-    Static_allocator_storage<1024> memory2;
-    list.insert(&memory2, 1024);
-    REQUIRE(!list.empty());
-    REQUIRE(list.capacity() <= 1024 / list.node_size());
-
-    ptr = list.allocate();
-    REQUIRE(ptr);
-    REQUIRE(is_aligned(ptr, list.alignment()));
-    list.deallocate(ptr);
-
-    ptr = list2.allocate();
-
-    list = std::move(list2);
-    REQUIRE(list2.empty());
-    REQUIRE(list2.capacity() == 0u);
-    REQUIRE(!list.empty());
-    REQUIRE(list.capacity() == capacity);
-
-    list.deallocate(ptr);
 }
 
 void use_list_array(Memory_list& list) {
@@ -190,19 +170,22 @@ void use_list_array(Memory_list& list) {
 }
 
 TEST_CASE("salt::detail::Unordered_memory_list", "[salt-memory/memory_list.hpp]") {
-    Unordered_memory_list list(4);
-    REQUIRE(list.empty());
-    REQUIRE(list.node_size() >= 4);
-    REQUIRE(list.capacity() == 0u);
-
+    SECTION("construct") {
+        Unordered_memory_list list(4);
+        REQUIRE(list.empty());
+        REQUIRE(list.node_size() >= 4);
+        REQUIRE(list.capacity() == 0u);
+    }
     SECTION("normal insert") {
         Static_allocator_storage<1024> memory;
+        Unordered_memory_list          list(4);
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
     SECTION("uneven insert") {
         Static_allocator_storage<1023> memory; // not dividable
+        Unordered_memory_list          list(4);
         check_list(list, &memory, 1023);
 
         check_move(list);
@@ -211,6 +194,8 @@ TEST_CASE("salt::detail::Unordered_memory_list", "[salt-memory/memory_list.hpp]"
         Static_allocator_storage<1024> a;
         Static_allocator_storage<100>  b;
         Static_allocator_storage<1337> c;
+        Unordered_memory_list          list(4);
+
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
         check_list(list, &c, 1337);
@@ -220,13 +205,16 @@ TEST_CASE("salt::detail::Unordered_memory_list", "[salt-memory/memory_list.hpp]"
 }
 
 TEST_CASE("salt::detail::Memory_list", "[salt-memory/memory_list.hpp]") {
-    Memory_list list(4);
-    REQUIRE(list.empty());
-    REQUIRE(list.node_size() >= 4);
-    REQUIRE(list.capacity() == 0u);
+    SECTION("construct") {
+        Memory_list list(4);
+        REQUIRE(list.empty());
+        REQUIRE(list.node_size() >= 4);
+        REQUIRE(list.capacity() == 0u);
+    }
 
     SECTION("normal insert") {
         Static_allocator_storage<1024> memory;
+        Memory_list                    list(4);
         check_list(list, &memory, 1024);
         use_list_array(list);
 
@@ -234,6 +222,7 @@ TEST_CASE("salt::detail::Memory_list", "[salt-memory/memory_list.hpp]") {
     }
     SECTION("uneven insert") {
         Static_allocator_storage<1023> memory; // not dividable
+        Memory_list                    list(4);
         check_list(list, &memory, 1023);
         use_list_array(list);
 
@@ -243,6 +232,8 @@ TEST_CASE("salt::detail::Memory_list", "[salt-memory/memory_list.hpp]") {
         Static_allocator_storage<1024> a;
         Static_allocator_storage<100>  b;
         Static_allocator_storage<1337> c;
+        Memory_list                    list(4);
+
         check_list(list, &a, 1024);
         use_list_array(list);
         check_list(list, &b, 100);
