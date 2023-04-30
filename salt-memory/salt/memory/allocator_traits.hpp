@@ -44,8 +44,14 @@ concept has_allocate =
     };
 
 template <typename Allocator>
-concept has_deallocate =
+concept has_void_deallocate =
     requires(Allocator&& allocator, void* ptr, std::size_t size) {
+        { allocator.deallocate(ptr, size) };
+    };
+
+template <typename Allocator, typename T = Allocator::value_type>
+concept has_type_deallocate =
+    requires(Allocator&& allocator, T* ptr, std::size_t size) {
         { allocator.deallocate(ptr, size) };
     };
 
@@ -150,8 +156,10 @@ template <typename Allocator> struct [[nodiscard]] allocator_traits final {
     {
         if constexpr (detail::has_deallocate_node<allocator_type>)
             allocator.deallocate_node(node, size, alignment);
-        else if constexpr (detail::has_deallocate<allocator_type>)
-            allocator.deallocate(node, size);
+        else if constexpr (detail::has_void_deallocate<allocator_type>)
+            allocator.deallocate(node, size);            
+        else if constexpr (detail::has_type_deallocate<allocator_type>)
+            allocator.deallocate(static_cast<allocator_type::value_type*>(node), size);
     }
 
     static constexpr void

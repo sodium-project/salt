@@ -8,7 +8,6 @@ detect_os() {
     case "$OSTYPE" in
         darwin*)  echo "MacOSX";;
         linux*)   echo "Linux";;
-        msys*)    echo "Linux";;
         *)        echo "Unsupported";;
     esac
 }
