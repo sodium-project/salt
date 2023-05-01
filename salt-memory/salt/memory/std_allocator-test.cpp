@@ -13,10 +13,7 @@ struct [[nodiscard]] Typeless_mallocator final {
     Typeless_mallocator() = default;
 
     [[nodiscard]] void* allocate(size_type n /* bytes */) {
-        if (auto* p = std::malloc(n * sizeof(std::byte)))
-            return p;
-
-        return nullptr;
+        return std::malloc(n * sizeof(std::byte));
     }
 
     void deallocate(void* p, size_type) noexcept {
