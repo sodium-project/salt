@@ -13,13 +13,10 @@ struct [[nodiscard]] Typeless_mallocator final {
     Typeless_mallocator() = default;
 
     [[nodiscard]] void* allocate(size_type n /* bytes */) {
-        if (n > std::numeric_limits<difference_type>::max() / sizeof(std::byte))
-            throw std::bad_array_new_length();
-
         if (auto* p = std::malloc(n * sizeof(std::byte)))
             return p;
 
-        throw std::bad_alloc();
+        return nullptr;
     }
 
     void deallocate(void* p, size_type) noexcept {
@@ -82,6 +79,7 @@ TEST_CASE("salt::Std_allocator", "[salt-memory/std_allocator.hpp]") {
         std_any_allocator adapter{unit_tests::Typeless_mallocator{}};
 
         auto* ptr = adapter.allocate(sizeof(int));
+        REQUIRE(ptr);
         REQUIRE(is_aligned(ptr, alignof(int)));
         adapter.deallocate(ptr, sizeof(int));
     }

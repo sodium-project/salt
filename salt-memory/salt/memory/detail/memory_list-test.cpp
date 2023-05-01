@@ -108,7 +108,14 @@ template <typename MemoryList> void check_move(MemoryList& list) {
     REQUIRE(!list2.empty());
     REQUIRE(list2.capacity() == capacity);
 
-    list2.deallocate(ptr);
+    MemoryList list3(4);
+    list3 = std::move(list2);
+    REQUIRE(list2.empty());
+    REQUIRE(list2.capacity() == 0u);
+    REQUIRE(!list3.empty());
+    REQUIRE(list3.capacity() == capacity);
+
+    list3.deallocate(ptr);
 }
 
 void use_list_array(Memory_list& list) {
