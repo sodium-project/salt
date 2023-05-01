@@ -18,7 +18,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/fixed_memory_stack.h
         REQUIRE(stack.top() == reinterpret_cast<std::byte*>(&memory));
 
         SECTION("alignment for allocate") {
-            auto ptr = stack.allocate(end, 13, 1u);
+            auto* ptr = stack.allocate(end, 13, 1u);
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, 1u));
 
@@ -46,7 +46,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/fixed_memory_stack.h
             stack.unwind(reinterpret_cast<std::byte*>(&memory) + diff);
             REQUIRE(stack.top() == reinterpret_cast<std::byte*>(&memory) + diff);
 
-            auto top = stack.top();
+            auto* top = stack.top();
             REQUIRE(!stack.allocate(end, 1024, 1));
             REQUIRE(stack.top() == top);
         }
@@ -63,7 +63,7 @@ TEST_CASE("salt::detail::Fixed_memory_stack", "[salt-memory/fixed_memory_stack.h
 
         REQUIRE(!other.allocate(end, 10, 1));
         REQUIRE(stack.allocate(end, 10, 1));
-        auto top = stack.top();
+        auto* top = stack.top();
 
         other = std::move(stack);
         REQUIRE(other.top() == top);

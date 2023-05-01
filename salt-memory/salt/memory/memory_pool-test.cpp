@@ -54,10 +54,41 @@ TEST_CASE("salt::Memory_pool", "[salt-memory/memory_pool.hpp]") {
         REQUIRE(pool.capacity() == 16u);
         REQUIRE(pool.size() >= 16u);
 
-        auto ptr = pool.allocate_node();
+        auto* ptr = pool.allocate_node();
         REQUIRE(ptr);
 
         pool.deallocate_node(ptr);
+    }
+}
+
+TEST_CASE("salt::Memory_pool_array", "[salt-memory/memory_pool.hpp]") {
+    using memory_pool = Memory_pool<Array_pool>;
+
+    memory_pool pool{4, memory_pool::min_block_size(4, 25)};
+    REQUIRE(pool.node_size() >= 4u);
+    REQUIRE(pool.capacity() >= 25 * 4u);
+    REQUIRE(pool.size() >= 25 * 4u);
+
+    SECTION("normal alloc/dealloc") {
+        auto capacity = pool.capacity();
+        REQUIRE(capacity / 4 >= 25);
+
+        auto* array = pool.allocate_array(25);
+        REQUIRE(pool.capacity() == 0u);
+
+        pool.deallocate_array(array, 25);
+        REQUIRE(pool.capacity() == capacity);
+    }
+    SECTION("try alloc/dealloc") {
+        auto capacity = pool.capacity();
+        REQUIRE(capacity / 4 >= 25);
+
+        auto* array = pool.try_allocate_array(25);
+        REQUIRE(array);
+        REQUIRE(pool.capacity() == 0u);
+
+        REQUIRE(pool.try_deallocate_array(array, 25));
+        REQUIRE(pool.capacity() == capacity);
     }
 }
 
@@ -70,12 +101,12 @@ void use_min_block_size(std::size_t node_size, std::size_t number_of_nodes) {
 
     // First allocations should not require realloc.
     for (auto i = 0u; i < number_of_nodes; ++i) {
-        auto ptr = pool.try_allocate_node();
+        auto* ptr = pool.try_allocate_node();
         CHECK(ptr);
     }
 
     // Further allocation might require it, but should still succeed then.
-    auto ptr = pool.allocate_node();
+    auto* ptr = pool.allocate_node();
     CHECK(ptr);
 }
 } // namespace

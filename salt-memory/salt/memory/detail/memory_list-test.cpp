@@ -17,7 +17,7 @@ template <typename MemoryList> void use_list_node(MemoryList& list) {
     // allocate and deallocate in reverse order
     {
         for (std::size_t i = 0u; i != capacity; ++i) {
-            auto ptr = list.allocate();
+            auto* ptr = list.allocate();
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, list.alignment()));
             ptrs.push_back(ptr);
@@ -37,7 +37,7 @@ template <typename MemoryList> void use_list_node(MemoryList& list) {
     // allocate and deallocate in same order
     {
         for (std::size_t i = 0u; i != capacity; ++i) {
-            auto ptr = list.allocate();
+            auto* ptr = list.allocate();
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, list.alignment()));
             ptrs.push_back(ptr);
@@ -55,7 +55,7 @@ template <typename MemoryList> void use_list_node(MemoryList& list) {
     // allocate and deallocate in random order
     {
         for (std::size_t i = 0u; i != capacity; ++i) {
-            auto ptr = list.allocate();
+            auto* ptr = list.allocate();
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, list.alignment()));
             ptrs.push_back(ptr);
@@ -82,7 +82,7 @@ template <typename MemoryList> void check_list(MemoryList& list, void* memory, s
 
     old_capacity = list.capacity();
 
-    auto node = list.allocate();
+    auto* node = list.allocate();
     REQUIRE(node);
     REQUIRE(is_aligned(node, list.alignment()));
     REQUIRE(list.capacity() == old_capacity - 1);
@@ -97,7 +97,7 @@ template <typename MemoryList> void check_move(MemoryList& list) {
     Static_allocator_storage<1024> memory;
     list.insert(&memory, 1024);
 
-    auto ptr = list.allocate();
+    auto* ptr = list.allocate();
     REQUIRE(ptr);
     REQUIRE(is_aligned(ptr, list.alignment()));
     auto capacity = list.capacity();
