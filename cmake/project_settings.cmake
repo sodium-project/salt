@@ -161,7 +161,7 @@ if(NOT (DEFINED CACHE{SALT_TARGET_CPU}    AND
         # Get the correct target architecture.
         salt_set_target_architecture(SALT_TARGET_CPU)
 
-        set(SALT_TARGET_VENDOR   GNU              CACHE STRING "[READONLY] The target vendor."       FORCE)
+        set(SALT_TARGET_VENDOR   "Linus Torvalds" CACHE STRING "[READONLY] The target vendor."       FORCE)
         set(SALT_TARGET_OS       Linux            CACHE STRING "[READONLY] The current platform."    FORCE)
         set(SALT_TARGET_GRAPHICS ${SALT_GRAPHICS} CACHE STRING "[READONLY] The target graphics api." FORCE)
 
@@ -208,17 +208,17 @@ function(salt_common_app _NAME)
         message("Target '${_NAME}' is ignored because the target OS is set to '${SALT_TARGET_OS}'.")
         return()
     endif()
-    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
+    cmake_parse_arguments(PARSE_ARGV 1         # start at the 1st argument
                           _SALT_COMMON_APP
-                          ""                    # options
-                          "BUNDLE_NAME"         # one   value keywords
-                          "SOURCES;LINK")       # multi value keywords
-    if(NOT _SALT_COMMON_APP_SOURCES)
+                          ""                   # options
+                          ""                   # one   value keywords
+                          "SOURCE;LINK")       # multi value keywords
+    if(NOT _SALT_COMMON_APP_SOURCE)
         message(FATAL_ERROR "Target '${_NAME}' has no sources.\n"
-                            "Perhaps you have forgotten to provide the SOURCES argument?")
+                            "Perhaps you have forgotten to provide the 'SOURCE' argument?")
     endif()
     add_executable(salt_${_NAME})
-    target_sources(salt_${_NAME} PRIVATE "${_SALT_COMMON_APP_SOURCES}")
+    target_sources(salt_${_NAME} PRIVATE "${_SALT_COMMON_APP_SOURCE}")
     target_link_libraries(salt_${_NAME} PRIVATE salt::project_settings)
     if(_SALT_COMMON_APP_LINK)
         target_link_libraries(salt_${_NAME} PRIVATE "${_SALT_COMMON_APP_LINK}")
@@ -232,14 +232,14 @@ function(salt_macosx_app _NAME)
         message("Target '${_NAME}' is ignored because the target OS is set to '${SALT_TARGET_OS}'.")
         return()
     endif()
-    cmake_parse_arguments(PARSE_ARGV 1          # start at the 1st argument
+    cmake_parse_arguments(PARSE_ARGV 1         # start at the 1st argument
                           _SALT_MACOSX_APP
-                          ""                    # options
-                          "BUNDLE_NAME"         # one   value keywords
-                          "SOURCES;LINK")       # multi value keywords
-    if(NOT _SALT_MACOSX_APP_SOURCES)
+                          ""                   # options
+                          "BUNDLE_NAME"        # one   value keywords
+                          "SOURCE;LINK")       # multi value keywords
+    if(NOT _SALT_MACOSX_APP_SOURCE)
         message(FATAL_ERROR "Target '${_NAME}' has no sources.\n"
-                            "Perhaps you have forgotten to provide the SOURCES argument?")
+                            "Perhaps you have forgotten to provide the 'SOURCE' argument?")
     endif()
     if(NOT _SALT_MACOSX_BUNDLE_NAME)
         set(_SALT_MACOSX_BUNDLE_NAME "${_NAME}")
@@ -253,7 +253,7 @@ function(salt_macosx_app _NAME)
                           MACOSX_BUNDLE_BUNDLE_NAME "${_SALT_MACOSX_BUNDLE_NAME}"
                           XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
                           XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
-    target_sources(salt_${_NAME} PRIVATE "${_SALT_MACOSX_APP_SOURCES}")
+    target_sources(salt_${_NAME} PRIVATE "${_SALT_MACOSX_APP_SOURCE}")
     target_link_libraries(salt_${_NAME} PRIVATE salt::project_settings)
     target_link_libraries(salt_${_NAME} PRIVATE " -framework AppKit")
     if(_SALT_MACOSX_APP_LINK)
@@ -262,6 +262,40 @@ function(salt_macosx_app _NAME)
     install(TARGETS salt_${_NAME}
             BUNDLE DESTINATION salt-${_NAME})
 endfunction(salt_macosx_app)
+
+# salt_executable(<name>
+#     <WINDOWS|MACOSX|LINUX|COMMON>
+#          <SOURCE|LINK> items...
+#         [<SOURCE|LINK> items...]...
+#     [<WINDOWS|MACOSX|LINUX|COMMON>
+#          <SOURCE|LINK> items...
+#         [<SOURCE|LINK> items...]...]...)
+function(salt_executable _ARG_NAME)
+    cmake_parse_arguments(PARSE_ARGV 1                 # start at the 1st argument
+                      _ARG                             # variable prefix
+                      ""                               # options
+                      ""                               # one   value keywords
+                      "WINDOWS;MACOSX;LINUX;COMMON")   # multi value keywords
+    if (SALT_TARGET_OS STREQUAL "MacOSX")
+        if (DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
+            salt_macosx_app(${_ARG_NAME} ${_ARG_MACOSX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on MacOSX.")
+        endif()
+    elseif(SALT_TARGET_OS STREQUAL "Windows")
+        if (DEFINED _ARG_WINDOWS OR DEFINED _ARG_COMMON)
+            salt_common_app(${_ARG_NAME} ${_ARG_WINDOWS} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
+        endif()
+    elseif(SALT_TARGET_OS STREQUAL "Linux")
+        if (DEFINED _ARG_LINUX OR DEFINED _ARG_COMMON)
+            salt_common_app(${_ARG_NAME} ${_ARG_LINUX} ${_ARG_COMMON})
+        else()
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on Linux.")
+        endif()
+    endif()
+endfunction(salt_executable)
 
 # This macro is used by `salt_static_library` and `salt_interface_library` functions. Don't call
 # it unless you know what you are doing.
@@ -323,10 +357,10 @@ function(salt_metal_library _ARG_NAME)
 endfunction(salt_metal_library)
 
 # salt_static_library(<name>
-#     <WINDOWS|APPLE|MACOSX|LINUX|COMMON>
+#     <WINDOWS|MACOSX|LINUX|COMMON>
 #          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
 #         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...
-#     [<WINDOWS|APPLE|MACOSX|LINUX|COMMON>
+#     [<WINDOWS|MACOSX|LINUX|COMMON>
 #          <SOURCE|TEST|LINK|INCLUDE_DIR> items...
 #         [<SOURCE|TEST|LINK|INCLUDE_DIR> items...]...]...)
 function(_salt_static_library _ARG_NAME)
@@ -338,7 +372,7 @@ function(_salt_static_library _ARG_NAME)
     set(_TARGET "salt_${_ARG_NAME}")
     add_library(${_TARGET} STATIC)
     add_library("salt::${_ARG_NAME}" ALIAS ${_TARGET})
-    target_include_directories(${_TARGET} PUBLIC "${CMAKE_CURRENT_LIST_DIR}" ${_ARG_INCLUDE_DIR})
+    target_include_directories(${_TARGET} PUBLIC "${CMAKE_CURRENT_LIST_DIR}" "${_ARG_INCLUDE_DIR}")
     target_link_libraries(${_TARGET}
                           PUBLIC  salt::project_settings
                                   "${_ARG_LINK}")
@@ -350,25 +384,25 @@ function(_salt_static_library _ARG_NAME)
 endfunction(_salt_static_library)
 
 function(salt_static_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1                           # start at the 1st argument
-                          _ARG                                   # variable prefix
-                          ""                                     # options
-                          ""                                     # one   value keywords
-                          "WINDOWS;APPLE;MACOSX;LINUX;COMMON")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
+                          _ARG                             # variable prefix
+                          ""                               # options
+                          ""                               # one   value keywords
+                          "WINDOWS;MACOSX;LINUX;COMMON")   # multi value keywords
     if (SALT_TARGET_OS STREQUAL "MacOSX")
-        if (_ARG_APPLE OR _ARG_MACOSX OR _ARG_COMMON)
-            _salt_static_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
+        if (DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
+            _salt_static_library(${_ARG_NAME} ${_ARG_MACOSX} ${_ARG_COMMON})
         else()
-            message("Ignoring salt::${_ARG_NAME}, this target is not supported on macOS X.")
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on MacOSX.")
         endif()
     elseif(SALT_TARGET_OS STREQUAL "Windows")
-        if (_ARG_WINDOWS OR _ARG_COMMON)
+        if (DEFINED _ARG_WINDOWS OR DEFINED _ARG_COMMON)
             _salt_static_library(${_ARG_NAME} ${_ARG_WINDOWS} ${_ARG_COMMON})
         else()
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
         endif()
     elseif(SALT_TARGET_OS STREQUAL "Linux")
-        if (_ARG_LINUX OR _ARG_COMMON)
+        if (DEFINED _ARG_LINUX OR DEFINED _ARG_COMMON)
             _salt_static_library(${_ARG_NAME} ${_ARG_LINUX} ${_ARG_COMMON})
         else()
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Linux.")
@@ -377,10 +411,10 @@ function(salt_static_library _ARG_NAME)
 endfunction(salt_static_library)
 
 # salt_interface_library(<name>
-#     <WINDOWS|APPLE|MACOSX|LINUX|COMMON>
+#     <WINDOWS|MACOSX|LINUX|COMMON>
 #          <TEST|LINK> items...
 #         [<TEST|LINK> items...]...
-#     [<WINDOWS|APPLE|MACOSX|LINUX|COMMON>
+#     [<WINDOWS|MACOSX|LINUX|COMMON>
 #          <TEST|LINK> items...
 #         [<TEST|LINK> items...]...]...)
 function(_salt_interface_library _ARG_NAME)
@@ -395,22 +429,22 @@ function(_salt_interface_library _ARG_NAME)
     target_include_directories(${_TARGET} INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
     target_link_libraries(${_TARGET}
                           INTERFACE salt::project_settings
-                                    ${_ARG_LINK})
+                                    "${_ARG_LINK}")
     _salt_install_headers("${_ARG_NAME}" ".")
     _salt_unit_tests("${_ARG_NAME}" "${_ARG_TEST}")
 endfunction(_salt_interface_library)
 
 function(salt_interface_library _ARG_NAME)
-    cmake_parse_arguments(PARSE_ARGV 1                           # start at the 1st argument
-                          _ARG                                   # variable prefix
-                          ""                                     # options
-                          ""                                     # one   value keywords
-                          "WINDOWS;APPLE;MACOSX;LINUX;COMMON")   # multi value keywords
+    cmake_parse_arguments(PARSE_ARGV 1                     # start at the 1st argument
+                          _ARG                             # variable prefix
+                          ""                               # options
+                          ""                               # one   value keywords
+                          "WINDOWS;MACOSX;LINUX;COMMON")   # multi value keywords
     if (SALT_TARGET_OS STREQUAL "MacOSX")
-        if (DEFINED _ARG_APPLE OR DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
-            _salt_interface_library(${_ARG_NAME} ${_ARG_APPLE} ${_ARG_MACOSX} ${_ARG_COMMON})
+        if (DEFINED _ARG_MACOSX OR DEFINED _ARG_COMMON)
+            _salt_interface_library(${_ARG_NAME} ${_ARG_MACOSX} ${_ARG_COMMON})
         else()
-            message("Ignoring salt::${_ARG_NAME}, this target is not supported on macOS X.")
+            message("Ignoring salt::${_ARG_NAME}, this target is not supported on MacOSX.")
         endif()
     elseif(SALT_TARGET_OS STREQUAL "Windows")
         if (DEFINED _ARG_WINDOWS OR DEFINED _ARG_COMMON)
@@ -419,7 +453,7 @@ function(salt_interface_library _ARG_NAME)
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Windows.")
         endif()
     elseif(SALT_TARGET_OS STREQUAL "Linux")
-        if (_ARG_LINUX OR _ARG_COMMON)
+        if (DEFINED _ARG_LINUX OR DEFINED _ARG_COMMON)
             _salt_interface_library(${_ARG_NAME} ${_ARG_LINUX} ${_ARG_COMMON})
         else()
             message("Ignoring salt::${_ARG_NAME}, this target is not supported on Linux.")
@@ -596,7 +630,7 @@ endif()
 #-----------------------------------------------------------------------------------------------------------------------
 
 if(NOT SALT_TARGET_OS STREQUAL "Windows")
-    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            NO )
+    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
     option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO )
     option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
     option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )

@@ -170,8 +170,8 @@ Memory_list::Memory_list(size_type node_size, void* memory, size_type size) noex
 Memory_list::Memory_list(Memory_list&& other) noexcept
         : node_size_{other.node_size_}, capacity_{std::exchange(other.capacity_, 0)} {
     if (!other.empty()) {
-        auto begin = list::xor_get_next(other.begin_node(), nullptr);
-        auto end   = list::xor_get_next(other.end_node(), nullptr);
+        auto* begin = list::xor_get_next(other.begin_node(), nullptr);
+        auto* end   = list::xor_get_next(other.end_node(), nullptr);
 
         list::xor_set_next(begin_node(), nullptr, begin);
         list::xor_exchange(begin, other.begin_node(), begin_node());
@@ -190,38 +190,12 @@ Memory_list::Memory_list(Memory_list&& other) noexcept
 }
 
 Memory_list& Memory_list::operator=(Memory_list&& other) noexcept {
-    auto begin = list::xor_get_next(begin_node(), nullptr);
-    auto end   = list::xor_get_next(end_node(), nullptr);
-
     Memory_list tmp{std::move(other)};
-    auto        tmp_begin = list::xor_get_next(tmp.begin_node(), nullptr);
-    auto        tmp_end   = list::xor_get_next(tmp.end_node(), nullptr);
-
-    if (!empty()) {
-        list::xor_set_next(tmp.begin_node(), nullptr, begin);
-        list::xor_exchange(begin, begin_node(), tmp.begin_node());
-        list::xor_exchange(end, end_node(), tmp.end_node());
-        list::xor_set_next(tmp.end_node(), end, nullptr);
-    } else {
-        list::xor_set_next(tmp.begin_node(), nullptr, tmp.end_node());
-        list::xor_set_next(tmp.end_node(), tmp.begin_node(), nullptr);
-    }
-
-    if (!tmp.empty()) {
-        list::xor_set_next(begin_node(), nullptr, tmp_begin);
-        list::xor_exchange(tmp_begin, tmp.begin_node(), begin_node());
-        list::xor_exchange(tmp_end, tmp.end_node(), end_node());
-        list::xor_set_next(end_node(), tmp_end, nullptr);
-    } else {
-        list::xor_set_next(begin_node(), nullptr, end_node());
-        list::xor_set_next(end_node(), begin_node(), nullptr);
-    }
 
     node_size_ = tmp.node_size_;
     capacity_  = tmp.capacity_;
-
-    node_.prev = begin_node();
-    node_.next = list::xor_get_next(node_.prev, nullptr);
+    node_.prev = tmp.node_.prev;
+    node_.next = tmp.node_.next;
     return *this;
 }
 

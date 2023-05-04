@@ -7,7 +7,7 @@
 template <typename RawAllocator>
 void do_allocate_node(salt::Allocator_reference<RawAllocator> reference) {
     using namespace salt::detail;
-    auto node = reference.allocate_node(sizeof(int), alignof(int));
+    auto* node = reference.allocate_node(sizeof(int), alignof(int));
     REQUIRE(node);
     REQUIRE(is_aligned(node, 4u));
     reference.deallocate_node(node, sizeof(int), alignof(int));
