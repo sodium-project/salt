@@ -4,8 +4,6 @@ find_package(glad REQUIRED)
 
 salt_executable(playground
     COMMON
-        SOURCE
-            "playground.cpp"
         LINK
             salt::core
             imgui::imgui
@@ -13,9 +11,13 @@ salt_executable(playground
         SOURCE
             "playground.mm"
         LINK
-            salt::core
-            imgui::imgui
             "-framework MetalKit"
+    WINDOWS
+        SOURCE
+            "playground.cpp"
+    LINUX
+        SOURCE
+            "playground.cpp"
 )
 
 # code: language="CMake" insertSpaces=true tabSize=4
