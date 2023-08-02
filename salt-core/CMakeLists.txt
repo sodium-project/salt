@@ -6,7 +6,6 @@ salt_static_library(core
             "salt/core/application.cpp"
             "salt/core/entry_point.cpp"
         LINK
-            entt::entt
-            salt::platform)
+            salt::config)
 
 # code: language="CMake" insertSpaces=true tabSize=4
