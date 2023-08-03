@@ -1,42 +1,28 @@
 #pragma once
 
-#if defined(SALT_CLANG_FULL_VERSION) && SALT_CLANG_FULL_VERSION < 140000
-#    define SALT_HAS_NO_CONCEPTS (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 192930134
-#    define SALT_HAS_NO_CONCEPTS (1)
-#endif
-
-#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VERSION < 140000)
-#    define SALT_HAS_NO_CONSTEVAL (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 193030704
-#    define SALT_HAS_NO_CONSTEVAL (1)
-#endif
-
-#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VERSION < 140000)
-#    define SALT_HAS_NO_SOURCE_LOCATION (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 193030704
-#    define SALT_HAS_NO_SOURCE_LOCATION (1)
-#endif
-
-#if defined(SALT_HAS_NO_CONSTEVAL)
-#    define SALT_CONSTEVAL constexpr
-#else
-#    define SALT_CONSTEVAL consteval
-#endif
-
-#if __has_cpp_attribute(msvc::no_unique_address)
-// MSVC implements [[no_unique_address]] as a silent no-op currently. If/when MSVC breaks its C++
-// ABI, it will be changed to work as intended. However, MSVC implements [[msvc::no_unique_address]]
-// which does what [[no_unique_address]] is supposed to do, in general.
-#    define SALT_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
-#elif __has_cpp_attribute(no_unique_address)
-#    define SALT_NO_UNIQUE_ADDRESS [[no_unique_address]]
-#else
-#    define SALT_NO_UNIQUE_ADDRESS /* nothing */
-#endif
-
 // Since Apple put a big willie on the implementation of features from C++20, so I can't use part of
 // the features from C++20. What could be better than that?
 #if SALT_TARGET_MACOSX && SALT_CLANG_FULL_VERSION <= 130106
 #    define SALT_HAS_NO_RANGES (1)
 #endif
+
+#define SALT_HAS_ATTRIBUTE_DLLIMPORT         (0)
+#define SALT_HAS_ATTRIBUTE_STDCALL           (0)
+#define SALT_HAS_ATTRIBUTE_NO_UNIQUE_ADDRESS (0)
+
+#if __has_cpp_attribute(gnu::dllimport) && !defined(__WINE__)
+#    undef SALT_HAS_ATTRIBUTE_DLLIMPORT
+#    define SALT_HAS_ATTRIBUTE_DLLIMPORT (1)
+#endif
+
+#if __has_cpp_attribute(gnu::stdcall) && !defined(__WINE__)
+#    undef SALT_HAS_ATTRIBUTE_STDCALL
+#    define SALT_HAS_ATTRIBUTE_STDCALL (1)
+#endif
+
+#if __has_cpp_attribute(no_unique_address)
+#    undef SALT_HAS_ATTRIBUTE_NO_UNIQUE_ADDRESS
+#    define SALT_HAS_ATTRIBUTE_NO_UNIQUE_ADDRESS (1)
+#endif
+
+#define SALT_HAS_ATTRIBUTE(X) SALT_JOIN(SALT_HAS_ATTRIBUTE_, X)
