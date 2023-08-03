@@ -6,9 +6,21 @@
 #    define SALT_HAS_NO_RANGES (1)
 #endif
 
+#define SALT_HAS_ATTRIBUTE_ASSUME            (0)
+#define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED    (0)
 #define SALT_HAS_ATTRIBUTE_DLLIMPORT         (0)
 #define SALT_HAS_ATTRIBUTE_STDCALL           (0)
 #define SALT_HAS_ATTRIBUTE_NO_UNIQUE_ADDRESS (0)
+
+#if __has_cpp_attribute(clang::assume)
+#    undef SALT_HAS_ATTRIBUTE_ASSUME
+#    define SALT_HAS_ATTRIBUTE_ASSUME (1)
+#endif
+
+#if __has_cpp_attribute(gnu::assume_aligned)
+#    undef SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED
+#    define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED (1)
+#endif
 
 #if __has_cpp_attribute(gnu::dllimport) && !defined(__WINE__)
 #    undef SALT_HAS_ATTRIBUTE_DLLIMPORT
