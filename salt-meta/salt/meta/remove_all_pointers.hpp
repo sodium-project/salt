@@ -1,6 +1,6 @@
 #pragma once
 
-namespace salt {
+namespace salt::meta {
 
 template <typename T>
 struct [[nodiscard]] remove_all_pointers
@@ -9,4 +9,4 @@ struct [[nodiscard]] remove_all_pointers
 
 template <typename T> using remove_all_pointers_t = typename remove_all_pointers<T>::type;
 
-} // namespace salt
+} // namespace salt::meta

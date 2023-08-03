@@ -1,9 +1,9 @@
 #pragma once
 
-namespace salt {
+namespace salt::meta {
 
 constexpr auto prvalue(auto&& arg) {
     return arg;
 }
 
-} // namespace salt
+} // namespace salt::meta
