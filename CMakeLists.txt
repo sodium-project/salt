@@ -28,6 +28,7 @@ endif()
 
 add_subdirectory("salt-config")
 add_subdirectory("salt-core")
+add_subdirectory("salt-platform")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Applications.

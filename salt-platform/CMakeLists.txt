@@ -5,13 +5,8 @@ find_package(imgui REQUIRED)
 salt_static_library(platform
     COMMON
         SOURCE
-            "salt/platform/opengl_window.cpp"
-            "salt/platform/opengl_imgui_overlay.cpp"
+            "salt/platform/dummy.cpp"
         LINK
-            glad::glad
-            glfw::glfw
-            imgui::imgui
-            salt::events
-            salt::foundation)
+            salt::config)
 
 # code: language="CMake" insertSpaces=true tabSize=4
