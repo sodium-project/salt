@@ -1,9 +1,5 @@
 #pragma once
 
-// clang-format off
-#include <salt/foundation/fast_terminate.hpp>
-#include <salt/foundation/logger.hpp>
+#include <salt/foundation/abort.hpp>
+#include <salt/foundation/types.hpp>
 #include <salt/foundation/uninitialized_storage.hpp>
-#include <salt/foundation/static_storage.hpp>
-#include <salt/foundation/slot_map.hpp>
-// clang-format on

@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include <salt/config.hpp>
+#include <salt/foundation/types.hpp>
 
 namespace salt::win32 {
 

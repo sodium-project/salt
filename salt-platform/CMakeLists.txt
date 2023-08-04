@@ -7,6 +7,6 @@ salt_static_library(platform
         SOURCE
             "salt/platform/dummy.cpp"
         LINK
-            salt::config)
+            salt::foundation)
 
 # code: language="CMake" insertSpaces=true tabSize=4

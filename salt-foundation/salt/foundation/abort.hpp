@@ -3,9 +3,9 @@
 #    include <cstdlib>
 #endif
 
-namespace salt {
+namespace salt::fdn {
 
-[[noreturn]] inline void fast_terminate() noexcept {
+[[noreturn]] inline void abort() noexcept {
 // @see: https://llvm.org/doxygen/Compiler_8h_source.html
 #if __has_builtin(__builtin_trap)
     __builtin_trap();

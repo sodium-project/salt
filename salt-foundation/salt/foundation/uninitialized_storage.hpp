@@ -1,45 +1,56 @@
 #pragma once
-#include <array>
-#include <memory>
+#include <salt/config.hpp>
+#include <salt/foundation/types.hpp>
 
-#include <salt/foundation/detail/aligned_cast.hpp>
+namespace salt::fdn {
 
-namespace salt {
+struct nontrivial_type {
+    // This default constructor is user-provided to avoid
+    // zero-initialization when objects are value-initialized.
+    constexpr nontrivial_type() noexcept {}
+};
 
-template <std::size_t Size, std::size_t Alignment>
-struct [[nodiscard]] Uninitialized_storage final {
+template <typename T> union [[nodiscard]] uninitialized_storage final {
+    using value_type = T;
+
+    value_type      value;
+    nontrivial_type _;
+
+    constexpr uninitialized_storage() : _{} {}
+
     // clang-format off
-    template <typename T, typename... Args> requires
-        match_size             <T, Size>      and
-        match_alignment        <T, Alignment> and
-        std::constructible_from<T, Args...>
-    constexpr T& construct(Args&&... args) noexcept(
-        std::is_nothrow_constructible_v<T, Args...>
-    ) {
-        auto const storage = get<T>();
-        std::ranges::construct_at(storage, std::forward<Args>(args)...);
-        return *storage;
-    }
+    constexpr uninitialized_storage(uninitialized_storage const&) noexcept
+        requires meta::trivially_copy_constructible<T> = default;
+    constexpr uninitialized_storage(uninitialized_storage&&) noexcept
+        requires meta::trivially_move_constructible<T> = default;
+
+    constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept
+        requires meta::trivially_copy_assignable<T> = default;
+    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept
+        requires meta::trivially_move_assignable<T> = default;
+
+    constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
+            : value{other.value} {}
+    constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
+            : value{std::move(other.value)} {}
+
+    constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept = delete;
+    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept      = delete;
+
+    constexpr ~uninitialized_storage() requires meta::trivially_destructible<T> = default;
+    constexpr ~uninitialized_storage() {}
     // clang-format on
 
-    template <std::destructible T> constexpr void destruct() noexcept {
-        get<T>()->~T();
+    [[nodiscard]] constexpr value_type* data() noexcept {
+        return std::addressof(value);
     }
-
-    template <aligned_as_pow2 T> [[nodiscard]] constexpr T* get() noexcept {
-        return detail::aligned_cast<T*>(&storage_);
+    [[nodiscard]] constexpr value_type const* data() const noexcept {
+        return std::addressof(value);
     }
-
-    template <aligned_as_pow2 T> [[nodiscard]] constexpr T const* get() const noexcept {
-        return detail::aligned_cast<T const*>(&storage_);
-    }
-
-private:
-    SALT_NO_UNIQUE_ADDRESS
-    alignas(Alignment) std::byte storage_[Size];
 };
 
 template <typename T>
-using Uninitialized_storage_for = Uninitialized_storage<sizeof(T), alignof(T)>;
+using transparent_uninitialized_storage =
+        meta::condition<meta::has_trivial_lifetime<T>, T, uninitialized_storage<T>>;
 
-} // namespace salt
+} // namespace salt::fdn
