@@ -17,10 +17,10 @@ template <unsigned Size, typename... Ts>
 using type_size_t = typename detail::type_size<Size, Ts...>::type;
 
 template <unsigned Size>
-using integer_t = typename detail::integer_type<Size>::type;
+using integer_of_size_t = typename detail::integer_type<Size>::type;
 
 template <unsigned Size>
-using unsigned_integer_t = typename detail::unsigned_integer_type<Size>::type;
+using unsigned_integer_of_size_t = typename detail::unsigned_integer_type<Size>::type;
 
 namespace detail {
 

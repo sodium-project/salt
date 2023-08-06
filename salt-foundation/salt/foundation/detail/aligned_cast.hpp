@@ -1,8 +1,9 @@
 #pragma once
 #include <salt/meta.hpp>
 
-namespace salt::fdn {
+namespace salt::fdn::detail {
 
+// clang-format off
 template <std::integral I>
 constexpr bool is_pow2(I value) noexcept {
     return value && !((value) & (value - 1));
@@ -38,5 +39,6 @@ template <typename To, typename From>
 #endif
     );
 }
+// clang-format on
 
-} // namespace salt::fdn
+} // namespace salt::fdn::detail

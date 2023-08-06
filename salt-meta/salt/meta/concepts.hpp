@@ -4,6 +4,8 @@ namespace salt::meta {
 
 using std::constructible_from;
 using std::convertible_to;
+using std::integral;
+using std::same_as;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
@@ -52,5 +54,39 @@ template <typename T>
 concept nothrow_copy_constructible = std::is_nothrow_copy_constructible_v<T>;
 template <typename T>
 concept nothrow_move_constructible = std::is_nothrow_move_constructible_v<T>;
+
+template <typename T>
+concept copy_constructible = std::is_copy_constructible_v<T>;
+template <typename T>
+concept move_constructible = std::is_move_constructible_v<T>;
+
+template <typename T, typename U>
+concept trivially_lexicographically_comparable =
+        same_as<T, U> && sizeof(T) == 1 && std::is_unsigned_v<T>;
+
+template <typename T, typename U>
+concept trivially_equality_comparable = is_trivially_equality_comparable_v<T, U>;
+
+template <typename T>
+concept has_iterator_category = requires { typename T::iterator_category; };
+
+template <typename T, typename U>
+concept iterator_category_convertible_to =
+        has_iterator_category<std::iter_value_t<T>> and
+        convertible_to<typename std::iterator_traits<T>::iterator_category, U>;
+
+template <typename T>
+concept has_random_access_iterator_category =
+        iterator_category_convertible_to<T, std::random_access_iterator_tag>;
+
+namespace detail {
+template <typename T>
+concept boolean_testable_impl = convertible_to<T, bool>;
+} // namespace detail
+
+template <typename T>
+concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) {
+    { not std::forward<T>(t) } -> detail::boolean_testable_impl;
+};
 
 } // namespace salt::meta

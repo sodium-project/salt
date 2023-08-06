@@ -22,9 +22,6 @@ struct dummy {
     constexpr ~dummy() {}
 };
 
-#include <array>
-std::array<int, 3> x;
-
 using namespace salt;
 static_assert(not meta::trivial<fdn::uninitialized_storage<int>>);
 static_assert(meta::standard_layout<fdn::uninitialized_storage<int>>);
