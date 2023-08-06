@@ -16,4 +16,5 @@ ignore:
   - "**/*-test.cpp"  # ignore test harness code
   - "**/abort.hpp"
   - "**/aligned_cast.hpp"
+  - "**/constexpr_memcmp.hpp"
   - "**/synth_three_way.hpp"

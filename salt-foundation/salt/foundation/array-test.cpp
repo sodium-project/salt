@@ -45,11 +45,11 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
         STATIC_REQUIRE_FALSE(a.empty());
         STATIC_REQUIRE(a.size() == 3);
         STATIC_REQUIRE(a.max_size() == 3);
-        
+
         STATIC_REQUIRE(a[0] == 1);
         STATIC_REQUIRE(a[1] == 2);
         STATIC_REQUIRE(a[2] == 3);
-        
+
         STATIC_REQUIRE(a.front() == 1);
         STATIC_REQUIRE(a.back() == 3);
     }
@@ -57,11 +57,14 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
     SECTION("basic functionality at run time") {
         using namespace salt;
         fdn::array a = {1, 2, 3};
+        CHECK_FALSE(a.empty());
+        CHECK(a.size() == 3);
+        CHECK(a.max_size() == 3);
 
         CHECK(a[0] == 1);
         CHECK(a[1] == 2);
         CHECK(a[2] == 3);
-        
+
         CHECK(a.front() == 1);
         CHECK(a.back() == 3);
 
@@ -76,7 +79,7 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
         CHECK(b[1] == 2);
         CHECK(b[2] == 3);
 
-        a[2] = 30;
+        a[2]   = 30;
         int* c = a.data();
         CHECK(c[0] == 1);
         CHECK(c[1] == 2);
@@ -89,10 +92,23 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
         fdn::array const b = {1, 2, 3};
         fdn::array const c = {4, 5, 6};
 
+        CHECK_FALSE(a.empty());
+        CHECK(a.size() == 3);
+        CHECK(a.max_size() == 3);
+
+        CHECK(a[0] == b[0]);
+        CHECK(a[1] == b[1]);
+        CHECK(a[2] == b[2]);
+
         CHECK(a == b);
         CHECK(b == a);
         CHECK(c != a);
         CHECK(b != c);
+
+        CHECK(a.front() == b.front());
+        CHECK(c.front() != b.front());
+        CHECK(a.back() == b.back());
+        CHECK(c.back() != b.back());
 
         CHECK(a.cbegin() != a.cend());
 
@@ -127,5 +143,9 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
 
         STATIC_REQUIRE(a > c);
         STATIC_REQUIRE(c < b);
+        STATIC_REQUIRE(a >= c);
+        STATIC_REQUIRE(c <= b);
+
+        STATIC_REQUIRE(meta::same_as<decltype(a <=> b), std::strong_ordering>);
     }
 }
