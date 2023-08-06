@@ -13,4 +13,7 @@ comment:
   behavior: default
 
 ignore:
-  - "**/*-test.cpp*"  # ignore test harness code
+  - "**/*-test.cpp"  # ignore test harness code
+  - "**/abort.hpp"
+  - "**/aligned_cast.hpp"
+  - "**/synth_three_way.hpp"
