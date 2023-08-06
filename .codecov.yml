@@ -13,4 +13,4 @@ comment:
   behavior: default
 
 ignore:
-  - "*/*-test.cpp*"  # ignore test harness code
+  - "**/*-test.cpp*"  # ignore test harness code
