@@ -109,4 +109,25 @@ struct [[nodiscard]] enforce_same {
 template <typename First, typename... Rest>
 using enforce_same_t = typename enforce_same<First, Rest...>::type;
 
+template <typename F> struct [[nodiscard]] deduce;
+
+// clang-format off
+template <typename F, typename... Args>
+struct [[nodiscard]] deduce<F(Args...)> {
+    using type = std::invoke_result_t<F, Args...>;
+};
+template <typename T>
+using deduce_t = typename deduce<T>::type;
+
+template <typename T>
+struct [[nodiscard]] dereference {
+    using type = decltype(*std::declval<T>());
+};
+template <typename T>
+using dereference_t = typename dereference<T>::type;
+// clang-format on
+
+using std::remove_cvref_t;
+using std::add_pointer_t;
+
 } // namespace salt::meta

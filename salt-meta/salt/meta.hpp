@@ -5,6 +5,7 @@
 //  Not the best place to include <iterator>. Move it somewhere.
 #include <iterator>
 
+#include <salt/meta/compare.hpp>
 #include <salt/meta/type_traits.hpp>
 #include <salt/meta/concepts.hpp>
 #include <salt/meta/integer.hpp>

@@ -7,6 +7,7 @@ salt_interface_library(foundation
             "salt/foundation/array-test.cpp"
             "salt/foundation/uninitialized_storage-test.cpp"
             "salt/foundation/detail/constexpr_memcmp-test.cpp"
+            "salt/foundation/detail/iterator_adapter-test.cpp"
         LINK
             salt::meta)
 

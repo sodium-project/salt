@@ -49,8 +49,36 @@ template <typename T> union [[nodiscard]] uninitialized_storage final {
     }
 };
 
+// clang-format off
 template <typename T>
-using transparent_uninitialized_storage =
+constexpr auto* data(uninitialized_storage<T>& storage) noexcept {
+    return storage.data();
+}
+template <typename T>
+constexpr auto const* data(uninitialized_storage<T> const& storage) noexcept {
+    return storage.data();
+}
+template <typename T>
+constexpr T* data(T& value) noexcept {
+    return std::addressof(value);
+}
+
+template <typename T>
+constexpr auto& get(uninitialized_storage<T>& storage) noexcept {
+    return *storage.data();
+}
+template <typename T>
+constexpr auto const& get(uninitialized_storage<T> const& storage) noexcept {
+    return *storage.data();
+}
+template <typename T>
+constexpr T&& get(T&& value) noexcept {
+    return value;
+}
+// clang-format on
+
+template <typename T>
+using uninitialized_storage_for =
         meta::condition<meta::has_trivial_lifetime<T>, T, uninitialized_storage<T>>;
 
 } // namespace salt::fdn

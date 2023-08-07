@@ -6,6 +6,7 @@ using std::constructible_from;
 using std::convertible_to;
 using std::integral;
 using std::same_as;
+using std::random_access_iterator;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
@@ -88,5 +89,16 @@ template <typename T>
 concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) {
     { not std::forward<T>(t) } -> detail::boolean_testable_impl;
 };
+
+template <typename T>
+concept object = std::is_object_v<T>;
+
+template <typename T>
+concept reference = std::is_reference_v<T>;
+template <typename T>
+concept not_reference = not reference<T>;
+
+template <typename T>
+concept non_cv = same_as<std::remove_cv_t<T>, T>;
 
 } // namespace salt::meta

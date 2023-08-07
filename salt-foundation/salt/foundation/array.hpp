@@ -178,4 +178,7 @@ template <typename T, std::size_t Size>
                                              detail::synth_three_way<T, T>);
 }
 
+// TODO:
+//  Add begin() and end() functions for arrays.
+
 } // namespace salt::fdn

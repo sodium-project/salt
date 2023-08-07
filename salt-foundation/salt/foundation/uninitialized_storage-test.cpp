@@ -43,7 +43,7 @@ static_assert(not meta::trivially_copy_assignable<fdn::uninitialized_storage<dum
 static_assert(not meta::trivially_move_assignable<fdn::uninitialized_storage<dummy>>);
 static_assert(not meta::trivially_destructible<fdn::uninitialized_storage<dummy>>);
 
-consteval int constexpr_storage_construct() noexcept {
+consteval int storage_construct() noexcept {
     fdn::uninitialized_storage<dummy> storage;
     static_assert(sizeof(storage) == sizeof(dummy));
 
@@ -52,26 +52,39 @@ consteval int constexpr_storage_construct() noexcept {
     std::destroy_at(storage.data());
     return value;
 }
+consteval int storage_accessors() noexcept {
+    fdn::uninitialized_storage<dummy> storage;
+    static_assert(sizeof(storage) == sizeof(dummy));
+
+    std::construct_at(fdn::data(storage), 20);
+    int value = fdn::get(storage).value;
+    std::destroy_at(fdn::data(storage));
+    return value;
+}
 
 TEST_CASE("salt::fdn::uninitialized_storage", "[salt-foundation/uninitialized_storage.hpp]") {
-    SECTION("construct uninitialized storage in constant expression") {
-        constexpr int result = constexpr_storage_construct();
-        STATIC_REQUIRE(10 == result);
+    SECTION("evaluate in constant expression") {
+        STATIC_REQUIRE(10 == storage_construct());
+        STATIC_REQUIRE(20 == storage_accessors());
     }
 
-    SECTION("construct uninitialized storage from fundamental type") {
+    SECTION("construct from fundamental type") {
         fdn::uninitialized_storage<int> storage;
 
         int* value = std::construct_at(storage.data(), 5);
         REQUIRE(5 == *value);
+        REQUIRE(fdn::get(*value) == fdn::get(storage));
+        REQUIRE(*fdn::data(*value) == *fdn::data(storage));
         std::destroy_at(storage.data());
     }
 
-    SECTION("construct constant uninitialized storage from fundamental type") {
+    SECTION("construct constant from fundamental type") {
         fdn::uninitialized_storage<int> const storage;
 
-        int const* value = std::construct_at(storage.data(), 5);
-        REQUIRE(5 == *value);
+        int const* value = std::construct_at(storage.data(), 8);
+        REQUIRE(8 == *value);
+        REQUIRE(fdn::get(*value) == fdn::get(storage));
+        REQUIRE(*fdn::data(*value) == *fdn::data(storage));
         std::destroy_at(storage.data());
     }
 }
