@@ -56,9 +56,9 @@ consteval int storage_accessors() noexcept {
     fdn::uninitialized_storage<dummy> storage;
     static_assert(sizeof(storage) == sizeof(dummy));
 
-    std::construct_at(fdn::data(storage), 20);
+    std::construct_at(fdn::address(storage), 20);
     int value = fdn::get(storage).value;
-    std::destroy_at(fdn::data(storage));
+    std::destroy_at(fdn::address(storage));
     return value;
 }
 
@@ -74,7 +74,7 @@ TEST_CASE("salt::fdn::uninitialized_storage", "[salt-foundation/uninitialized_st
         int* value = std::construct_at(storage.data(), 5);
         REQUIRE(5 == *value);
         REQUIRE(fdn::get(*value) == fdn::get(storage));
-        REQUIRE(*fdn::data(*value) == *fdn::data(storage));
+        REQUIRE(*fdn::address(*value) == *fdn::address(storage));
         std::destroy_at(storage.data());
     }
 
@@ -84,7 +84,7 @@ TEST_CASE("salt::fdn::uninitialized_storage", "[salt-foundation/uninitialized_st
         int const* value = std::construct_at(storage.data(), 8);
         REQUIRE(8 == *value);
         REQUIRE(fdn::get(*value) == fdn::get(storage));
-        REQUIRE(*fdn::data(*value) == *fdn::data(storage));
+        REQUIRE(*fdn::address(*value) == *fdn::address(storage));
         std::destroy_at(storage.data());
     }
 }

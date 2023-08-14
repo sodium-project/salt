@@ -1,6 +1,8 @@
 #pragma once
 #include <salt/foundation/algorithm.hpp>
 
+#include <cassert>
+
 namespace salt::fdn {
 
 template <typename T, std::size_t Size> struct [[nodiscard]] array final {

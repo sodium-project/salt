@@ -5,6 +5,8 @@ namespace salt::fdn::detail {
 
 template <meta::random_access_iterator Iterator, typename Adapter>
 class [[nodiscard]] iterator_adapter final {
+    using iterator_type   = Iterator;
+    using adapter_type    = Adapter;
     using iterator_traits = std::iterator_traits<Iterator>;
 
 public:
@@ -15,10 +17,17 @@ public:
     using iterator_category = typename iterator_traits::iterator_category;
     using iterator_concept  = typename iterator_traits::iterator_concept;
 
+    iterator_type it_;
+    adapter_type  adapter_;
+
     constexpr iterator_adapter() noexcept = default;
 
-    constexpr iterator_adapter(Iterator const& it, Adapter adapter) noexcept
+    constexpr iterator_adapter(iterator_type const& it, adapter_type adapter) noexcept
             : it_{it}, adapter_{adapter} {}
+
+    template <meta::convertible_to<iterator_type> It, typename Fn>
+    constexpr iterator_adapter(iterator_adapter<It, Fn> const& other) noexcept
+            : it_{other.it_}, adapter_{other.adapter_} {}
 
     [[nodiscard]] constexpr reference operator*() const noexcept {
         return adapter_(*it_);
@@ -88,10 +97,6 @@ public:
     friend constexpr auto operator+(difference_type off, iterator_adapter const& it) noexcept {
         return iterator_adapter{it.it_ + off, it.adapter_};
     }
-
-private:
-    Iterator it_;
-    Adapter  adapter_;
 };
 
 } // namespace salt::fdn::detail

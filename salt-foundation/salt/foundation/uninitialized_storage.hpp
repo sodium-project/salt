@@ -17,6 +17,8 @@ template <typename T> union [[nodiscard]] uninitialized_storage final {
     nontrivial_type _;
 
     constexpr uninitialized_storage() : _{} {}
+    constexpr explicit uninitialized_storage(value_type const& v) noexcept : value{v} {}
+    constexpr explicit uninitialized_storage(value_type&& v) noexcept : value{std::move(v)} {}
 
     // clang-format off
     constexpr uninitialized_storage(uninitialized_storage const&) noexcept
@@ -49,17 +51,23 @@ template <typename T> union [[nodiscard]] uninitialized_storage final {
     }
 };
 
+template <typename T>
+constexpr bool operator==(uninitialized_storage<T> const& lhs,
+                          uninitialized_storage<T> const& rhs) noexcept {
+    return lhs.value == rhs.value;
+}
+
 // clang-format off
 template <typename T>
-constexpr auto* data(uninitialized_storage<T>& storage) noexcept {
+constexpr auto* address(uninitialized_storage<T>& storage) noexcept {
     return storage.data();
 }
 template <typename T>
-constexpr auto const* data(uninitialized_storage<T> const& storage) noexcept {
+constexpr auto const* address(uninitialized_storage<T> const& storage) noexcept {
     return storage.data();
 }
 template <typename T>
-constexpr T* data(T& value) noexcept {
+constexpr T* address(T& value) noexcept {
     return std::addressof(value);
 }
 

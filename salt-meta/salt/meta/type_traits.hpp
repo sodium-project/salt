@@ -3,6 +3,15 @@
 namespace salt::meta {
 
 // clang-format off
+template <typename T>
+using remove_ref_t = std::remove_reference_t<T>;
+template <typename... T>
+using common_type = std::common_type_t<T...>;
+
+using std::remove_cv_t;
+using std::remove_cvref_t;
+using std::add_pointer_t;
+
 template <typename T, typename... Ts>
 struct [[nodiscard]] are_distinct
         : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_distinct<Ts...>> {};
@@ -35,8 +44,6 @@ template <> struct [[nodiscard]] if_<false> final {
 
 template <bool Condition, typename T, typename F>
 using condition = typename detail::if_<Condition>::template type<T, F>;
-
-template <typename... T> using common_type = std::common_type_t<T...>;
 
 template <typename T, template <typename...> typename Template>
 struct [[nodiscard]] is_specialization : std::false_type {};
@@ -75,7 +82,7 @@ struct [[nodiscard]] is_trivially_equality_comparable_impl : std::false_type {};
 template <typename T>
 struct [[nodiscard]] is_trivially_equality_comparable_impl<T, T>
 #if __has_builtin(__is_trivially_equality_comparable)
-        : std::bool_constant<__is_trivially_equality_comparable(T) &&
+        : std::bool_constant<__is_trivially_equality_comparable(T) and
                              is_equality_comparable_v<T, T>>
 #else
         : std::is_integral<T>
@@ -86,15 +93,17 @@ struct [[nodiscard]] is_trivially_equality_comparable_impl<T, T>
 template <typename T>
 struct [[nodiscard]] is_trivially_equality_comparable_impl<T*, T*> : std::true_type {};
 
+// clang-format off
 template <typename T, typename U>
 struct [[nodiscard]] is_trivially_equality_comparable_impl<T*, U*>
-        : std::bool_constant<is_equality_comparable_v<T*, U*> &&
-                             (std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<U>> ||
-                              std::is_void_v<T> || std::is_void_v<U>)> {};
+        : std::bool_constant<is_equality_comparable_v<T*, U*> and
+                             (std::is_same_v<remove_cv_t<T>, remove_cv_t<U>> or
+                              std::is_void_v<T> or std::is_void_v<U>)> {};
+// clang-format on
 
 template <typename T, typename U>
 using is_trivially_equality_comparable =
-        is_trivially_equality_comparable_impl<std::remove_cv_t<T>, std::remove_cv_t<U>>;
+        is_trivially_equality_comparable_impl<remove_cv_t<T>, remove_cv_t<U>>;
 
 template <typename T, typename U>
 inline constexpr bool is_trivially_equality_comparable_v =
@@ -125,9 +134,24 @@ struct [[nodiscard]] dereference {
 };
 template <typename T>
 using dereference_t = typename dereference<T>::type;
+
+template <typename Iterator>
+using iter_value_t = std::iter_value_t<Iterator>;
+template <typename Iterator>
+using iter_diff_t = std::iter_difference_t<Iterator>;
+
+template <typename T, typename U>
+using is_same_as = std::bool_constant<__is_same(T, U)>;
+
+template <typename T, typename U>
+struct [[nodiscard]] is_same_uncvref : is_same_as<remove_cvref_t<T>, remove_cvref_t<U>> {};
+template <typename T, typename U>
+inline constexpr bool is_same_uncvref_v = is_same_uncvref<T, U>::value;
 // clang-format on
 
-using std::remove_cvref_t;
-using std::add_pointer_t;
+template <typename T, typename U>
+struct [[nodiscard]] is_constructible_from
+        : std::bool_constant<std::is_nothrow_destructible_v<T> && std::is_constructible_v<T, U>> {
+};
 
 } // namespace salt::meta

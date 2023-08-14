@@ -1,9 +1,11 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/foundation/detail/constexpr_memcmp.hpp>
+#include <salt/foundation/detail/constexpr_memcpy.hpp>
 #include <salt/foundation/detail/synth_three_way.hpp>
 
 namespace salt::fdn {
+
+using std::exchange;
 
 // clang-format off
 template <typename T, typename U> requires meta::trivially_equality_comparable<T, U>
