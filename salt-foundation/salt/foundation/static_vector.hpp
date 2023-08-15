@@ -203,7 +203,7 @@ public:
     constexpr iterator erase(const_iterator first, const_iterator last) noexcept {
         assert(first <= last && "invalid range first > last");
         auto const erase_begin = begin() + (first - begin());
-        auto const erase_end   = begin() + (last - begin()) + 1;
+        auto const erase_end   = begin() + (last  - begin());
 
         auto const elements_to_erase = size_type(erase_end - erase_begin);
         destroy(erase_begin, erase_end);

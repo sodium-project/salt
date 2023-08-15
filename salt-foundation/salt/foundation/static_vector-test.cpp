@@ -475,6 +475,14 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             CHECK(v.max_size() == 8);
         }
         {
+            fdn::static_vector<nontrivial_int, 5> v;
+
+            auto it = v.insert(v.end(), {5, 6, 7});
+            it      = v.insert(v.begin(), 3);
+            it      = v.insert(v.begin() + 2, 1);
+            CHECK(v == fdn::static_vector<nontrivial_int, 5>{3, 5, 1, 6, 7});
+        }
+        {
             constexpr auto v1 = []() {
                 fdn::static_vector<int, 5> v{1, 2, 3};
                 (void)v.insert(v.begin(), 5);
@@ -547,6 +555,23 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
         }
     }
 
+    SECTION("erase one") {
+        {
+            constexpr auto v1 = []() {
+                fdn::static_vector<int, 3> v{2, 3, 4};
+                (void)v.erase(v.begin());
+                return v;
+            }();
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 3>{3, 4});
+        }
+        {
+            fdn::static_vector<int, 3> v{2, 3, 4};
+            auto                       it = v.erase(v.begin());
+            CHECK(it == v.begin());
+            CHECK(v == fdn::static_vector<int, 3>{3, 4});
+        }
+    }
+
     SECTION("erase range") {
         {
             constexpr auto v1 = []() {
@@ -554,23 +579,23 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 (void)v.erase(v.begin() + 1, v.begin() + 3);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{0, 4});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{0, 3, 4});
         }
         {
             constexpr auto v1 = []() {
                 fdn::static_vector<nontrivial_int, 6> v{0, 1, 2};
                 fdn::array<nontrivial_int, 3>         a{5, 6, 7};
                 (void)v.insert(v.end(), a.begin(), a.end());
-                (void)v.erase(v.begin() + 1, v.begin() + 3);
+                (void)v.erase(v.begin() + 2, v.begin() + 4);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector<nontrivial_int, 6>{0, 6, 7});
+            STATIC_REQUIRE(v1 == fdn::static_vector<nontrivial_int, 6>{0, 1, 6, 7});
         }
         {
             fdn::static_vector<int, 8> v1{2, 1, 4, 5, 0, 3};
             auto                       it = v1.erase(v1.begin() + 2, v1.begin() + 4);
             CHECK(it == v1.begin() + 2);
-            CHECK(v1 == fdn::static_vector<int, 8>{2, 1, 3});
+            CHECK(v1 == fdn::static_vector<int, 8>{2, 1, 0, 3});
         }
     }
 }
