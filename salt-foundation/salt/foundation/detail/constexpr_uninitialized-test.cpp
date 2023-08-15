@@ -44,16 +44,6 @@ struct counted {
 int counted::count       = 0;
 int counted::constructed = 0;
 
-template <typename InputIterator, typename ForwardIterator>
-consteval void uninitialized_relocate_x(InputIterator   first,
-                                        InputIterator   last,
-                                        ForwardIterator d_first) noexcept {
-    auto current = d_first;
-    for (; first != last; (void)++current, ++first) {
-        std::construct_at(std::addressof(*current), std::move(*first));
-    }
-}
-
 consteval bool uninitialized_relocate_array() noexcept {
     using namespace salt;
     // clang-format off
@@ -70,10 +60,10 @@ consteval bool uninitialized_relocate_array() noexcept {
 
     struct [[nodiscard]] adapter final {
         constexpr dummy& operator()(storage& value) const noexcept {
-            return fdn::get(value);
+            return fdn::get<dummy&>(value);
         }
         constexpr dummy const& operator()(storage const& value) const noexcept {
-            return fdn::get(value);
+            return fdn::get<dummy const&>(value);
         }
     };
     using It = fdn::detail::iterator_adapter<typename source::iterator, adapter>;
@@ -89,9 +79,9 @@ consteval bool uninitialized_relocate_array() noexcept {
     auto result = fdn::uninitialized_relocate(src_begin, src_begin + 3, dest_begin);
     (void)result;
     // clang-format off
-    bool const constructed = fdn::get(dest[0]).constructed &&
-                             fdn::get(dest[1]).constructed &&
-                             fdn::get(dest[2]).constructed;
+    bool const constructed = fdn::get<dummy&>(dest[0]).constructed &&
+                             fdn::get<dummy&>(dest[1]).constructed &&
+                             fdn::get<dummy&>(dest[2]).constructed;
     // clang-format on
     std::destroy(dest_begin, dest_begin + 3);
     std::destroy(src_begin + 3, src_begin + N);

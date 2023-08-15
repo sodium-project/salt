@@ -98,37 +98,191 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             STATIC_REQUIRE(v.capacity() == 5);
         }
         {
-            constexpr fdn::static_vector<int, 5> v{};
+            fdn::static_vector<int, 5> v{};
             CHECK(v.empty());
             CHECK(v.max_size() == 5);
             CHECK(v.capacity() == 5);
         }
     }
 
-    SECTION("variadic constructor") {
-        fdn::static_vector<int, 5> vector{1, 2, 3};
-        CHECK(vector[0] == 1);
-        CHECK(vector[1] == 2);
-        CHECK(vector[2] == 3);
-        CHECK(vector.size() == 3);
-        CHECK(vector.max_size() == 5);
+    SECTION("count constructor") {
+        {
+            fdn::static_vector<int, 5> v(5);
+            CHECK_FALSE(v.empty());
+            CHECK(v.max_size() == 5);
+            CHECK(v.capacity() == 5);
+            CHECK(v == fdn::static_vector{0, 0, 0, 0, 0});
+        }
+        {
+            fdn::static_vector<int, 5> v(5, 3);
+            CHECK_FALSE(v.empty());
+            CHECK(v.max_size() == 5);
+            CHECK(v.capacity() == 5);
+            CHECK(v == fdn::static_vector{3, 3, 3, 3, 3});
+        }
+    }
+
+    SECTION("list constructor") {
+        fdn::static_vector<int, 5> v{1, 2, 3};
+        CHECK(v[0] == 1);
+        CHECK(v[1] == 2);
+        CHECK(v[2] == 3);
+        CHECK(v.size() == 3);
+        CHECK(v.max_size() == 5);
     }
 
     SECTION("range constructor") {
-        constexpr fdn::static_vector<int, 3> v1{7, 9};
-        STATIC_REQUIRE(v1[0] == 7);
-        STATIC_REQUIRE(v1[1] == 9);
-        STATIC_REQUIRE(v1.size() == 2);
-        constexpr fdn::static_vector<int, 5> v2{v1.begin(), v1.end()};
-        STATIC_REQUIRE(v2[0] == 7);
-        STATIC_REQUIRE(v2[1] == 9);
-        STATIC_REQUIRE(v2.size() == 2);
+        {
+            constexpr fdn::static_vector<int, 3> v1{7, 9};
+            STATIC_REQUIRE(v1[0] == 7);
+            STATIC_REQUIRE(v1[1] == 9);
+            STATIC_REQUIRE(v1.size() == 2);
+            constexpr fdn::static_vector<int, 5> v2{v1.begin(), v1.end()};
+            STATIC_REQUIRE(v2[0] == 7);
+            STATIC_REQUIRE(v2[1] == 9);
+            STATIC_REQUIRE(v2.size() == 2);
+        }
+        {
+            fdn::static_vector<int, 3> v1{2, 1};
+            CHECK(v1[0] == 2);
+            CHECK(v1[1] == 1);
+            CHECK(v1.size() == 2);
+            fdn::static_vector<int, 5> v2{v1.begin(), v1.end()};
+            CHECK(v2[0] == 2);
+            CHECK(v2[1] == 1);
+            CHECK(v2.size() == 2);
+        }
+    }
+
+    SECTION("copy constructor") {
+        {
+            constexpr auto v1 = []() {
+                fdn::static_vector<nontrivial_int, 3> v;
+                v.emplace_back(1);
+                v.emplace_back(2);
+                return v;
+            }();
+            constexpr fdn::static_vector<nontrivial_int, 3> v2{v1};
+            STATIC_REQUIRE(v1 == v2);
+        }
+        {
+            fdn::static_vector<nontrivial_int, 3> v1;
+            v1.emplace_back(1);
+            v1.emplace_back(2);
+
+            fdn::static_vector<nontrivial_int, 3> v2{v1};
+            CHECK(v1 == v2);
+        }
+    }
+
+    SECTION("move constructor") {
+        {
+            constexpr auto v1 = []() {
+                fdn::static_vector<nontrivial_int, 3> v;
+                v.emplace_back(1);
+                v.emplace_back(2);
+                return v;
+            }();
+            constexpr fdn::static_vector<nontrivial_int, 3> v2{meta::move(v1)};
+            STATIC_REQUIRE(v1 == v2);
+        }
+        {
+            fdn::static_vector<nontrivial_int, 3> v1;
+            v1.emplace_back(1);
+            v1.emplace_back(2);
+
+            fdn::static_vector<nontrivial_int, 3> v2{meta::move(v1)};
+            CHECK(v1 == v2);
+        }
+        {
+            fdn::static_vector<int, 5> v1{5, 6, 7};
+            fdn::static_vector<int, 5> v2{meta::move(v1)};
+            CHECK(v1 == v2);
+        }
+    }
+
+    SECTION("copy assignment") {
+        {
+            constexpr auto cmp = []() {
+                fdn::static_vector<nontrivial_int, 3> v1;
+                v1.emplace_back(1);
+                v1.emplace_back(2);
+                fdn::static_vector<nontrivial_int, 3> v2{};
+                v2 = v1;
+                return v1 == v2;
+            }();
+            STATIC_REQUIRE(cmp);
+        }
+        {
+            fdn::static_vector<nontrivial_int, 3> v1;
+            v1.emplace_back(1);
+            v1.emplace_back(2);
+
+            fdn::static_vector<nontrivial_int, 3> v2;
+            v2 = v1;
+            CHECK(v1 == v2);
+        }
+    }
+
+    SECTION("move assignment") {
+        {
+            constexpr auto cmp = []() {
+                fdn::static_vector<nontrivial_int, 3> v1;
+                v1.emplace_back(1);
+                v1.emplace_back(2);
+                fdn::static_vector<nontrivial_int, 3> v2{};
+                v2 = meta::move(v1);
+                return v1 == v2;
+            }();
+            STATIC_REQUIRE(cmp);
+        }
+        {
+            fdn::static_vector<nontrivial_int, 3> v1;
+            v1.emplace_back(1);
+            v1.emplace_back(2);
+
+            fdn::static_vector<nontrivial_int, 3> v2;
+            v2 = meta::move(v1);
+            CHECK(v1 == v2);
+        }
+        {
+            fdn::static_vector<int, 5> v1{1, 2};
+            fdn::static_vector<int, 5> v2;
+            v2 = meta::move(v1);
+            CHECK(v1 == v2);
+        }
     }
 
     SECTION("equality operator") {
         constexpr fdn::static_vector vector{1, 2, 3};
         STATIC_REQUIRE(vector == fdn::static_vector{1, 2, 3});
         STATIC_REQUIRE(vector != fdn::static_vector{1, 2, 1});
+    }
+
+    SECTION("assign") {
+        {
+            constexpr auto v1 = []() {
+                fdn::static_vector<int, 5> v;
+                v.assign({1, 2, 3, 4, 5});
+                return v;
+            }();
+            STATIC_REQUIRE_FALSE(v1.empty());
+            STATIC_REQUIRE(v1 == fdn::static_vector{1, 2, 3, 4, 5});
+        }
+        {
+            fdn::static_vector<int, 5> v;
+            v.assign({1, 2, 3});
+            CHECK_FALSE(v.empty());
+            CHECK(v == fdn::static_vector<int, 5>{1, 2, 3});
+            v.assign(2, 5);
+            CHECK(v == fdn::static_vector<int, 5>{5, 5});
+        }
+        {
+            fdn::static_vector<nontrivial_int, 3> v1{10, 20, 30};
+            fdn::static_vector<nontrivial_int, 3> v2;
+            v2.assign(v1.begin(), v1.end());
+            CHECK(v1 == v2);
+        }
     }
 
     SECTION("clear") {
@@ -165,7 +319,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 v.resize(3);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector{1, 2, 3});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{1, 2, 3});
             STATIC_REQUIRE(v1.capacity() == 5);
         }
         {
@@ -174,13 +328,13 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 v.resize(4, 7);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector{1, 2, 7, 7});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{1, 2, 7, 7});
             STATIC_REQUIRE(v1.capacity() == 5);
         }
         {
             fdn::static_vector<int, 5> v{1, 2, 3, 4, 5};
             v.resize(3);
-            CHECK(v == fdn::static_vector{1, 2, 3});
+            CHECK(v == fdn::static_vector<int, 5>{1, 2, 3});
         }
         {
             fdn::static_vector<nontrivial_int, 5> v{1, 2};
@@ -233,7 +387,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 v.push_back(value);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector{1, 2, 5, 8});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{1, 2, 5, 8});
         }
         {
             fdn::static_vector<int, 3> v;
@@ -257,7 +411,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 v.emplace_back(value);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector{1, 2, 5, 8});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{1, 2, 5, 8});
         }
         {
             fdn::static_vector<complex_type, 3> v;
@@ -295,18 +449,18 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             }();
             STATIC_REQUIRE(v1.size() == 2);
             STATIC_REQUIRE(v1.capacity() == 3);
-            STATIC_REQUIRE(v1 == fdn::static_vector{0, 1});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 3>{0, 1});
         }
         {
             fdn::static_vector<int, 4> v{5, 6, 7};
             v.pop_back();
-            CHECK(v == fdn::static_vector{5, 6});
+            CHECK(v == fdn::static_vector<int, 4>{5, 6});
         }
     }
 
     SECTION("insert") {
         {
-            fdn::static_vector<int, 3> v;
+            fdn::static_vector<int, 8> v;
 
             auto x  = 2;
             auto it = v.begin();
@@ -314,9 +468,11 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             it      = v.insert(it, x);
             it      = v.insert(it, 1);
             CHECK(it == v.begin());
-            CHECK(v == fdn::static_vector{1, 2, 3});
-            CHECK(v.size() == 3);
-            CHECK(v.max_size() == 3);
+            it = v.insert(v.end(), {5, 6, 7});
+            CHECK(it != v.begin());
+            CHECK(v == fdn::static_vector<int, 8>{1, 2, 3, 5, 6, 7});
+            CHECK(v.size() == 6);
+            CHECK(v.max_size() == 8);
         }
         {
             constexpr auto v1 = []() {
@@ -398,7 +554,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 (void)v.erase(v.begin() + 1, v.begin() + 3);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector{0, 4});
+            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{0, 4});
         }
         {
             constexpr auto v1 = []() {
@@ -414,7 +570,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             fdn::static_vector<int, 8> v1{2, 1, 4, 5, 0, 3};
             auto                       it = v1.erase(v1.begin() + 2, v1.begin() + 4);
             CHECK(it == v1.begin() + 2);
-            CHECK(v1 == fdn::static_vector{2, 1, 3});
+            CHECK(v1 == fdn::static_vector<int, 8>{2, 1, 3});
         }
     }
 }

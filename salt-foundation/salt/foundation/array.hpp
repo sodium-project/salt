@@ -5,7 +5,7 @@
 
 namespace salt::fdn {
 
-template <typename T, std::size_t Size> struct [[nodiscard]] array final {
+template <typename T, std::size_t Size> struct [[nodiscard]] array {
     using value_type      = T;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -80,7 +80,7 @@ template <typename T, std::size_t Size> struct [[nodiscard]] array final {
     }
 };
 
-template <typename T> struct [[nodiscard]] array<T, 0> final {
+template <typename T> struct [[nodiscard]] array<T, 0> {
     using value_type      = T;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;

@@ -1,4 +1,5 @@
 #pragma once
+#include <salt/foundation/addressof.hpp>
 #include <salt/meta.hpp>
 
 namespace salt::fdn::detail {
@@ -22,6 +23,9 @@ public:
 
     constexpr iterator_adapter() noexcept = default;
 
+    constexpr iterator_adapter(iterator_type const& it) noexcept requires meta::default_constructible<adapter_type>
+            : it_{it}, adapter_{} {}
+
     constexpr iterator_adapter(iterator_type const& it, adapter_type adapter) noexcept
             : it_{it}, adapter_{adapter} {}
 
@@ -34,7 +38,7 @@ public:
     }
 
     [[nodiscard]] constexpr pointer operator->() const noexcept {
-        return std::addressof(adapter_(*it_));
+        return fdn::addressof(adapter_(*it_));
     }
 
     [[nodiscard]] constexpr reference operator[](difference_type index) const noexcept {

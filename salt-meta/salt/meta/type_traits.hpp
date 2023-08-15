@@ -12,6 +12,9 @@ using std::remove_cv_t;
 using std::remove_cvref_t;
 using std::add_pointer_t;
 
+template <typename T>
+inline constexpr bool is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
+
 template <typename T, typename... Ts>
 struct [[nodiscard]] are_distinct
         : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_distinct<Ts...>> {};

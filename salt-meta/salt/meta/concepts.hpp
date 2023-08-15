@@ -147,7 +147,7 @@ concept contiguous = (pointer<T>             and pointer<U>) or
 namespace detail {
 template <typename InputIterator>
 constexpr decltype(auto) iter_move(InputIterator&& it) noexcept {
-    return std::move(*it);
+    return meta::move(*it);
 }
 template <typename InputIterator, typename OutputIterator>
 struct [[nodiscard]] is_memcpyable final {

@@ -1,6 +1,7 @@
 #pragma once
 #include <salt/config.hpp>
 #include <salt/foundation/types.hpp>
+#include <salt/foundation/addressof.hpp>
 
 #include <salt/foundation/detail/constexpr_memcpy.hpp>
 
@@ -14,7 +15,7 @@ template <typename T>
 #endif
 constexpr void* voidify(T& from) noexcept {
     // Cast away cv-qualifiers to allow modifying elements of a range through const iterators.
-    return const_cast<void*>(static_cast<const volatile void*>(std::addressof(from)));
+    return const_cast<void*>(static_cast<const volatile void*>(addressof(from)));
 }
 // clang-format on
 } // namespace detail
@@ -39,7 +40,7 @@ constexpr void uninitialized_default_construct(ForwardIterator first,
                                                ForwardIterator last) noexcept {
     if consteval {
         for (; first != last; ++first) {
-            std::construct_at(std::addressof(*first));
+            std::construct_at(addressof(*first));
         }
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
@@ -53,7 +54,7 @@ template <typename ForwardIterator, meta::integer Integer>
 constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer n) noexcept {
     if consteval {
         for (; n > 0; ++first, (void)--n) {
-            std::construct_at(std::addressof(*first));
+            std::construct_at(addressof(*first));
         }
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
@@ -66,14 +67,14 @@ constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer 
 template <typename ForwardIterator>
 constexpr void uninitialized_value_construct(ForwardIterator first, ForwardIterator last) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(std::addressof(*first));
+        std::construct_at(addressof(*first));
     }
 }
 
 template <typename ForwardIterator, meta::integer Integer>
 constexpr void uninitialized_value_construct_n(ForwardIterator first, Integer n) noexcept {
     for (; n > 0; ++first, (void)--n) {
-        std::construct_at(std::addressof(*first));
+        std::construct_at(addressof(*first));
     }
 }
 
@@ -83,7 +84,7 @@ constexpr void uninitialized_construct(ForwardIterator first,
                                        ForwardIterator last,
                                        T const&        value) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(std::addressof(*first), value);
+        std::construct_at(addressof(*first), value);
     }
 }
 template <typename ForwardIterator, typename T>
@@ -91,7 +92,7 @@ constexpr void uninitialized_construct(ForwardIterator first,
                                        ForwardIterator last,
                                        T&&             value) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(std::addressof(*first), std::move(value));
+        std::construct_at(addressof(*first), meta::move(value));
     }
 }
 
@@ -100,7 +101,7 @@ constexpr void uninitialized_construct_n(ForwardIterator first,
                                          Integer         count,
                                          T const&        value) noexcept {
     for (; count > 0; ++first, (void)--count) {
-        std::construct_at(std::addressof(*first), value);
+        std::construct_at(addressof(*first), value);
     }
 }
 template <typename ForwardIterator, meta::integer Integer, typename T>
@@ -108,7 +109,7 @@ constexpr void uninitialized_construct_n(ForwardIterator first,
                                          Integer         count,
                                          T&&             value) noexcept {
     for (; count > 0; ++first, (void)--count) {
-        std::construct_at(std::addressof(*first), std::move(value));
+        std::construct_at(addressof(*first), meta::move(value));
     }
 }
 
@@ -119,7 +120,7 @@ constexpr void uninitialized_move(InputIterator   first,
                                   ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; first != last; (void)++current, ++first) {
-        std::construct_at(std::addressof(*current), std::move(*first));
+        std::construct_at(addressof(*current), meta::move(*first));
     }
 }
 
@@ -130,7 +131,7 @@ constexpr void uninitialized_move_n(InputIterator   first,
                                     ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; count > 0; (void)++current, ++first, --count) {
-        std::construct_at(std::addressof(*current), std::move(*first));
+        std::construct_at(addressof(*current), meta::move(*first));
     }
 }
 
@@ -140,9 +141,9 @@ constexpr auto uninitialized_copy(InputIterator   first,
                                   ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; first != last; (void)++current, ++first) {
-        std::construct_at(std::addressof(*current), *first);
+        std::construct_at(addressof(*current), *first);
     }
-    return std::move(current);
+    return meta::move(current);
 }
 
 template <typename InputIterator, meta::integer Integer, typename ForwardIterator>
@@ -151,7 +152,7 @@ constexpr void uninitialized_copy_n(InputIterator   first,
                                     ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; count > 0; (void)++current, ++first, --count) {
-        std::construct_at(std::addressof(*current), *first);
+        std::construct_at(addressof(*current), *first);
     }
 }
 
@@ -164,7 +165,7 @@ constexpr auto uninitialized_copy_no_overlap(InputIterator   first,
             return uninitialized_copy(first, last, d_first);
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memcpy(std::addressof(*d_first), std::addressof(*first), count);
+            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -185,14 +186,14 @@ constexpr U* relocate_at(T* src, U* dest) noexcept {
     if constexpr (meta::same_trivially_relocatable<T, U>) {
         if consteval {
             destroy_guard<T> guard{src};
-            return std::construct_at(dest, std::move(*src));
+            return std::construct_at(dest, meta::move(*src));
         } else {
             detail::constexpr_memmove(dest, src);
-            return __builtin_launder(dest); // required?
+            return launder(dest); // required?
         }
     } else {
         destroy_guard<T> guard{src};
-        return std::construct_at(dest, std::move(*src));
+        return std::construct_at(dest, meta::move(*src));
     }
 }
 
@@ -210,18 +211,18 @@ constexpr auto uninitialized_relocate(InputIterator   first,
         if consteval {
             auto current = d_first;
             for (; first != last; (void)++current, ++first) {
-                relocate_at(std::addressof(*first), std::addressof(*current));
+                relocate_at(addressof(*first), addressof(*current));
             }
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memmove(std::addressof(*d_first), std::addressof(*first), count);
+            detail::constexpr_memmove(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
         auto current = d_first;
         for (; first != last; (void)++current, ++first) {
-            relocate_at(std::addressof(*first), std::addressof(*current));
+            relocate_at(addressof(*first), addressof(*current));
         }
         return current;
     }
@@ -241,18 +242,18 @@ constexpr auto uninitialized_relocate_no_overlap(InputIterator   first,
         if consteval {
             auto current = d_first;
             for (; first != last; (void)++current, ++first) {
-                relocate_at(std::addressof(*first), std::addressof(*current));
+                relocate_at(addressof(*first), addressof(*current));
             }
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memcpy(std::addressof(*d_first), std::addressof(*first), count);
+            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
         auto current = d_first;
         for (; first != last; (void)++current, ++first) {
-            relocate_at(std::addressof(*first), std::addressof(*current));
+            relocate_at(addressof(*first), addressof(*current));
         }
         return current;
     }
@@ -272,37 +273,37 @@ constexpr void uninitialized_relocate_n(InputIterator   first,
         if consteval {
             auto current = d_first;
             for (; count > 0; (void)++current, ++first, --count) {
-                relocate_at(std::addressof(*first), std::addressof(*current));
+                relocate_at(addressof(*first), addressof(*current));
             }
         } else {
-            detail::constexpr_memmove(std::addressof(*d_first), std::addressof(*first), count);
+            detail::constexpr_memmove(addressof(*d_first), addressof(*first), count);
         }
     } else {
         auto current = d_first;
         for (; count > 0; (void)++current, ++first, --count) {
-            relocate_at(std::addressof(*first), std::addressof(*current));
+            relocate_at(addressof(*first), addressof(*current));
         }
     }
 }
 
 template <typename ForwardIterator, typename T>
 constexpr void construct_at(ForwardIterator position, T const& value) noexcept {
-    std::construct_at(std::addressof(*position), value);
+    std::construct_at(addressof(*position), value);
 }
 template <typename ForwardIterator, typename T>
 constexpr void construct_at(ForwardIterator position, T&& value) noexcept {
-    std::construct_at(std::addressof(*position), std::move(value));
+    std::construct_at(addressof(*position), meta::move(value));
 }
 template <typename ForwardIterator, typename... Args>
 constexpr void construct_at(ForwardIterator position, Args&&... args) noexcept {
-    std::construct_at(std::addressof(*position), std::forward<Args>(args)...);
+    std::construct_at(addressof(*position), meta::forward<Args>(args)...);
 }
 
 template <typename InputIterator>
 constexpr void destroy_at(InputIterator position) noexcept {
     using value_type = meta::iter_value_t<InputIterator>;
     if constexpr (meta::not_trivially_destructible<value_type>) {
-        std::destroy_at(std::addressof(*position));
+        std::destroy_at(addressof(*position));
     }
 }
 
@@ -310,7 +311,7 @@ template <typename ForwardIterator>
 constexpr void destroy(ForwardIterator first, ForwardIterator last) noexcept {
     using value_type = meta::iter_value_t<ForwardIterator>;
     for (; first != last; ++first) {
-        destroy_guard<value_type> guard{std::addressof(*first)};
+        destroy_guard<value_type> guard{addressof(*first)};
     }
 }
 // clang-format on

@@ -2,28 +2,31 @@
 #include <salt/foundation/array.hpp>
 #include <salt/foundation/uninitialized_storage.hpp>
 
+#include <initializer_list>
 #include <salt/foundation/detail/constexpr_uninitialized.hpp>
+#include <salt/foundation/detail/distance.hpp>
 #include <salt/foundation/detail/iterator_adapter.hpp>
 
 namespace salt::fdn {
 
 template <meta::object T, std::size_t Capacity> class [[nodiscard]] static_vector final {
-    using storage = uninitialized_storage_for<T>;
-    static_assert(meta::equal<sizeof(storage), sizeof(T)>);
+    using uninitialized_storage = optional_uninitialized_storage<T>;
+    using uninitialized_array   = array<uninitialized_storage, Capacity>;
+
+    static_assert(meta::equal<sizeof(uninitialized_storage), sizeof(T)>);
     static_assert(meta::non_cv<T>, "T must not be cv-qualified");
 
-    struct [[nodiscard]] adapter final {
-        constexpr T& operator()(storage& value) const noexcept {
-            return get(value);
+    struct [[nodiscard]] storage_adapter final {
+        constexpr T& operator()(uninitialized_storage& storage) const noexcept {
+            return get<T&>(storage);
         }
-        constexpr T const& operator()(storage const& value) const noexcept {
-            return get(value);
+        constexpr T const& operator()(uninitialized_storage const& storage) const noexcept {
+            return get<T const&>(storage);
         }
     };
 
     template <typename Iterator>
-    using iterator_adapter = detail::iterator_adapter<Iterator, adapter>;
-    using storage_array    = array<storage, Capacity>;
+    using wrap_iter = detail::iterator_adapter<Iterator, storage_adapter>;
 
 public:
     using value_type      = T;
@@ -33,8 +36,8 @@ public:
     using const_pointer   = T const*;
     using reference       = T&;
     using const_reference = T const&;
-    using iterator        = iterator_adapter<typename storage_array::iterator>;
-    using const_iterator  = iterator_adapter<typename storage_array::const_iterator>;
+    using iterator        = wrap_iter<typename uninitialized_array::iterator>;
+    using const_iterator  = wrap_iter<typename uninitialized_array::const_iterator>;
 
     constexpr static_vector() noexcept : size_{} {
         // Objects with a trivial lifetime will not be wrapped by `uninitialized_storage`
@@ -42,27 +45,26 @@ public:
         if constexpr (meta::has_trivial_lifetime<T>) {
             // ...and at constant evaluation time initialization is a requirement.
             if consteval {
-                uninitialized_value_construct(address(storage_));
+                uninitialized_value_construct(get<pointer>(storage_));
             }
         }
     }
 
-    // clang-format off
-    template <typename... Args> requires meta::underlying_constructible<T, Args...>
-    constexpr explicit static_vector(Args&&... args) noexcept
-            : size_{sizeof...(Args)}, storage_{storage{std::forward<Args>(args)}...} {}
-    // clang-format on
+    constexpr explicit static_vector(std::initializer_list<T> list) noexcept
+            : static_vector(list.begin(), list.end()) {}
 
     constexpr explicit static_vector(size_type count) noexcept
             : static_vector(count, value_type{}) {}
 
     constexpr static_vector(size_type count, T const& value) noexcept : static_vector() {
+        check_free_space(count);
         uninitialized_construct_n(begin(), count, value);
         size_ = count;
     }
 
     template <meta::input_iterator InputIterator>
     constexpr static_vector(InputIterator first, InputIterator last) noexcept : static_vector() {
+        check_free_space(udistance(first, last));
         auto d_begin = begin();
         auto new_end = uninitialized_copy_no_overlap(first, last, d_begin);
         size_        = size_type(new_end - d_begin);
@@ -124,11 +126,15 @@ public:
         clear();
         resize(count, value);
     }
+    constexpr void assign(std::initializer_list<T> list) noexcept {
+        clear();
+        (void)insert(end(), list);
+    }
 
-    template <typename InputIterator>
+    template <meta::input_iterator InputIterator>
     constexpr void assign(InputIterator first, InputIterator last) noexcept {
         clear();
-        insert(end(), first, last);
+        (void)insert(end(), first, last);
     }
 
     // Capacity
@@ -171,11 +177,17 @@ public:
         construct_at(insert_position, value);
         return insert_position;
     }
+    constexpr iterator insert(const_iterator position, std::initializer_list<T> list) noexcept {
+        auto const count           = list.size();
+        auto const insert_position = move_elements(position, count);
+        (void)uninitialized_copy_no_overlap(list.begin(), list.end(), insert_position);
+        return insert_position;
+    }
 
     template <typename ForwardIterator>
     constexpr iterator insert(const_iterator position, ForwardIterator first,
                               ForwardIterator last) noexcept {
-        auto const count           = size_type(last - first); // use distance(first, last)
+        auto const count           = udistance(first, last);
         auto const insert_position = move_elements(position, count);
         (void)uninitialized_copy_no_overlap(first, last, insert_position);
         return insert_position;
@@ -184,7 +196,7 @@ public:
     template <typename... Args>
     constexpr iterator emplace(const_iterator position, Args&&... args) noexcept {
         auto const emplace_position = move_elements(position, 1);
-        construct_at(emplace_position, std::forward<Args>(args)...);
+        construct_at(emplace_position, meta::forward<Args>(args)...);
         return emplace_position;
     }
 
@@ -208,7 +220,7 @@ public:
     // clang-format off
     template <typename... Args>
     constexpr reference emplace_back(Args&&... args) noexcept {
-        return emplace_one_at_back(std::forward<Args>(args)...);
+        return emplace_one_at_back(meta::forward<Args>(args)...);
     }
     // clang-format on
 
@@ -216,13 +228,13 @@ public:
         emplace_one_at_back(value);
     }
     constexpr void push_back(value_type&& value) noexcept {
-        emplace_one_at_back(std::move(value));
+        emplace_one_at_back(meta::move(value));
     }
 
     constexpr void pop_back() noexcept {
-        check_empty();
-        destroy_at(end());
+        check_not_empty();
         --size_;
+        destroy_at(end());
     }
 
     constexpr void resize(size_type count, value_type const& value) noexcept {
@@ -247,44 +259,44 @@ public:
 
     // Element access
     [[nodiscard]] constexpr pointer data() noexcept {
-        return address(storage_.front());
+        return get<pointer>(storage_.front());
     }
     [[nodiscard]] constexpr const_pointer data() const noexcept {
-        return address(storage_.front());
+        return get<const_pointer>(storage_.front());
     }
 
     [[nodiscard]] constexpr reference front() noexcept {
-        return get(storage_.front());
+        return get<reference>(storage_.front());
     }
     [[nodiscard]] constexpr const_reference front() const noexcept {
-        return get(storage_.front());
+        return get<const_reference>(storage_.front());
     }
     [[nodiscard]] constexpr reference back() noexcept {
-        return get(storage_[size() - 1]);
+        return get<reference>(storage_[size() - 1]);
     }
     [[nodiscard]] constexpr const_reference back() const noexcept {
-        return get(storage_[size() - 1]);
+        return get<const_reference>(storage_[size() - 1]);
     }
 
     [[nodiscard]] constexpr reference operator[](size_type index) noexcept {
-        return get(storage_[index]);
+        return get<reference>(storage_[index]);
     }
     [[nodiscard]] constexpr const_reference operator[](size_type index) const noexcept {
-        return get(storage_[index]);
+        return get<const_reference>(storage_[index]);
     }
 
     // Iterators
     constexpr iterator begin() noexcept {
-        return {storage_.begin(), adapter{}};
+        return {storage_.begin()};
     }
     constexpr const_iterator begin() const noexcept {
-        return {storage_.begin(), adapter{}};
+        return {storage_.begin()};
     }
     constexpr iterator end() noexcept {
-        return {storage_.begin() + size(), adapter{}};
+        return {storage_.begin() + size()};
     }
     constexpr const_iterator end() const noexcept {
-        return {storage_.begin() + size(), adapter{}};
+        return {storage_.begin() + size()};
     }
 
     constexpr const_iterator cbegin() const noexcept {
@@ -295,8 +307,7 @@ public:
     }
 
     // clang-format off
-    template <size_type Size>
-    constexpr bool operator==(static_vector<T, Size> const& other) const noexcept {
+    constexpr bool operator==(static_vector<T, Capacity> const& other) const noexcept {
         return equal(begin(), end(), other.begin());
     }
     friend constexpr auto operator<=>(static_vector const& lhs, static_vector const& rhs) noexcept = default;
@@ -306,7 +317,8 @@ private:
     constexpr void check_free_space(size_type new_size) const noexcept {
         assert(new_size <= capacity());
     }
-    constexpr void check_empty() const noexcept {
+
+    constexpr void check_not_empty() const noexcept {
         assert(!empty());
     }
 
@@ -314,7 +326,7 @@ private:
     template <typename... Args>
     constexpr reference emplace_one_at_back(Args&&... args) noexcept {
         check_free_space(size() + 1);
-        construct_at(end(), std::forward<Args>(args)...);
+        construct_at(end(), meta::forward<Args>(args)...);
         ++size_;
         return back();
     }
@@ -332,18 +344,18 @@ private:
         if constexpr (meta::trivially_relocatable<T>) {
             if consteval {
                 for (size_type i = 0; i < elements_to_move; ++i) {
-                    relocate_at(address(storage_[from_index - i]),
-                                address(storage_[  to_index - i]));
+                    relocate_at(get<pointer>(storage_[from_index - i]),
+                                get<pointer>(storage_[  to_index - i]));
                 }
             } else {
-                detail::constexpr_memmove(address(storage_[  end_offset]),
-                                          address(storage_[begin_offset]),
+                detail::constexpr_memmove(get<pointer>(storage_[  end_offset]),
+                                          get<pointer>(storage_[begin_offset]),
                                           elements_to_move);
             }
         } else {
             for (size_type i = 0; i < elements_to_move; ++i) {
-                relocate_at(address(storage_[from_index - i]),
-                            address(storage_[  to_index - i]));
+                relocate_at(get<pointer>(storage_[from_index - i]),
+                            get<pointer>(storage_[  to_index - i]));
             }
         }
         size_ += n;
@@ -351,8 +363,8 @@ private:
     }
     // clang-format on
 
-    size_type     size_;
-    storage_array storage_;
+    size_type           size_;
+    uninitialized_array storage_;
 };
 
 template <typename T, typename... Args>
