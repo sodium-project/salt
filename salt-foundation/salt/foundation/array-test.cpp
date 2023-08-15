@@ -131,21 +131,38 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
     }
 
     SECTION("lexicographical compare") {
-        using namespace salt;
-        constexpr fdn::array a = {'a', 'b', 'c'};
-        constexpr fdn::array b = {'a', 'b', 'c'};
-        constexpr fdn::array c = {'A', 'B', 'C'};
+        {
+            using namespace salt;
+            constexpr fdn::array a = {'a', 'b', 'c'};
+            constexpr fdn::array b = {'a', 'b', 'c'};
+            constexpr fdn::array c = {'A', 'B', 'C'};
 
-        STATIC_REQUIRE(a == b);
-        STATIC_REQUIRE(b == a);
-        STATIC_REQUIRE(c != a);
-        STATIC_REQUIRE(b != c);
+            STATIC_REQUIRE(a == b);
+            STATIC_REQUIRE(b == a);
+            STATIC_REQUIRE(c != a);
+            STATIC_REQUIRE(b != c);
 
-        STATIC_REQUIRE(a > c);
-        STATIC_REQUIRE(c < b);
-        STATIC_REQUIRE(a >= c);
-        STATIC_REQUIRE(c <= b);
+            STATIC_REQUIRE(a > c);
+            STATIC_REQUIRE(c < b);
+            STATIC_REQUIRE(a >= c);
+            STATIC_REQUIRE(c <= b);
 
-        STATIC_REQUIRE(meta::same_as<decltype(a <=> b), std::strong_ordering>);
+            STATIC_REQUIRE(meta::same_as<decltype(a <=> b), std::strong_ordering>);
+        }
+        {
+            using namespace salt;
+            fdn::array a = {'a', 'b', 'c'};
+            fdn::array b = {'a', 'b', 'c'};
+            fdn::array c = {'A', 'B', 'C'};
+            CHECK(a == b);
+            CHECK(b == a);
+            CHECK(c != a);
+            CHECK(b != c);
+
+            CHECK(a > c);
+            CHECK(c < b);
+            CHECK(a >= c);
+            CHECK(c <= b);
+        }
     }
 }

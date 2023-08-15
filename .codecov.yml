@@ -16,3 +16,4 @@ ignore:
   - "**/*-test.cpp"  # ignore test harness code
   - "**/abort.hpp"
   - "**/detail"
+  - "**/salt-meta"

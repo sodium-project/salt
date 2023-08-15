@@ -231,12 +231,12 @@ public:
         // Reinitialize the new members if we are enlarging.
         while (size() < count) {
             construct_at(end(), value);
-            --size_;
+            ++size_;
         }
         // Destroy extras if we are making it smaller.
         while (size() > count) {
-            destroy_at(end());
             --size_;
+            destroy_at(end());
         }
     }
     constexpr void resize(size_type count) noexcept

@@ -122,29 +122,29 @@ template <typename T> struct [[nodiscard]] array<T, 0> final {
     }
 
     [[nodiscard]] constexpr reference front() noexcept {
-        // assert(false, "cannot call array<T, 0>::front() on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::front() on a zero-sized array");
         return *data();
     }
     [[nodiscard]] constexpr const_reference front() const noexcept {
-        // assert(false, "cannot call array<T, 0>::front() on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::front() on a zero-sized array");
         return *data();
     }
 
     [[nodiscard]] constexpr reference back() noexcept {
-        // assert(false, "cannot call array<T, 0>::back() on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::back() on a zero-sized array");
         return *data();
     }
     [[nodiscard]] constexpr const_reference back() const noexcept {
-        // assert(false, "cannot call array<T, 0>::back() on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::back() on a zero-sized array");
         return *data();
     }
 
     [[nodiscard]] constexpr reference operator[](size_type) noexcept {
-        // assert(false, "cannot call array<T, 0>::operator[] on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::operator[] on a zero-sized array");
         return *data();
     }
     [[nodiscard]] constexpr const_reference operator[](size_type) const noexcept {
-        // assert(false, "cannot call array<T, 0>::operator[] on a zero-sized array");
+        assert(false && "cannot call array<T, 0>::operator[] on a zero-sized array");
         return *data();
     }
 
