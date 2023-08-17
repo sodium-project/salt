@@ -6,6 +6,7 @@ using std::constructible_from;
 using std::convertible_to;
 using std::integral;
 using std::input_iterator;
+using std::forward_iterator;
 using std::random_access_iterator;
 using std::contiguous_iterator;
 using std::same_as;

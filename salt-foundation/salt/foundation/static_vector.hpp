@@ -9,7 +9,8 @@
 
 namespace salt::fdn {
 
-template <meta::object T, std::size_t Capacity> class [[nodiscard]] static_vector final {
+template <meta::object T, std::size_t Capacity>
+class [[nodiscard, clang::trivial_abi]] static_vector final {
     using uninitialized_storage = optional_uninitialized_storage<T>;
     using uninitialized_array   = array<uninitialized_storage, Capacity>;
 
@@ -45,7 +46,7 @@ public:
         if constexpr (meta::has_trivial_lifetime<T>) {
             // ...and at constant evaluation time initialization is a requirement.
             if consteval {
-                uninitialized_value_construct(get<pointer>(storage_));
+                detail::uninitialized_value_construct(get<pointer>(storage_));
             }
         }
     }
@@ -74,7 +75,7 @@ public:
         requires meta::trivially_copy_constructible<T>
     = default;
     constexpr static_vector(static_vector const& other) noexcept : static_vector() {
-        (void)uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
+        uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
         size_ = other.size();
     }
 
@@ -83,7 +84,7 @@ public:
     = default;
     constexpr static_vector(static_vector&& other) noexcept : static_vector() {
         if constexpr (meta::relocatable<T>) {
-            (void)uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
+            uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
             size_ = exchange(other.size_, 0);
         } else {
             uninitialized_move(other.begin(), other.end(), begin());
@@ -96,7 +97,7 @@ public:
     = default;
     constexpr static_vector& operator=(static_vector const& other) noexcept {
         clear();
-        (void)uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
+        uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
         size_ = other.size();
         return *this;
     }
@@ -107,7 +108,7 @@ public:
     constexpr static_vector& operator=(static_vector&& other) noexcept {
         clear();
         if constexpr (meta::relocatable<T>) {
-            (void)uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
+            uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
             size_ = exchange(other.size_, 0);
         } else {
             uninitialized_move(other.begin(), other.end(), begin());
@@ -128,13 +129,13 @@ public:
     }
     constexpr void assign(std::initializer_list<T> list) noexcept {
         clear();
-        (void)insert(end(), list);
+        insert(end(), list);
     }
 
     template <meta::input_iterator InputIterator>
     constexpr void assign(InputIterator first, InputIterator last) noexcept {
         clear();
-        (void)insert(end(), first, last);
+        insert(end(), first, last);
     }
 
     // Capacity
@@ -163,8 +164,8 @@ public:
     constexpr void clear() noexcept
         requires meta::not_trivially_destructible<T>
     {
-        size_ = 0;
         destroy(begin(), end());
+        size_ = 0;
     }
 
     constexpr iterator insert(const_iterator position, value_type const& value) noexcept {
@@ -180,16 +181,16 @@ public:
     constexpr iterator insert(const_iterator position, std::initializer_list<T> list) noexcept {
         auto const count           = list.size();
         auto const insert_position = move_elements(position, count);
-        (void)uninitialized_copy_no_overlap(list.begin(), list.end(), insert_position);
+        uninitialized_copy_no_overlap(list.begin(), list.end(), insert_position);
         return insert_position;
     }
 
-    template <typename ForwardIterator>
+    template <meta::forward_iterator ForwardIterator>
     constexpr iterator insert(const_iterator position, ForwardIterator first,
                               ForwardIterator last) noexcept {
         auto const count           = udistance(first, last);
         auto const insert_position = move_elements(position, count);
-        (void)uninitialized_copy_no_overlap(first, last, insert_position);
+        uninitialized_copy_no_overlap(first, last, insert_position);
         return insert_position;
     }
 
@@ -208,7 +209,7 @@ public:
         auto const elements_to_erase = size_type(erase_end - erase_begin);
         destroy(erase_begin, erase_end);
 
-        (void)uninitialized_relocate(erase_end, end(), erase_begin);
+        uninitialized_relocate(erase_end, end(), erase_begin);
         size_ -= elements_to_erase;
         return erase_begin;
     }
@@ -307,10 +308,21 @@ public:
     }
 
     // clang-format off
-    constexpr bool operator==(static_vector<T, Capacity> const& other) const noexcept {
+    template <size_type OtherCapacity>
+    [[nodiscard]]
+    constexpr bool operator==(static_vector<T, OtherCapacity> const& other) const noexcept {
+        if (size() != other.size())
+            return false;
+
         return equal(begin(), end(), other.begin());
     }
-    friend constexpr auto operator<=>(static_vector const& lhs, static_vector const& rhs) noexcept = default;
+
+    template <size_type OtherCapacity>
+    [[nodiscard]]
+    constexpr auto operator<=>(static_vector<T, OtherCapacity> const& other) const noexcept {
+        return lexicographical_compare_three_way(
+                begin(), end(), other.begin(), other.end(), detail::synth_three_way<T, T>);
+    }
     // clang-format on
 
 private:
@@ -344,8 +356,8 @@ private:
         if constexpr (meta::trivially_relocatable<T>) {
             if consteval {
                 for (size_type i = 0; i < elements_to_move; ++i) {
-                    relocate_at(get<pointer>(storage_[from_index - i]),
-                                get<pointer>(storage_[  to_index - i]));
+                    detail::relocate_at(get<pointer>(storage_[from_index - i]),
+                                        get<pointer>(storage_[  to_index - i]));
                 }
             } else {
                 detail::constexpr_memmove(get<pointer>(storage_[  end_offset]),
@@ -354,8 +366,8 @@ private:
             }
         } else {
             for (size_type i = 0; i < elements_to_move; ++i) {
-                relocate_at(get<pointer>(storage_[from_index - i]),
-                            get<pointer>(storage_[  to_index - i]));
+                detail::relocate_at(get<pointer>(storage_[from_index - i]),
+                                    get<pointer>(storage_[  to_index - i]));
             }
         }
         size_ += n;
@@ -363,8 +375,8 @@ private:
     }
     // clang-format on
 
-    size_type           size_;
-    uninitialized_array storage_;
+    SALT_NO_UNIQUE_ADDRESS size_type           size_;
+    SALT_NO_UNIQUE_ADDRESS uninitialized_array storage_;
 };
 
 template <typename T, typename... Args>

@@ -34,11 +34,11 @@ static_assert(salt::meta::trivially_destructible<vector_type>);
 } // namespace copyable_or_movable_vector
 
 struct nontrivial_int {
-    int x = 0;
+    int x;
 
-    constexpr nontrivial_int() : x{0} {}
+    constexpr nontrivial_int() noexcept : x{0} {}
 
-    constexpr nontrivial_int(int val) : x{val} {}
+    constexpr nontrivial_int(int val) noexcept : x{val} {}
     constexpr ~nontrivial_int() {}
 
     constexpr nontrivial_int(nontrivial_int const& other) noexcept {
@@ -57,11 +57,7 @@ struct nontrivial_int {
         return *this;
     }
 
-    constexpr operator int() noexcept {
-        return x;
-    }
-
-    constexpr bool operator==(nontrivial_int const& other) const {
+    constexpr bool operator==(nontrivial_int const& other) const noexcept {
         return x == other.x;
     }
 };
@@ -77,6 +73,62 @@ static_assert(not salt::meta::trivially_move_assignable<vector_type>);
 static_assert(not salt::meta::trivially_destructible<vector_type>);
 
 } // namespace not_trivially_copyable_vector
+
+struct nontrivial_counter {
+    int        x;
+    bool       has_resource;
+    static int ctor_dtor_call_counter;
+
+    nontrivial_counter() noexcept : x{}, has_resource{true} {
+        ++ctor_dtor_call_counter;
+    }
+
+    nontrivial_counter(int val) noexcept : x{val}, has_resource{true} {
+        ++ctor_dtor_call_counter;
+    }
+
+    ~nontrivial_counter() {
+        if (has_resource)
+            --ctor_dtor_call_counter;
+    }
+
+    nontrivial_counter(nontrivial_counter const& other) noexcept {
+        has_resource = other.has_resource;
+        x            = other.x;
+        if (has_resource)
+            ++ctor_dtor_call_counter;
+    }
+    nontrivial_counter(nontrivial_counter&& other) noexcept {
+        has_resource = other.has_resource;
+        x            = other.x;
+        if (other.has_resource)
+            other.has_resource = false;
+    }
+
+    nontrivial_counter& operator=(nontrivial_counter const& other) noexcept {
+        x = other.x;
+        if (has_resource) {
+            has_resource = false;
+        }
+        if (other.has_resource) {
+            has_resource = true;
+        }
+        return *this;
+    }
+    nontrivial_counter& operator=(nontrivial_counter&& other) noexcept {
+        x = other.x;
+        if (has_resource) {
+            has_resource = false;
+        }
+        has_resource = std::exchange(other.has_resource, false);
+        return *this;
+    }
+
+    bool operator==(nontrivial_counter const& other) const noexcept {
+        return x == other.x && has_resource == other.has_resource;
+    }
+};
+int nontrivial_counter::ctor_dtor_call_counter = 0;
 
 struct complex_type {
     constexpr complex_type(int param_a, int param_b1, int param_b2, int param_c)
@@ -254,9 +306,61 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
     }
 
     SECTION("equality operator") {
-        constexpr fdn::static_vector vector{1, 2, 3};
-        STATIC_REQUIRE(vector == fdn::static_vector{1, 2, 3});
-        STATIC_REQUIRE(vector != fdn::static_vector{1, 2, 1});
+        constexpr fdn::static_vector v{1, 2, 3};
+        STATIC_REQUIRE(v == fdn::static_vector{1, 2, 3});
+        STATIC_REQUIRE(v != fdn::static_vector{1, 2, 1});
+        STATIC_REQUIRE(v != fdn::static_vector{1, 2, 3, 4});
+    }
+
+    SECTION("compare") {
+        {
+            constexpr fdn::static_vector v1{1, 2, 3};
+            constexpr fdn::static_vector v2{1, 2, 4};
+            STATIC_REQUIRE(v1 < v2);
+            STATIC_REQUIRE(v1 <= v2);
+            STATIC_REQUIRE_FALSE(v1 > v2);
+            STATIC_REQUIRE_FALSE(v1 >= v2);
+        }
+        {
+            fdn::static_vector v1{1, 2, 3};
+            fdn::static_vector v2{1, 2, 4};
+            CHECK(v1 < v2);
+            CHECK(v1 <= v2);
+            CHECK_FALSE(v1 > v2);
+            CHECK_FALSE(v1 >= v2);
+        }
+        {
+            constexpr fdn::static_vector v1{1, 5};
+            constexpr fdn::static_vector v2{1, 2, 4};
+            STATIC_REQUIRE_FALSE(v1 < v2);
+            STATIC_REQUIRE_FALSE(v1 <= v2);
+            STATIC_REQUIRE(v1 > v2);
+            STATIC_REQUIRE(v1 >= v2);
+        }
+        {
+            fdn::static_vector v1{1, 5};
+            fdn::static_vector v2{1, 2, 4};
+            CHECK_FALSE(v1 < v2);
+            CHECK_FALSE(v1 <= v2);
+            CHECK(v1 > v2);
+            CHECK(v1 >= v2);
+        }
+        {
+            constexpr fdn::static_vector v1{1, 2, 3};
+            constexpr fdn::static_vector v2{1, 5};
+            STATIC_REQUIRE(v1 < v2);
+            STATIC_REQUIRE(v1 <= v2);
+            STATIC_REQUIRE_FALSE(v1 > v2);
+            STATIC_REQUIRE_FALSE(v1 >= v2);
+        }
+        {
+            fdn::static_vector v1{1, 2, 3};
+            fdn::static_vector v2{1, 2, 4};
+            CHECK(v1 < v2);
+            CHECK(v1 <= v2);
+            CHECK_FALSE(v1 > v2);
+            CHECK_FALSE(v1 >= v2);
+        }
     }
 
     SECTION("assign") {
@@ -304,7 +408,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             CHECK(v.capacity() == 5);
         }
         {
-            fdn::static_vector<nontrivial_int, 3> v{1, 2, 3};
+            fdn::static_vector<nontrivial_counter, 3> v{1, 2, 3};
             v.clear();
             CHECK(v.empty());
             CHECK(v.max_size() == 3);
@@ -324,11 +428,11 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
         }
         {
             constexpr auto v1 = []() {
-                fdn::static_vector<int, 5> v{1, 2};
+                fdn::static_vector<nontrivial_int, 5> v{1, 2};
                 v.resize(4, 7);
                 return v;
             }();
-            STATIC_REQUIRE(v1 == fdn::static_vector<int, 5>{1, 2, 7, 7});
+            STATIC_REQUIRE(v1 == fdn::static_vector<nontrivial_int, 5>{1, 2, 7, 7});
             STATIC_REQUIRE(v1.capacity() == 5);
         }
         {
@@ -337,11 +441,11 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             CHECK(v == fdn::static_vector<int, 5>{1, 2, 3});
         }
         {
-            fdn::static_vector<nontrivial_int, 5> v{1, 2};
+            fdn::static_vector<nontrivial_counter, 5> v{1, 2};
 
-            auto const x = nontrivial_int{7};
+            auto const x = nontrivial_counter{7};
             v.resize(4, x);
-            CHECK(v == fdn::static_vector<nontrivial_int, 5>{1, 2, 7, 7});
+            CHECK(v == fdn::static_vector<nontrivial_counter, 5>{1, 2, 7, 7});
         }
     }
 
@@ -452,9 +556,9 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             STATIC_REQUIRE(v1 == fdn::static_vector<int, 3>{0, 1});
         }
         {
-            fdn::static_vector<int, 4> v{5, 6, 7};
+            fdn::static_vector<nontrivial_counter, 4> v{5, 6, 7};
             v.pop_back();
-            CHECK(v == fdn::static_vector<int, 4>{5, 6});
+            CHECK(v == fdn::static_vector<nontrivial_counter, 4>{5, 6});
         }
     }
 
@@ -475,12 +579,12 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             CHECK(v.max_size() == 8);
         }
         {
-            fdn::static_vector<nontrivial_int, 5> v;
+            fdn::static_vector<nontrivial_counter, 5> v;
 
             auto it = v.insert(v.end(), {5, 6, 7});
             it      = v.insert(v.begin(), 3);
             it      = v.insert(v.begin() + 2, 1);
-            CHECK(v == fdn::static_vector<nontrivial_int, 5>{3, 5, 1, 6, 7});
+            CHECK(v == fdn::static_vector<nontrivial_counter, 5>{3, 5, 1, 6, 7});
         }
         {
             constexpr auto v1 = []() {
@@ -545,13 +649,13 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             STATIC_REQUIRE(v1 == fdn::static_vector<nontrivial_int, 3>{2, 4, 3});
         }
         {
-            fdn::static_vector<int, 5> v{0, 1, 2};
+            fdn::static_vector<nontrivial_counter, 5> v{0, 1, 2};
 
             auto it = v.begin() + 1;
             it      = v.emplace(it, 3);
             it      = v.emplace(it, 4);
             CHECK(it == v.begin() + 1);
-            CHECK(v == fdn::static_vector{0, 4, 3, 1, 2});
+            CHECK(v == fdn::static_vector<nontrivial_counter, 5>{0, 4, 3, 1, 2});
         }
     }
 
@@ -565,10 +669,10 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             STATIC_REQUIRE(v1 == fdn::static_vector<int, 3>{3, 4});
         }
         {
-            fdn::static_vector<int, 3> v{2, 3, 4};
-            auto                       it = v.erase(v.begin());
+            fdn::static_vector<nontrivial_counter, 3> v{2, 3, 4};
+            auto                                      it = v.erase(v.begin());
             CHECK(it == v.begin());
-            CHECK(v == fdn::static_vector<int, 3>{3, 4});
+            CHECK(v == fdn::static_vector<nontrivial_counter, 3>{3, 4});
         }
     }
 
@@ -597,5 +701,9 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             CHECK(it == v1.begin() + 2);
             CHECK(v1 == fdn::static_vector<int, 8>{2, 1, 0, 3});
         }
+    }
+
+    SECTION("end") {
+        REQUIRE(nontrivial_counter::ctor_dtor_call_counter == 0);
     }
 }

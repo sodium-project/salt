@@ -5,7 +5,8 @@
 
 namespace salt::fdn {
 
-template <typename T, std::size_t Size> struct [[nodiscard]] array {
+template <typename T, std::size_t Size>
+struct [[nodiscard]] array {
     using value_type      = T;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -16,7 +17,7 @@ template <typename T, std::size_t Size> struct [[nodiscard]] array {
     using iterator        = T*;
     using const_iterator  = T const*;
 
-    T elements[Size];
+    SALT_NO_UNIQUE_ADDRESS T elements[Size];
 
     [[nodiscard]] constexpr pointer data() noexcept {
         return elements;
@@ -80,7 +81,8 @@ template <typename T, std::size_t Size> struct [[nodiscard]] array {
     }
 };
 
-template <typename T> struct [[nodiscard]] array<T, 0> {
+template <typename T>
+struct [[nodiscard]] array<T, 0> {
     using value_type      = T;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -91,7 +93,7 @@ template <typename T> struct [[nodiscard]] array<T, 0> {
     using iterator        = T*;
     using const_iterator  = T const*;
 
-    alignas(T) std::byte elements[sizeof(T)];
+    alignas(T) SALT_NO_UNIQUE_ADDRESS std::byte elements[sizeof(T)];
 
     [[nodiscard]] constexpr pointer data() noexcept {
         return nullptr;

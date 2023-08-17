@@ -46,6 +46,7 @@ int counted::constructed = 0;
 
 consteval bool uninitialized_relocate_array() noexcept {
     using namespace salt;
+    using namespace salt::fdn::detail;
     // clang-format off
     struct dummy {
         bool constructed = false;
@@ -72,11 +73,11 @@ consteval bool uninitialized_relocate_array() noexcept {
     destination dest;
 
     auto src_begin = It{src.begin(), adapter{}};
-    fdn::uninitialized_value_construct_n(src_begin, N);
+    uninitialized_value_construct_n(src_begin, N);
     auto dest_begin = It{dest.begin(), adapter{}};
-    fdn::uninitialized_value_construct_n(dest_begin, N);
+    uninitialized_value_construct_n(dest_begin, N);
 
-    auto result = fdn::uninitialized_relocate(src_begin, src_begin + 3, dest_begin);
+    auto result = uninitialized_relocate(src_begin, src_begin + 3, dest_begin);
     (void)result;
     // clang-format off
     bool const constructed = fdn::get<dummy&>(dest[0]).constructed &&
@@ -89,7 +90,7 @@ consteval bool uninitialized_relocate_array() noexcept {
 }
 
 TEST_CASE("salt::fdn::uninitialized_relocate", "[salt-foundation/constexpr_uninitialized.hpp]") {
-    using namespace salt;
+    using namespace salt::fdn::detail;
 
     SECTION("relocate array") {
         STATIC_REQUIRE(uninitialized_relocate_array());
@@ -105,16 +106,16 @@ TEST_CASE("salt::fdn::uninitialized_relocate", "[salt-foundation/constexpr_unini
         std::byte pool[sizeof(counted) * N] = {};
         counted*  counted_pointer           = reinterpret_cast<counted*>(pool);
         // clang-format on
-        auto result = fdn::uninitialized_relocate(InputIterator(values), InputIterator(values + 1),
-                                                  OutputIterator(counted_pointer));
+        auto result = uninitialized_relocate(InputIterator(values), InputIterator(values + 1),
+                                             OutputIterator(counted_pointer));
         CHECK(result == OutputIterator(counted_pointer + 1));
         CHECK(counted::constructed == 1);
         CHECK(counted::count == 1);
         CHECK(counted_pointer[0].value == 1);
         CHECK(values[0] == 0);
 
-        result = fdn::uninitialized_relocate(InputIterator(values + 1), InputIterator(values + N),
-                                             OutputIterator(counted_pointer + 1));
+        result = uninitialized_relocate(InputIterator(values + 1), InputIterator(values + N),
+                                        OutputIterator(counted_pointer + 1));
         CHECK(result == OutputIterator(counted_pointer + N));
         CHECK(counted::count == 5);
         CHECK(counted::constructed == 5);

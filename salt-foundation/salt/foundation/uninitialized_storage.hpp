@@ -12,31 +12,30 @@ struct nontrivial_type {
     constexpr nontrivial_type() noexcept {}
 };
 
-template <typename T> union [[nodiscard]] uninitialized_storage final {
+template <typename T>
+union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
     using value_type = T;
 
-    value_type      value;
-    nontrivial_type _;
+    SALT_NO_UNIQUE_ADDRESS value_type      value;
+    SALT_NO_UNIQUE_ADDRESS nontrivial_type _;
 
     constexpr uninitialized_storage() : _{} {}
-    constexpr explicit uninitialized_storage(value_type const& v) noexcept : value{v} {}
-    constexpr explicit uninitialized_storage(value_type&& v) noexcept : value{meta::move(v)} {}
 
     // clang-format off
-    constexpr uninitialized_storage(uninitialized_storage const&) noexcept
+    constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
         requires meta::trivially_copy_constructible<T> = default;
-    constexpr uninitialized_storage(uninitialized_storage&&) noexcept
+    constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
+            : value{other.value} {}
+
+    constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
         requires meta::trivially_move_constructible<T> = default;
+    constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
+            : value{meta::move(other.value)} {}
 
     constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept
         requires meta::trivially_copy_assignable<T> = default;
     constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept
         requires meta::trivially_move_assignable<T> = default;
-
-    constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
-            : value{other.value} {}
-    constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
-            : value{meta::move(other.value)} {}
 
     constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept = delete;
     constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept      = delete;
@@ -60,36 +59,34 @@ constexpr bool operator==(uninitialized_storage<T> const& lhs,
 }
 
 // clang-format off
-template <meta::reference T, typename U>
-constexpr auto& get(uninitialized_storage<U>& storage) noexcept {
+template <meta::reference Reference, typename T>
+constexpr Reference get(uninitialized_storage<T>& storage) noexcept {
     return *storage.data();
 }
-template <meta::reference T, typename U>
-constexpr auto const& get(uninitialized_storage<U> const& storage) noexcept {
+template <meta::reference Reference, typename T>
+constexpr Reference get(uninitialized_storage<T> const& storage) noexcept {
     return *storage.data();
 }
-template <meta::reference T, typename U>
-constexpr U&& get(U&& value) noexcept {
+template <meta::reference Reference, typename T>
+constexpr T&& get(T&& value) noexcept {
     return value;
 }
 
-template <meta::pointer T, typename U>
-constexpr U* get(uninitialized_storage<U>& storage) noexcept {
+template <meta::pointer Pointer, typename T>
+constexpr Pointer get(uninitialized_storage<T>& storage) noexcept {
     return storage.data();
 }
-template <meta::pointer T, typename U>
-constexpr U const* get(uninitialized_storage<U> const& storage) noexcept {
+template <meta::pointer Pointer, typename T>
+constexpr Pointer get(uninitialized_storage<T> const& storage) noexcept {
     return storage.data();
 }
-template <meta::pointer T, typename U>
-constexpr U* get(U& value) noexcept {
+template <meta::pointer Pointer, typename T>
+constexpr T* get(T& value) noexcept {
     return addressof(value);
 }
 // clang-format on
 
-
-// Optional for types with trivial lifetimes, i.e. such types will
-// not be wrapped by an uninitialized_storage.
+// Optional, since types with trivial lifetimes will not be wrapped by an uninitialized storage.
 template <typename T>
 using optional_uninitialized_storage =
         meta::condition<meta::has_trivial_lifetime<T>, T, uninitialized_storage<T>>;

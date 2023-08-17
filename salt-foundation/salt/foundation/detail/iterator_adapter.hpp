@@ -4,8 +4,8 @@
 
 namespace salt::fdn::detail {
 
-template <meta::random_access_iterator Iterator, typename Adapter>
-class [[nodiscard]] iterator_adapter final {
+template <meta::random_access_iterator Iterator, meta::default_constructible Adapter>
+class iterator_adapter final {
     using iterator_type   = Iterator;
     using adapter_type    = Adapter;
     using iterator_traits = std::iterator_traits<Iterator>;
@@ -23,10 +23,7 @@ public:
 
     constexpr iterator_adapter() noexcept = default;
 
-    constexpr iterator_adapter(iterator_type const& it) noexcept requires meta::default_constructible<adapter_type>
-            : it_{it}, adapter_{} {}
-
-    constexpr iterator_adapter(iterator_type const& it, adapter_type adapter) noexcept
+    constexpr iterator_adapter(iterator_type const& it, adapter_type adapter = {}) noexcept
             : it_{it}, adapter_{adapter} {}
 
     template <meta::convertible_to<iterator_type> It, typename Fn>

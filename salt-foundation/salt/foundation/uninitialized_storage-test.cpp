@@ -83,8 +83,8 @@ TEST_CASE("salt::fdn::uninitialized_storage", "[salt-foundation/uninitialized_st
 
         int const* value = std::construct_at(storage.data(), 8);
         REQUIRE(8 == *value);
-        REQUIRE( fdn::get<int&>(*value) ==  fdn::get<int&>(storage));
-        REQUIRE(*fdn::get<int*>(*value) == *fdn::get<int*>(storage));
+        REQUIRE( fdn::get<int const&>(*value) ==  fdn::get<int const&>(storage));
+        REQUIRE(*fdn::get<int const*>(*value) == *fdn::get<int const*>(storage));
         std::destroy_at(storage.data());
     }
 }

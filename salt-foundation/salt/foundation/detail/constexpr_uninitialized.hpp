@@ -1,13 +1,9 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/foundation/types.hpp>
-#include <salt/foundation/addressof.hpp>
+#include <salt/foundation/detail/constexpr_construct.hpp>
 
-#include <salt/foundation/detail/constexpr_memcpy.hpp>
+namespace salt::fdn::detail {
 
-namespace salt::fdn {
-
-namespace detail {
 // clang-format off
 template <typename T>
 #if SALT_HAS_ATTRIBUTE(ALWAYS_INLINE)
@@ -15,10 +11,9 @@ template <typename T>
 #endif
 constexpr void* voidify(T& from) noexcept {
     // Cast away cv-qualifiers to allow modifying elements of a range through const iterators.
-    return const_cast<void*>(static_cast<const volatile void*>(addressof(from)));
+    return const_cast<void*>(static_cast<void const volatile*>(addressof(from)));
 }
 // clang-format on
-} // namespace detail
 
 // clang-format off
 template <typename T>
@@ -45,7 +40,7 @@ constexpr void uninitialized_default_construct(ForwardIterator first,
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
         for (; first != last; ++first) {
-            ::new (detail::voidify(*first)) value_type;
+            ::new (voidify(*first)) value_type;
         }
     }
 }
@@ -59,7 +54,7 @@ constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer 
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
         for (; n > 0; ++first, (void)--n) {
-            ::new (detail::voidify(*first)) value_type;
+            ::new (voidify(*first)) value_type;
         }
     }
 }
@@ -165,35 +160,11 @@ constexpr auto uninitialized_copy_no_overlap(InputIterator   first,
             return uninitialized_copy(first, last, d_first);
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
+            constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
         return uninitialized_copy(first, last, d_first);
-    }
-}
-
-template <typename T>
-struct [[nodiscard]] destroy_guard final {
-    T* value;
-    constexpr explicit destroy_guard(T* other) noexcept : value{other} {}
-    constexpr ~destroy_guard() requires meta::trivially_destructible<T> = default;
-    constexpr ~destroy_guard() { std::destroy_at(value); }
-};
-
-template <typename T, typename U>
-constexpr U* relocate_at(T* src, U* dest) noexcept {
-    if constexpr (meta::same_trivially_relocatable<T, U>) {
-        if consteval {
-            destroy_guard<T> guard{src};
-            return std::construct_at(dest, meta::move(*src));
-        } else {
-            detail::constexpr_memmove(dest, src);
-            return launder(dest); // required?
-        }
-    } else {
-        destroy_guard<T> guard{src};
-        return std::construct_at(dest, meta::move(*src));
     }
 }
 
@@ -216,7 +187,7 @@ constexpr auto uninitialized_relocate(InputIterator   first,
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memmove(addressof(*d_first), addressof(*first), count);
+            constexpr_memmove(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -247,7 +218,7 @@ constexpr auto uninitialized_relocate_no_overlap(InputIterator   first,
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
+            constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -258,62 +229,6 @@ constexpr auto uninitialized_relocate_no_overlap(InputIterator   first,
         return current;
     }
 }
-
-template <typename InputIterator, meta::integer Integer, typename ForwardIterator>
-    requires meta::nothrow_move_constructible<meta::iter_value_t<InputIterator>>
-constexpr void uninitialized_relocate_n(InputIterator   first,
-                                        Integer         count,
-                                        ForwardIterator d_first) noexcept {
-    using T = decltype(meta::detail::iter_move(first));
-    using U = meta::iter_value_t<ForwardIterator>;
-    if constexpr (
-        meta::same_trivially_relocatable<T, U> and
-        meta::contiguous<InputIterator, ForwardIterator>
-    ) {
-        if consteval {
-            auto current = d_first;
-            for (; count > 0; (void)++current, ++first, --count) {
-                relocate_at(addressof(*first), addressof(*current));
-            }
-        } else {
-            detail::constexpr_memmove(addressof(*d_first), addressof(*first), count);
-        }
-    } else {
-        auto current = d_first;
-        for (; count > 0; (void)++current, ++first, --count) {
-            relocate_at(addressof(*first), addressof(*current));
-        }
-    }
-}
-
-template <typename ForwardIterator, typename T>
-constexpr void construct_at(ForwardIterator position, T const& value) noexcept {
-    std::construct_at(addressof(*position), value);
-}
-template <typename ForwardIterator, typename T>
-constexpr void construct_at(ForwardIterator position, T&& value) noexcept {
-    std::construct_at(addressof(*position), meta::move(value));
-}
-template <typename ForwardIterator, typename... Args>
-constexpr void construct_at(ForwardIterator position, Args&&... args) noexcept {
-    std::construct_at(addressof(*position), meta::forward<Args>(args)...);
-}
-
-template <typename InputIterator>
-constexpr void destroy_at(InputIterator position) noexcept {
-    using value_type = meta::iter_value_t<InputIterator>;
-    if constexpr (meta::not_trivially_destructible<value_type>) {
-        std::destroy_at(addressof(*position));
-    }
-}
-
-template <typename ForwardIterator>
-constexpr void destroy(ForwardIterator first, ForwardIterator last) noexcept {
-    using value_type = meta::iter_value_t<ForwardIterator>;
-    for (; first != last; ++first) {
-        destroy_guard<value_type> guard{addressof(*first)};
-    }
-}
 // clang-format on
 
-} // namespace salt::fdn
+} // namespace salt::fdn::detail
