@@ -375,8 +375,8 @@ private:
     }
     // clang-format on
 
-    SALT_NO_UNIQUE_ADDRESS size_type           size_;
-    SALT_NO_UNIQUE_ADDRESS uninitialized_array storage_;
+    size_type           size_;
+    uninitialized_array storage_;
 };
 
 template <typename T, typename... Args>

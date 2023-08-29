@@ -17,7 +17,7 @@ struct [[nodiscard]] array {
     using iterator        = T*;
     using const_iterator  = T const*;
 
-    SALT_NO_UNIQUE_ADDRESS T elements[Size];
+    T elements[Size];
 
     [[nodiscard]] constexpr pointer data() noexcept {
         return elements;
@@ -93,7 +93,7 @@ struct [[nodiscard]] array<T, 0> {
     using iterator        = T*;
     using const_iterator  = T const*;
 
-    alignas(T) SALT_NO_UNIQUE_ADDRESS std::byte elements[sizeof(T)];
+    alignas(T) std::byte elements[sizeof(T)];
 
     [[nodiscard]] constexpr pointer data() noexcept {
         return nullptr;

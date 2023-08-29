@@ -16,30 +16,34 @@ template <typename T>
 union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
     using value_type = T;
 
-    SALT_NO_UNIQUE_ADDRESS value_type      value;
-    SALT_NO_UNIQUE_ADDRESS nontrivial_type _;
+    value_type      value;
+    nontrivial_type _;
 
     constexpr uninitialized_storage() : _{} {}
 
-    // clang-format off
     constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
-        requires meta::trivially_copy_constructible<T> = default;
+        requires meta::trivially_copy_constructible<T>
+    = default;
     constexpr uninitialized_storage(uninitialized_storage const& other) noexcept
             : value{other.value} {}
 
     constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
-        requires meta::trivially_move_constructible<T> = default;
+        requires meta::trivially_move_constructible<T>
+    = default;
     constexpr uninitialized_storage(uninitialized_storage&& other) noexcept
             : value{meta::move(other.value)} {}
 
     constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept
-        requires meta::trivially_copy_assignable<T> = default;
-    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept
-        requires meta::trivially_move_assignable<T> = default;
-
+        requires meta::trivially_copy_assignable<T>
+    = default;
     constexpr uninitialized_storage& operator=(uninitialized_storage const&) noexcept = delete;
-    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept      = delete;
 
+    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept
+        requires meta::trivially_move_assignable<T>
+    = default;
+    constexpr uninitialized_storage& operator=(uninitialized_storage&&) noexcept = delete;
+
+    // clang-format off
     constexpr ~uninitialized_storage() requires meta::trivially_destructible<T> = default;
     constexpr ~uninitialized_storage() {}
     // clang-format on
