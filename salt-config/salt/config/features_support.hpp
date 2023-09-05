@@ -6,11 +6,11 @@
 #    define SALT_HAS_NO_RANGES (1)
 #endif
 
-#define SALT_HAS_ATTRIBUTE_ASSUME            (0)
-#define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED    (0)
-#define SALT_HAS_ATTRIBUTE_ALWAYS_INLINE     (0)
-#define SALT_HAS_ATTRIBUTE_DLLIMPORT         (0)
-#define SALT_HAS_ATTRIBUTE_STDCALL           (0)
+#define SALT_HAS_ATTRIBUTE_ASSUME         (0)
+#define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED (0)
+#define SALT_HAS_ATTRIBUTE_ALWAYS_INLINE  (0)
+#define SALT_HAS_ATTRIBUTE_DLLIMPORT      (0)
+#define SALT_HAS_ATTRIBUTE_STDCALL        (0)
 
 #if __has_cpp_attribute(clang::assume)
 #    undef SALT_HAS_ATTRIBUTE_ASSUME
@@ -57,3 +57,17 @@
 // conditionally in one language version only would make the ABI inconsistent.
 #    define SALT_NO_UNIQUE_ADDRESS /* nothing */
 #endif
+
+namespace salt::config {
+
+namespace detail {
+struct [[nodiscard]] empty                        final {};
+struct [[nodiscard]] empty_with_no_unique_address final {
+    SALT_NO_UNIQUE_ADDRESS int   a;
+    SALT_NO_UNIQUE_ADDRESS empty e;
+};
+} // namespace detail
+
+constexpr bool has_no_unique_address = sizeof(detail::empty_with_no_unique_address) == 4;
+
+} // namespace salt::config

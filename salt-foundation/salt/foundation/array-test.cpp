@@ -15,6 +15,14 @@ struct nontrivial_copy {
     }
 };
 
+#if __has_cpp_attribute(no_unique_address)
+struct test_zero_size_array {
+    [[no_unique_address]] int i;
+    [[no_unique_address]] salt::fdn::array<int, 0> a;
+};
+static_assert(sizeof(test_zero_size_array) == 4);
+#endif
+
 template <typename T> constexpr void check_trivially_copyable() noexcept {
     using namespace salt;
     STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 0>>);

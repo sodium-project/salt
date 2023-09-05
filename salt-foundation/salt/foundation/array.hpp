@@ -93,8 +93,6 @@ struct [[nodiscard]] array<T, 0> {
     using iterator        = T*;
     using const_iterator  = T const*;
 
-    alignas(T) std::byte elements[sizeof(T)];
-
     [[nodiscard]] constexpr pointer data() noexcept {
         return nullptr;
     }
