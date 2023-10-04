@@ -165,7 +165,7 @@ public:
     constexpr void clear() noexcept
         requires meta::not_trivially_destructible<T>
     {
-        destroy(begin(), end());
+        memory::destroy(begin(), end());
         size_ = 0;
     }
 
@@ -308,10 +308,9 @@ public:
         return end();
     }
 
-    // clang-format off
     template <size_type OtherCapacity>
-    [[nodiscard]]
-    constexpr bool operator==(static_vector<T, OtherCapacity> const& other) const noexcept {
+    [[nodiscard]] constexpr bool
+    operator==(static_vector<T, OtherCapacity> const& other) const noexcept {
         if (size() != other.size())
             return false;
 
@@ -319,12 +318,11 @@ public:
     }
 
     template <size_type OtherCapacity>
-    [[nodiscard]]
-    constexpr auto operator<=>(static_vector<T, OtherCapacity> const& other) const noexcept {
-        return lexicographical_compare_three_way(
-                begin(), end(), other.begin(), other.end(), detail::synth_three_way<T, T>);
+    [[nodiscard]] constexpr auto
+    operator<=>(static_vector<T, OtherCapacity> const& other) const noexcept {
+        return lexicographical_compare_three_way(begin(), end(), other.begin(), other.end(),
+                                                 detail::synth_three_way<T, T>);
     }
-    // clang-format on
 
 private:
     constexpr void check_free_space(size_type new_size) const noexcept {

@@ -12,7 +12,8 @@ struct nontrivial_type {
     constexpr nontrivial_type() noexcept {}
 };
 
-template <typename T> union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
+template <typename T>
+union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
     using value_type = T;
 
     value_type      value;
