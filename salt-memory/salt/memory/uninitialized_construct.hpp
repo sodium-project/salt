@@ -1,8 +1,8 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/foundation/detail/constexpr_construct.hpp>
+#include <salt/memory/construct_at.hpp>
 
-namespace salt::fdn::detail {
+namespace salt::memory::detail {
 
 // clang-format off
 template <typename T>
@@ -14,6 +14,10 @@ constexpr void* voidify(T& from) noexcept {
     return const_cast<void*>(static_cast<void const volatile*>(addressof(from)));
 }
 // clang-format on
+
+} // namespace salt::memory::detail
+
+namespace salt::memory {
 
 // clang-format off
 template <typename T>
@@ -40,7 +44,7 @@ constexpr void uninitialized_default_construct(ForwardIterator first,
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
         for (; first != last; ++first) {
-            ::new (voidify(*first)) value_type;
+            ::new (detail::voidify(*first)) value_type;
         }
     }
 }
@@ -54,7 +58,7 @@ constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer 
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
         for (; n > 0; ++first, (void)--n) {
-            ::new (voidify(*first)) value_type;
+            ::new (detail::voidify(*first)) value_type;
         }
     }
 }
@@ -160,7 +164,7 @@ constexpr auto uninitialized_copy_no_overlap(InputIterator   first,
             return uninitialized_copy(first, last, d_first);
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            constexpr_memcpy(addressof(*d_first), addressof(*first), count);
+            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -187,7 +191,7 @@ constexpr auto uninitialized_relocate(InputIterator   first,
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            constexpr_memmove(addressof(*d_first), addressof(*first), count);
+            detail::constexpr_memmove(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -218,7 +222,7 @@ constexpr auto uninitialized_relocate_no_overlap(InputIterator   first,
             return current;
         } else {
             auto const count = static_cast<std::size_t>(last - first);
-            constexpr_memcpy(addressof(*d_first), addressof(*first), count);
+            detail::constexpr_memcpy(addressof(*d_first), addressof(*first), count);
             return d_first + meta::iter_diff_t<ForwardIterator>(count);
         }
     } else {
@@ -231,4 +235,4 @@ constexpr auto uninitialized_relocate_no_overlap(InputIterator   first,
 }
 // clang-format on
 
-} // namespace salt::fdn::detail
+} // namespace salt::memory

@@ -1,7 +1,8 @@
 #pragma once
-#include <salt/foundation/types.hpp>
+#include <cstddef>
+#include <salt/meta.hpp>
 
-namespace salt::fdn::detail {
+namespace salt::memory::detail {
 
 // clang-format off
 template <typename T, typename U> requires meta::trivially_lexicographically_comparable<T, U>
@@ -61,4 +62,4 @@ constexpr auto constexpr_memmove(T* dest, U const* src, std::size_t count = 1) n
 }
 // clang-format on
 
-} // namespace salt::fdn::detail
+} // namespace salt::memory::detail

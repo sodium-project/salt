@@ -1,9 +1,10 @@
 #pragma once
-#include <salt/foundation/array.hpp>
-#include <salt/foundation/uninitialized_storage.hpp>
-
 #include <initializer_list>
-#include <salt/foundation/detail/constexpr_uninitialized.hpp>
+
+#include <salt/memory/uninitialized_construct.hpp>
+#include <salt/memory/uninitialized_storage.hpp>
+
+#include <salt/foundation/array.hpp>
 #include <salt/foundation/detail/distance.hpp>
 #include <salt/foundation/detail/iterator_adapter.hpp>
 
@@ -46,7 +47,7 @@ public:
         if constexpr (meta::has_trivial_lifetime<T>) {
             // ...and at constant evaluation time initialization is a requirement.
             if consteval {
-                detail::uninitialized_value_construct(get<pointer>(storage_));
+                memory::uninitialized_value_construct(get<pointer>(storage_));
             }
         }
     }
@@ -59,7 +60,7 @@ public:
 
     constexpr static_vector(size_type count, T const& value) noexcept : static_vector() {
         check_free_space(count);
-        uninitialized_construct_n(begin(), count, value);
+        memory::uninitialized_construct_n(begin(), count, value);
         size_ = count;
     }
 
@@ -67,7 +68,7 @@ public:
     constexpr static_vector(InputIterator first, InputIterator last) noexcept : static_vector() {
         check_free_space(udistance(first, last));
         auto d_begin = begin();
-        auto new_end = uninitialized_copy_no_overlap(first, last, d_begin);
+        auto new_end = memory::uninitialized_copy_no_overlap(first, last, d_begin);
         size_        = size_type(new_end - d_begin);
     }
 
@@ -75,7 +76,7 @@ public:
         requires meta::trivially_copy_constructible<T>
     = default;
     constexpr static_vector(static_vector const& other) noexcept : static_vector() {
-        uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
+        memory::uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
         size_ = other.size();
     }
 
@@ -84,10 +85,10 @@ public:
     = default;
     constexpr static_vector(static_vector&& other) noexcept : static_vector() {
         if constexpr (meta::relocatable<T>) {
-            uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
+            memory::uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
             size_ = exchange(other.size_, 0);
         } else {
-            uninitialized_move(other.begin(), other.end(), begin());
+            memory::uninitialized_move(other.begin(), other.end(), begin());
             size_ = other.size_;
         }
     }
@@ -97,7 +98,7 @@ public:
     = default;
     constexpr static_vector& operator=(static_vector const& other) noexcept {
         clear();
-        uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
+        memory::uninitialized_copy_no_overlap(other.begin(), other.end(), begin());
         size_ = other.size();
         return *this;
     }
@@ -108,10 +109,10 @@ public:
     constexpr static_vector& operator=(static_vector&& other) noexcept {
         clear();
         if constexpr (meta::relocatable<T>) {
-            uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
+            memory::uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
             size_ = exchange(other.size_, 0);
         } else {
-            uninitialized_move(other.begin(), other.end(), begin());
+            memory::uninitialized_move(other.begin(), other.end(), begin());
             size_ = other.size_;
         }
         return *this;
@@ -170,18 +171,18 @@ public:
 
     constexpr iterator insert(const_iterator position, value_type const& value) noexcept {
         auto const insert_position = move_elements(position, 1);
-        construct_at(insert_position, value);
+        memory::construct_at(insert_position, value);
         return insert_position;
     }
     constexpr iterator insert(const_iterator position, value_type&& value) noexcept {
         auto const insert_position = move_elements(position, 1);
-        construct_at(insert_position, value);
+        memory::construct_at(insert_position, value);
         return insert_position;
     }
     constexpr iterator insert(const_iterator position, std::initializer_list<T> list) noexcept {
         auto const count           = list.size();
         auto const insert_position = move_elements(position, count);
-        uninitialized_copy_no_overlap(list.begin(), list.end(), insert_position);
+        memory::uninitialized_copy_no_overlap(list.begin(), list.end(), insert_position);
         return insert_position;
     }
 
@@ -190,26 +191,26 @@ public:
                               ForwardIterator last) noexcept {
         auto const count           = udistance(first, last);
         auto const insert_position = move_elements(position, count);
-        uninitialized_copy_no_overlap(first, last, insert_position);
+        memory::uninitialized_copy_no_overlap(first, last, insert_position);
         return insert_position;
     }
 
     template <typename... Args>
     constexpr iterator emplace(const_iterator position, Args&&... args) noexcept {
         auto const emplace_position = move_elements(position, 1);
-        construct_at(emplace_position, meta::forward<Args>(args)...);
+        memory::construct_at(emplace_position, meta::forward<Args>(args)...);
         return emplace_position;
     }
 
     constexpr iterator erase(const_iterator first, const_iterator last) noexcept {
         assert(first <= last && "invalid range first > last");
         auto const erase_begin = begin() + (first - begin());
-        auto const erase_end   = begin() + (last  - begin());
+        auto const erase_end   = begin() + (last - begin());
 
         auto const elements_to_erase = size_type(erase_end - erase_begin);
-        destroy(erase_begin, erase_end);
+        memory::destroy(erase_begin, erase_end);
 
-        uninitialized_relocate(erase_end, end(), erase_begin);
+        memory::uninitialized_relocate(erase_end, end(), erase_begin);
         size_ -= elements_to_erase;
         return erase_begin;
     }
@@ -235,7 +236,7 @@ public:
     constexpr void pop_back() noexcept {
         check_not_empty();
         --size_;
-        destroy_at(end());
+        memory::destroy_at(end());
     }
 
     constexpr void resize(size_type count, value_type const& value) noexcept {
@@ -243,13 +244,13 @@ public:
 
         // Reinitialize the new members if we are enlarging.
         while (size() < count) {
-            construct_at(end(), value);
+            memory::construct_at(end(), value);
             ++size_;
         }
         // Destroy extras if we are making it smaller.
         while (size() > count) {
             --size_;
-            destroy_at(end());
+            memory::destroy_at(end());
         }
     }
     constexpr void resize(size_type count) noexcept
@@ -338,7 +339,7 @@ private:
     template <typename... Args>
     constexpr reference emplace_one_at_back(Args&&... args) noexcept {
         check_free_space(size() + 1);
-        construct_at(end(), meta::forward<Args>(args)...);
+        memory::construct_at(end(), meta::forward<Args>(args)...);
         ++size_;
         return back();
     }
@@ -356,17 +357,17 @@ private:
         if constexpr (meta::trivially_relocatable<T>) {
             if consteval {
                 for (size_type i = 0; i < elements_to_move; ++i) {
-                    detail::relocate_at(get<pointer>(storage_[from_index - i]),
+                    memory::relocate_at(get<pointer>(storage_[from_index - i]),
                                         get<pointer>(storage_[  to_index - i]));
                 }
             } else {
-                detail::constexpr_memmove(get<pointer>(storage_[  end_offset]),
-                                          get<pointer>(storage_[begin_offset]),
-                                          elements_to_move);
+                memory::detail::constexpr_memmove(get<pointer>(storage_[  end_offset]),
+                                                  get<pointer>(storage_[begin_offset]),
+                                                  elements_to_move);
             }
         } else {
             for (size_type i = 0; i < elements_to_move; ++i) {
-                detail::relocate_at(get<pointer>(storage_[from_index - i]),
+                memory::relocate_at(get<pointer>(storage_[from_index - i]),
                                     get<pointer>(storage_[  to_index - i]));
             }
         }

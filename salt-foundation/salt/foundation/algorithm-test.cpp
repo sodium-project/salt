@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 #include <salt/foundation/algorithm.hpp>
+#include <salt/foundation/types.hpp>
 
 using salt::fdn::equal;
 

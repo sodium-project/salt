@@ -1,10 +1,10 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/foundation/addressof.hpp>
-#include <salt/foundation/array.hpp>
-#include <salt/foundation/types.hpp>
+#include <salt/meta.hpp>
 
-namespace salt::fdn {
+#include <salt/memory/addressof.hpp>
+
+namespace salt::memory {
 
 struct nontrivial_type {
     // This default constructor is user-provided to avoid
@@ -12,8 +12,7 @@ struct nontrivial_type {
     constexpr nontrivial_type() noexcept {}
 };
 
-template <typename T>
-union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
+template <typename T> union [[nodiscard, clang::trivial_abi]] uninitialized_storage final {
     using value_type = T;
 
     value_type      value;
@@ -62,13 +61,17 @@ constexpr bool operator==(uninitialized_storage<T> const& lhs,
     return lhs.value == rhs.value;
 }
 
+} // namespace salt::memory
+
+namespace salt {
+
 // clang-format off
 template <meta::reference Reference, typename T>
-constexpr Reference get(uninitialized_storage<T>& storage) noexcept {
+constexpr Reference get(memory::uninitialized_storage<T>& storage) noexcept {
     return *storage.data();
 }
 template <meta::reference Reference, typename T>
-constexpr Reference get(uninitialized_storage<T> const& storage) noexcept {
+constexpr Reference get(memory::uninitialized_storage<T> const& storage) noexcept {
     return *storage.data();
 }
 template <meta::reference Reference, typename T>
@@ -77,22 +80,22 @@ constexpr T&& get(T&& value) noexcept {
 }
 
 template <meta::pointer Pointer, typename T>
-constexpr Pointer get(uninitialized_storage<T>& storage) noexcept {
+constexpr Pointer get(memory::uninitialized_storage<T>& storage) noexcept {
     return storage.data();
 }
 template <meta::pointer Pointer, typename T>
-constexpr Pointer get(uninitialized_storage<T> const& storage) noexcept {
+constexpr Pointer get(memory::uninitialized_storage<T> const& storage) noexcept {
     return storage.data();
 }
 template <meta::pointer Pointer, typename T>
 constexpr T* get(T& value) noexcept {
-    return addressof(value);
+    return memory::addressof(value);
 }
 // clang-format on
 
 // Optional, since types with trivial lifetimes will not be wrapped by an uninitialized storage.
 template <typename T>
 using optional_uninitialized_storage =
-        meta::condition<meta::has_trivial_lifetime<T>, T, uninitialized_storage<T>>;
+        meta::condition<meta::has_trivial_lifetime<T>, T, memory::uninitialized_storage<T>>;
 
-} // namespace salt::fdn
+} // namespace salt

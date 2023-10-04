@@ -1,17 +1,12 @@
 #pragma once
-#include <salt/meta.hpp>
+#include <salt/memory/align.hpp>
 
 namespace salt::fdn::detail {
 
 // clang-format off
-template <std::integral I>
-constexpr bool is_pow2(I value) noexcept {
-    return value && !((value) & (value - 1));
-}
-
 template <typename T>
 concept aligned_as_pow2 = requires {
-    requires is_pow2(alignof(T));
+    requires memory::is_pow2(alignof(T));
 };
 
 template <std::size_t N, typename T>

@@ -1,7 +1,7 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/foundation/detail/constexpr_memcpy.hpp>
 #include <salt/foundation/detail/synth_three_way.hpp>
+#include <salt/memory/detail/constexpr_memcpy.hpp>
 
 namespace salt::fdn {
 
@@ -10,7 +10,7 @@ using std::exchange;
 // clang-format off
 template <typename T, typename U> requires meta::trivially_equality_comparable<T, U>
 constexpr bool equal(T* first1, T* last1, U* first2) noexcept {
-    return detail::constexpr_memcmp_equal(first1, first2, std::size_t(last1 - first1));
+    return memory::detail::constexpr_memcmp_equal(first1, first2, std::size_t(last1 - first1));
 }
 
 template <typename InputIterator1, typename InputIterator2>

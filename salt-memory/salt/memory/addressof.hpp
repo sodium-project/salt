@@ -1,7 +1,7 @@
 #pragma once
-#include <salt/foundation/types.hpp>
+#include <salt/config.hpp>
 
-namespace salt::fdn {
+namespace salt::memory {
 
 template <typename T>
 #if SALT_HAS_ATTRIBUTE(ALWAYS_INLINE)
@@ -14,12 +14,4 @@ template <typename T>
 template <typename T>
 T const* addressof(T const&&) = delete;
 
-template <typename T>
-#if SALT_HAS_ATTRIBUTE(ALWAYS_INLINE)
-[[clang::always_inline]]
-#endif
-[[nodiscard]] constexpr T* launder(T* p) noexcept {
-    return __builtin_launder(p);
-}
-
-} // namespace salt::fdn
+} // namespace salt::memory

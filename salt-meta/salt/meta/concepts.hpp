@@ -125,7 +125,7 @@ concept not_reference = not reference<T>;
 template <typename T>
 concept pointer = std::is_pointer_v<T>;
 template <typename T>
-concept not_pointer = not reference<T>;
+concept not_pointer = not pointer<T>;
 
 template <typename T>
 concept non_cv = same_as<std::remove_cv_t<T>, T>;

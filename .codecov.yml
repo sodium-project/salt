@@ -16,5 +16,8 @@ ignore:
   - "**/*-test.cpp"  # ignore test harness code
   - "**/abort.hpp"
   - "**/addressof.hpp"
+  - "**/align.hpp"
+  - "**/construct_at.hpp"
+  - "**/launder.hpp"
   - "**/detail"
   - "**/meta"

@@ -1,5 +1,5 @@
 #pragma once
-#include <salt/foundation/addressof.hpp>
+#include <salt/memory/addressof.hpp>
 #include <salt/meta.hpp>
 
 namespace salt::fdn::detail {
@@ -35,7 +35,7 @@ public:
     }
 
     [[nodiscard]] constexpr pointer operator->() const noexcept {
-        return fdn::addressof(adapter_(*it_));
+        return memory::addressof(adapter_(*it_));
     }
 
     [[nodiscard]] constexpr reference operator[](difference_type index) const noexcept {

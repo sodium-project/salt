@@ -1,5 +1,9 @@
 #include <catch2/catch.hpp>
 #include <salt/foundation/array.hpp>
+#include <salt/foundation/detail/iterator_adapter.hpp>
+
+#include <salt/memory/uninitialized_construct.hpp>
+#include <salt/memory/uninitialized_storage.hpp>
 
 struct empty {};
 
@@ -17,7 +21,7 @@ struct nontrivial_copy {
 
 #if __has_cpp_attribute(no_unique_address)
 struct test_zero_size_array {
-    [[no_unique_address]] int i;
+    [[no_unique_address]] int                      i;
     [[no_unique_address]] salt::fdn::array<int, 0> a;
 };
 static_assert(sizeof(test_zero_size_array) == 4);
@@ -31,7 +35,56 @@ template <typename T> constexpr void check_trivially_copyable() noexcept {
     STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 3>>);
 }
 
+consteval bool uninitialized_relocate_array() noexcept {
+    using namespace salt;
+    // clang-format off
+    struct dummy {
+        bool constructed = false;
+        constexpr dummy() noexcept = default;
+        constexpr dummy(dummy&&) noexcept { constructed = true; }
+    };
+    // clang-format on
+    auto const N      = 5u;
+    using storage     = memory::uninitialized_storage<dummy>;
+    using source      = fdn::array<storage, N>;
+    using destination = fdn::array<storage, N>;
+
+    struct [[nodiscard]] adapter final {
+        constexpr dummy& operator()(storage& value) const noexcept {
+            return get<dummy&>(value);
+        }
+        constexpr dummy const& operator()(storage const& value) const noexcept {
+            return get<dummy const&>(value);
+        }
+    };
+    using It = fdn::detail::iterator_adapter<typename source::iterator, adapter>;
+
+    source      src;
+    destination dest;
+
+    auto src_begin = It{src.begin(), adapter{}};
+    uninitialized_value_construct_n(src_begin, N);
+    auto dest_begin = It{dest.begin(), adapter{}};
+    uninitialized_value_construct_n(dest_begin, N);
+
+    auto result = uninitialized_relocate(src_begin, src_begin + 3, dest_begin);
+    (void)result;
+    // clang-format off
+    bool const constructed = get<dummy&>(dest[0]).constructed &&
+                             get<dummy&>(dest[1]).constructed &&
+                             get<dummy&>(dest[2]).constructed;
+    // clang-format on
+    memory::destroy(dest_begin, dest_begin + 3);
+    memory::destroy(src_begin + 3, src_begin + N);
+    return constructed;
+}
+
 TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
+
+    SECTION("relocate array") {
+        STATIC_REQUIRE(uninitialized_relocate_array());
+    }
+
     SECTION("trivially copyable") {
         check_trivially_copyable<int>();
         check_trivially_copyable<double>();
