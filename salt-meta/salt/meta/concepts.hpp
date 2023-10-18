@@ -5,11 +5,10 @@ namespace salt::meta {
 using std::constructible_from;
 using std::convertible_to;
 using std::integral;
-using std::input_iterator;
-using std::forward_iterator;
-using std::random_access_iterator;
-using std::contiguous_iterator;
 using std::same_as;
+using std::movable;
+using std::common_reference_with;
+using std::derived_from;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
@@ -93,18 +92,6 @@ concept trivially_lexicographically_comparable =
 template <typename T, typename U>
 concept trivially_equality_comparable = is_trivially_equality_comparable_v<T, U>;
 
-template <typename T>
-concept has_iterator_category = requires { typename T::iterator_category; };
-
-template <typename T, typename U>
-concept iterator_category_convertible_to =
-        has_iterator_category<std::iter_value_t<T>> and
-        convertible_to<typename std::iterator_traits<T>::iterator_category, U>;
-
-template <typename T>
-concept has_random_access_iterator_category =
-        iterator_category_convertible_to<T, std::random_access_iterator_tag>;
-
 namespace detail {
 template <typename T>
 concept boolean_testable_impl = convertible_to<T, bool>;
@@ -139,31 +126,6 @@ template <typename T>
 concept trivially_relocatable = trivially_copyable<T>; // trivially_move_constructible<T> and trivially_destructible<T>;
 template <typename T>
 concept relocatable = trivially_copyable<T>; // move_constructible<T>;
-
-// clang-format off
-template <typename T, typename U = T>
-concept contiguous = (pointer<T>             and pointer<U>) or
-                     (contiguous_iterator<T> and contiguous_iterator<U>);
-
-namespace detail {
-template <typename InputIterator>
-constexpr decltype(auto) iter_move(InputIterator&& it) noexcept {
-    return meta::move(*it);
-}
-template <typename InputIterator, typename OutputIterator>
-struct [[nodiscard]] is_memcpyable final {
-    using T = iter_value_t<OutputIterator>;
-    using U = decltype(iter_move(std::declval<InputIterator>()));
-
-    static constexpr bool value = same_as<T, remove_ref_t<U>> and trivially_copyable<T>;
-};
-template <typename InputIterator, typename OutputIterator>
-inline constexpr bool is_memcpyable_v = is_memcpyable<InputIterator, OutputIterator>::value;
-} // namespace detail
-
-template <typename T, typename U>
-concept memcpyable = detail::is_memcpyable_v<T, U> and contiguous<T, U>;
-// clang-format on
 
 template <typename T, typename U = T>
 concept not_volatile = std::is_volatile_v<T> and std::is_volatile_v<U>;

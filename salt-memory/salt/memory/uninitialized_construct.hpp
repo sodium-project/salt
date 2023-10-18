@@ -2,35 +2,20 @@
 #include <salt/config.hpp>
 #include <salt/memory/construct_at.hpp>
 
-namespace salt::memory::detail {
-
-// clang-format off
-template <typename T>
-#if SALT_HAS_ATTRIBUTE(ALWAYS_INLINE)
-[[clang::always_inline]]
-#endif
-constexpr void* voidify(T& from) noexcept {
-    // Cast away cv-qualifiers to allow modifying elements of a range through const iterators.
-    return const_cast<void*>(static_cast<void const volatile*>(addressof(from)));
-}
-// clang-format on
-
-} // namespace salt::memory::detail
-
 namespace salt::memory {
 
 // clang-format off
 template <typename T>
 constexpr T* uninitialized_default_construct(T* const p) noexcept {
     if consteval {
-        return std::construct_at(p);
+        return construct_at(p);
     }
     return ::new (p) T;
 }
 
 template <typename T>
 constexpr T* uninitialized_value_construct(T* const p) noexcept {
-    return std::construct_at(p);
+    return construct_at(p);
 }
 // clang-format on
 
@@ -39,7 +24,7 @@ constexpr void uninitialized_default_construct(ForwardIterator first,
                                                ForwardIterator last) noexcept {
     if consteval {
         for (; first != last; ++first) {
-            std::construct_at(addressof(*first));
+            construct_at(addressof(*first));
         }
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
@@ -53,7 +38,7 @@ template <typename ForwardIterator, meta::integer Integer>
 constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer n) noexcept {
     if consteval {
         for (; n > 0; ++first, (void)--n) {
-            std::construct_at(addressof(*first));
+            construct_at(addressof(*first));
         }
     } else {
         using value_type = meta::iter_value_t<ForwardIterator>;
@@ -66,14 +51,14 @@ constexpr void uninitialized_default_construct_n(ForwardIterator first, Integer 
 template <typename ForwardIterator>
 constexpr void uninitialized_value_construct(ForwardIterator first, ForwardIterator last) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(addressof(*first));
+        construct_at(addressof(*first));
     }
 }
 
 template <typename ForwardIterator, meta::integer Integer>
 constexpr void uninitialized_value_construct_n(ForwardIterator first, Integer n) noexcept {
     for (; n > 0; ++first, (void)--n) {
-        std::construct_at(addressof(*first));
+        construct_at(addressof(*first));
     }
 }
 
@@ -83,7 +68,7 @@ constexpr void uninitialized_construct(ForwardIterator first,
                                        ForwardIterator last,
                                        T const&        value) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(addressof(*first), value);
+        construct_at(addressof(*first), value);
     }
 }
 template <typename ForwardIterator, typename T>
@@ -91,7 +76,7 @@ constexpr void uninitialized_construct(ForwardIterator first,
                                        ForwardIterator last,
                                        T&&             value) noexcept {
     for (; first != last; ++first) {
-        std::construct_at(addressof(*first), meta::move(value));
+        construct_at(addressof(*first), meta::move(value));
     }
 }
 
@@ -100,7 +85,7 @@ constexpr void uninitialized_construct_n(ForwardIterator first,
                                          Integer         count,
                                          T const&        value) noexcept {
     for (; count > 0; ++first, (void)--count) {
-        std::construct_at(addressof(*first), value);
+        construct_at(addressof(*first), value);
     }
 }
 template <typename ForwardIterator, meta::integer Integer, typename T>
@@ -108,7 +93,7 @@ constexpr void uninitialized_construct_n(ForwardIterator first,
                                          Integer         count,
                                          T&&             value) noexcept {
     for (; count > 0; ++first, (void)--count) {
-        std::construct_at(addressof(*first), meta::move(value));
+        construct_at(addressof(*first), meta::move(value));
     }
 }
 
@@ -119,7 +104,7 @@ constexpr void uninitialized_move(InputIterator   first,
                                   ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; first != last; (void)++current, ++first) {
-        std::construct_at(addressof(*current), meta::move(*first));
+        construct_at(addressof(*current), meta::move(*first));
     }
 }
 
@@ -130,7 +115,7 @@ constexpr void uninitialized_move_n(InputIterator   first,
                                     ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; count > 0; (void)++current, ++first, --count) {
-        std::construct_at(addressof(*current), meta::move(*first));
+        construct_at(addressof(*current), meta::move(*first));
     }
 }
 
@@ -140,7 +125,7 @@ constexpr auto uninitialized_copy(InputIterator   first,
                                   ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; first != last; (void)++current, ++first) {
-        std::construct_at(addressof(*current), *first);
+        construct_at(addressof(*current), *first);
     }
     return meta::move(current);
 }
@@ -151,7 +136,7 @@ constexpr void uninitialized_copy_n(InputIterator   first,
                                     ForwardIterator d_first) noexcept {
     auto current = d_first;
     for (; count > 0; (void)++current, ++first, --count) {
-        std::construct_at(addressof(*current), *first);
+        construct_at(addressof(*current), *first);
     }
 }
 

@@ -8,15 +8,14 @@ template <meta::random_access_iterator Iterator, meta::default_constructible Ada
 class iterator_adapter final {
     using iterator_type   = Iterator;
     using adapter_type    = Adapter;
-    using iterator_traits = std::iterator_traits<Iterator>;
 
 public:
-    using reference         = meta::deduce_t<Adapter(meta::dereference_t<Iterator>)>;
+    using reference         = meta::deduce_t<Adapter(meta::deref_t<Iterator>)>;
     using value_type        = meta::remove_cvref_t<reference>;
     using pointer           = meta::add_pointer_t<value_type>;
-    using difference_type   = typename iterator_traits::difference_type;
-    using iterator_category = typename iterator_traits::iterator_category;
-    using iterator_concept  = typename iterator_traits::iterator_concept;
+    using difference_type   = meta::iterator_traits<Iterator>::difference_type;
+    using iterator_category = meta::random_access_iterator_tag;
+    using iterator_concept  = meta::contiguous_iterator_tag;
 
     iterator_type it_;
     adapter_type  adapter_;

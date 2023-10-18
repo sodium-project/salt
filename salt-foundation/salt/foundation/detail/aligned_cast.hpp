@@ -28,7 +28,7 @@ template <typename To, typename From>
 [[nodiscard]] constexpr To aligned_cast(From const& x) noexcept {
     return assume_aligned<alignof(meta::remove_all_pointers_t<To>)>(
 #if __cplusplus < 202002L
-            std::launder(reinterpret_cast<To>(x))
+            memory::launder(reinterpret_cast<To>(x))
 #else
             reinterpret_cast<To>(x)
 #endif

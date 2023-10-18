@@ -1,5 +1,6 @@
-#include <catch2/catch.hpp>
 #include <salt/memory/detail/constexpr_memcpy.hpp>
+
+#include <catch2/catch.hpp>
 
 constexpr unsigned char Banand[] = "Banand";
 constexpr unsigned char Banane[] = "Banane";

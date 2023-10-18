@@ -1,5 +1,6 @@
-#include <catch2/catch.hpp>
 #include <salt/memory.hpp>
+
+#include <catch2/catch.hpp>
 
 struct dummy {
     int value{};

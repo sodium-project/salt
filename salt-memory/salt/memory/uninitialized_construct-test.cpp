@@ -1,5 +1,6 @@
-#include <catch2/catch.hpp>
 #include <salt/memory/uninitialized_construct.hpp>
+
+#include <catch2/catch.hpp>
 
 static_assert(salt::meta::relocatable<int>);
 static_assert(salt::meta::relocatable<const int>);

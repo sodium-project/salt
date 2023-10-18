@@ -11,6 +11,7 @@ using common_type = std::common_type_t<T...>;
 using std::remove_cv_t;
 using std::remove_cvref_t;
 using std::add_pointer_t;
+using std::void_t;
 
 template <typename T>
 inline constexpr bool is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
@@ -132,16 +133,11 @@ template <typename T>
 using deduce_t = typename deduce<T>::type;
 
 template <typename T>
-struct [[nodiscard]] dereference {
+struct [[nodiscard]] deref {
     using type = decltype(*std::declval<T>());
 };
 template <typename T>
-using dereference_t = typename dereference<T>::type;
-
-template <typename Iterator>
-using iter_value_t = std::iter_value_t<Iterator>;
-template <typename Iterator>
-using iter_diff_t = std::iter_difference_t<Iterator>;
+using deref_t = typename deref<T>::type;
 
 template <typename T, typename U>
 using is_same_as = std::bool_constant<__is_same(T, U)>;

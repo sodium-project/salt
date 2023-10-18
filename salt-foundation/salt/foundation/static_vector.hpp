@@ -18,7 +18,7 @@ class [[nodiscard, clang::trivial_abi]] static_vector final {
     static_assert(meta::equal<sizeof(uninitialized_storage), sizeof(T)>);
     static_assert(meta::non_cv<T>, "T must not be cv-qualified");
 
-    struct [[nodiscard]] storage_adapter final {
+    struct [[nodiscard]] mapper final {
         constexpr T& operator()(uninitialized_storage& storage) const noexcept {
             return get<T&>(storage);
         }
@@ -28,7 +28,7 @@ class [[nodiscard, clang::trivial_abi]] static_vector final {
     };
 
     template <typename Iterator>
-    using wrap_iter = detail::iterator_adapter<Iterator, storage_adapter>;
+    using iterator_adapter = detail::iterator_adapter<Iterator, mapper>;
 
 public:
     using value_type      = T;
@@ -38,8 +38,8 @@ public:
     using const_pointer   = T const*;
     using reference       = T&;
     using const_reference = T const&;
-    using iterator        = wrap_iter<typename uninitialized_array::iterator>;
-    using const_iterator  = wrap_iter<typename uninitialized_array::const_iterator>;
+    using iterator        = iterator_adapter<typename uninitialized_array::iterator>;
+    using const_iterator  = iterator_adapter<typename uninitialized_array::const_iterator>;
 
     constexpr static_vector() noexcept : size_{} {
         // Objects with a trivial lifetime will not be wrapped by `uninitialized_storage`
@@ -171,12 +171,12 @@ public:
 
     constexpr iterator insert(const_iterator position, value_type const& value) noexcept {
         auto const insert_position = move_elements(position, 1);
-        memory::construct_at(insert_position, value);
+        memory::construct_in_place(insert_position, value);
         return insert_position;
     }
     constexpr iterator insert(const_iterator position, value_type&& value) noexcept {
         auto const insert_position = move_elements(position, 1);
-        memory::construct_at(insert_position, value);
+        memory::construct_in_place(insert_position, value);
         return insert_position;
     }
     constexpr iterator insert(const_iterator position, std::initializer_list<T> list) noexcept {
@@ -198,7 +198,7 @@ public:
     template <typename... Args>
     constexpr iterator emplace(const_iterator position, Args&&... args) noexcept {
         auto const emplace_position = move_elements(position, 1);
-        memory::construct_at(emplace_position, meta::forward<Args>(args)...);
+        memory::construct_in_place(emplace_position, meta::forward<Args>(args)...);
         return emplace_position;
     }
 
@@ -236,7 +236,7 @@ public:
     constexpr void pop_back() noexcept {
         check_not_empty();
         --size_;
-        memory::destroy_at(end());
+        memory::destroy_in_place(end());
     }
 
     constexpr void resize(size_type count, value_type const& value) noexcept {
@@ -244,13 +244,13 @@ public:
 
         // Reinitialize the new members if we are enlarging.
         while (size() < count) {
-            memory::construct_at(end(), value);
+            memory::construct_in_place(end(), value);
             ++size_;
         }
         // Destroy extras if we are making it smaller.
         while (size() > count) {
             --size_;
-            memory::destroy_at(end());
+            memory::destroy_in_place(end());
         }
     }
     constexpr void resize(size_type count) noexcept
@@ -337,7 +337,7 @@ private:
     template <typename... Args>
     constexpr reference emplace_one_at_back(Args&&... args) noexcept {
         check_free_space(size() + 1);
-        memory::construct_at(end(), meta::forward<Args>(args)...);
+        memory::construct_in_place(end(), meta::forward<Args>(args)...);
         ++size_;
         return back();
     }

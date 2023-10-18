@@ -5,16 +5,19 @@ namespace salt::meta {
 
 namespace detail {
 
-template <unsigned Size, typename... Ts> struct [[nodiscard]] type_size;
+template <unsigned Size, typename... Ts>
+struct [[nodiscard]] integral_size_list;
 
-template <unsigned Size> struct [[nodiscard]] integer_type;
+template <unsigned Size>
+struct [[nodiscard]] integer_type;
 
-template <unsigned Size> struct [[nodiscard]] unsigned_integer_type;
+template <unsigned Size>
+struct [[nodiscard]] unsigned_integer_type;
 
 } // namespace detail
 
 template <unsigned Size, typename... Ts>
-using type_size_t = typename detail::type_size<Size, Ts...>::type;
+using integral_size_list_t = typename detail::integral_size_list<Size, Ts...>::type;
 
 template <unsigned Size>
 using integer_of_size_t = typename detail::integer_type<Size>::type;
@@ -25,24 +28,24 @@ using unsigned_integer_of_size_t = typename detail::unsigned_integer_type<Size>:
 namespace detail {
 
 template <unsigned Size, typename T, typename... Ts>
-struct [[nodiscard]] type_size<Size, T, Ts...> final {
-    using type = condition<sizeof(T) == Size, T, type_size_t<Size, Ts...>>;
+struct [[nodiscard]] integral_size_list<Size, T, Ts...> final {
+    using type = condition<sizeof(T) == Size, T, integral_size_list_t<Size, Ts...>>;
 };
 
 template <unsigned Size>
-struct [[nodiscard]] type_size<Size> final {
+struct [[nodiscard]] integral_size_list<Size> final {
     using type = void;
 };
 
 template <unsigned Size>
 struct [[nodiscard]] integer_type final {
-    using type = type_size_t<Size, signed char, short, int, long, long long>;
+    using type = integral_size_list_t<Size, signed char, short, int, long, long long>;
 };
 
 template <unsigned Size>
 struct [[nodiscard]] unsigned_integer_type final {
-    using type = type_size_t<Size, unsigned char, unsigned short, unsigned int, unsigned long,
-                             unsigned long long>;
+    using type = integral_size_list_t<Size, unsigned char, unsigned short, unsigned int,
+                                      unsigned long, unsigned long long>;
 };
 
 } // namespace detail
