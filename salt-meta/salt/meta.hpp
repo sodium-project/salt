@@ -3,8 +3,8 @@
 #include <concepts>
 
 #include <salt/meta/type_traits.hpp>
-#include <salt/meta/concepts.hpp>
 #include <salt/meta/move.hpp>
+#include <salt/meta/concepts.hpp>
 #include <salt/meta/iterator_traits.hpp>
 #include <salt/meta/memcpyable.hpp>
 #include <salt/meta/compare.hpp>

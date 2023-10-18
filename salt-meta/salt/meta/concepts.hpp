@@ -99,7 +99,7 @@ concept boolean_testable_impl = convertible_to<T, bool>;
 
 template <typename T>
 concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) {
-    { not std::forward<T>(t) } -> detail::boolean_testable_impl;
+    { not forward<T>(t) } -> detail::boolean_testable_impl;
 };
 
 template <typename T>
