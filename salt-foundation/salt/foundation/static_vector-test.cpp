@@ -284,7 +284,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 v1.emplace_back(2);
                 fdn::static_vector<nontrivial_int, 3> v2{};
                 v2 = meta::move(v1);
-                return v1 == v2;
+                return v2 == fdn::static_vector{nontrivial_int(1), nontrivial_int(2)};
             }();
             STATIC_REQUIRE(cmp);
         }

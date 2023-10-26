@@ -2,15 +2,29 @@
 
 #include <catch2/catch.hpp>
 
+static_assert(salt::meta::trivially_relocatable<int>);
+static_assert(salt::meta::trivially_relocatable<const int>);
+static_assert(salt::meta::trivially_relocatable<int*>);
+static_assert(salt::meta::trivially_relocatable<int (*)()>);
+
+static_assert(salt::meta::trivially_relocatable<int[]>);
+static_assert(salt::meta::trivially_relocatable<int const[]>);
+static_assert(salt::meta::trivially_relocatable<int[4]>);
+static_assert(salt::meta::trivially_relocatable<int const[4]>);
+
+static_assert(not salt::meta::trivially_relocatable<void>);
+static_assert(not salt::meta::trivially_relocatable<void const>);
+static_assert(not salt::meta::trivially_relocatable<int()>);
+
 static_assert(salt::meta::relocatable<int>);
 static_assert(salt::meta::relocatable<const int>);
 static_assert(salt::meta::relocatable<int*>);
 static_assert(salt::meta::relocatable<int (*)()>);
 
-static_assert(salt::meta::relocatable<int[]>);
-static_assert(salt::meta::relocatable<int const[]>);
-static_assert(salt::meta::relocatable<int[4]>);
-static_assert(salt::meta::relocatable<int const[4]>);
+static_assert(not salt::meta::relocatable<int[]>);
+static_assert(not salt::meta::relocatable<int const[]>);
+static_assert(not salt::meta::relocatable<int[4]>);
+static_assert(not salt::meta::relocatable<int const[4]>);
 
 static_assert(not salt::meta::relocatable<void>);
 static_assert(not salt::meta::relocatable<void const>);

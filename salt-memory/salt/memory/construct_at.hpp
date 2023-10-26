@@ -17,17 +17,18 @@ constexpr void* voidify(T& from) noexcept {
 
 } // namespace salt::memory::detail
 
-// This is a workaround for writing your own constexpr `construct_at` if you don't want to pull
-// everything found in the <memory> header. Currently, this hack only works with Clang.
+// This is a workaround for writing your own constexpr `construct_at` if you don't want to
+// pull everything found in the <memory> header. Currently, this hack only works with Clang.
 // But that's okay, since I'm not going to use the others.
 namespace std::detail {
 
 // clang-format off
-template <typename T, typename... Args,
-          void_t<decltype(::new (std::declval<void*>()) T(std::declval<Args>()...))>* = nullptr>
-constexpr T* construct_at(T* location, Args&&... args) noexcept {
-    return ::new (::salt::memory::detail::voidify(*location))
-            T(::salt::meta::forward<Args>(args)...);
+template <typename T, typename... Args>
+    requires requires(void* ptr, Args&&... args) { ::new (ptr) T(static_cast<Args&&>(args)...); }
+    // ^^^ allows copy elision since C++17 mandates it
+constexpr T* construct_at(T* const location, Args&&... args) noexcept {
+    // @see: https://cplusplus.github.io/LWG/issue3870
+    return ::new (static_cast<void*>(location)) T(::salt::meta::forward<Args>(args)...);
 }
 // clang-format on
 
@@ -55,7 +56,7 @@ template <typename ForwardIterator>
 constexpr ForwardIterator destroy(ForwardIterator, ForwardIterator) noexcept;
 
 template <typename T>
-constexpr void destroy_at(T* location) noexcept {
+constexpr void destroy_at(T* const location) noexcept {
     location->~T();
 }
 
@@ -78,13 +79,13 @@ constexpr void destroy_in_place(InputIterator position) noexcept {
 template <typename T>
 struct [[nodiscard]] destroy_guard final {
     T* value;
-    constexpr explicit destroy_guard(T* other) noexcept : value{other} {}
+    constexpr explicit destroy_guard(T* const other) noexcept : value{other} {}
     constexpr ~destroy_guard() noexcept requires meta::trivially_destructible<T> = default;
     constexpr ~destroy_guard() noexcept { destroy_at(value); }
 };
 
 template <typename T, typename U>
-constexpr U* relocate_at(T* src, U* dest) noexcept {
+constexpr U* relocate_at(T* const src, U* const dest) noexcept {
     if constexpr (meta::same_trivially_relocatable<T, U>) {
         if consteval {
             destroy_guard<T> guard{src};

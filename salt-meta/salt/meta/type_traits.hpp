@@ -10,6 +10,7 @@ using common_type = std::common_type_t<T...>;
 
 using std::remove_cv_t;
 using std::remove_cvref_t;
+using std::remove_all_extents_t;
 using std::add_pointer_t;
 using std::void_t;
 

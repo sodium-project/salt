@@ -267,6 +267,9 @@ concept iterator_category_convertible_to =
 template <typename T>
 concept has_random_access_iterator_category =
         iterator_category_convertible_to<T, random_access_iterator_tag>;
+
+template <typename T>
+concept addressable = pointer<T> or requires(T const x) { x.operator->(); };
 // clang-format on
 
 } // namespace salt::meta

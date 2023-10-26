@@ -59,6 +59,8 @@ template <typename T>
 concept trivially_destructible = std::is_trivially_destructible_v<T>;
 template <typename T>
 concept not_trivially_destructible = not trivially_destructible<T>;
+template <typename T>
+concept destructible = std::is_destructible_v<T>;
 
 template <typename T>
 concept has_trivial_lifetime = trivially_default_constructible<T> and trivially_destructible<T>;
@@ -81,9 +83,9 @@ concept nothrow_move_constructible = std::is_nothrow_move_constructible_v<T>;
 // clang-format on
 
 template <typename T>
-concept copy_constructible = std::is_copy_constructible_v<T>;
+concept copy_constructible = std::copy_constructible<T>;
 template <typename T>
-concept move_constructible = std::is_move_constructible_v<T>;
+concept move_constructible = std::move_constructible<T>;
 
 template <typename T, typename U>
 concept trivially_lexicographically_comparable =
@@ -123,9 +125,11 @@ template <typename T>
 concept unsigned_integer = std::unsigned_integral<T> and not same_as<remove_cvref_t<T>, bool>;
 
 template <typename T>
-concept trivially_relocatable = trivially_copyable<T>; // trivially_move_constructible<T> and trivially_destructible<T>;
+concept trivially_relocatable = trivially_copyable<T>;
+//                                trivially_move_constructible<remove_all_extents_t<T>> and
+//                                      trivially_destructible<remove_all_extents_t<T>>;
 template <typename T>
-concept relocatable = trivially_copyable<T>; // move_constructible<T>;
+concept relocatable = move_constructible<T> and destructible<T>; // trivially_copyable<T>
 
 template <typename T, typename U = T>
 concept not_volatile = std::is_volatile_v<T> and std::is_volatile_v<U>;

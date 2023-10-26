@@ -61,7 +61,7 @@ consteval int storage_accessors() noexcept {
     return value;
 }
 
-TEST_CASE("salt::memory::uninitialized_storage", "[salt-foundation/uninitialized_storage.hpp]") {
+TEST_CASE("salt::memory::uninitialized_storage", "[salt-memory/uninitialized_storage.hpp]") {
     REQUIRE(true);
     SECTION("evaluate in constant expression") {
         STATIC_REQUIRE(10 == storage_construct());
@@ -78,13 +78,12 @@ TEST_CASE("salt::memory::uninitialized_storage", "[salt-foundation/uninitialized
         memory::destroy_at(storage.data());
     }
 
-    SECTION("construct constant from fundamental type") {
-        memory::uninitialized_storage<int> const storage;
+    SECTION("construct from user-defined type") {
+        memory::uninitialized_storage<dummy> storage;
 
-        int const* value = memory::construct_at(storage.data(), 8);
-        REQUIRE(8 == *value);
-        REQUIRE( get<int const&>(*value) ==  get<int const&>(storage));
-        REQUIRE(*get<int const*>(*value) == *get<int const*>(storage));
+        memory::construct_at(storage.data(), 8);
+        REQUIRE(8 == get<dummy&>(storage).value);
+        REQUIRE(8 == get<dummy*>(storage)->value);
         memory::destroy_at(storage.data());
     }
 }
