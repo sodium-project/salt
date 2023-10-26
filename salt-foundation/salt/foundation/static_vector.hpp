@@ -140,11 +140,11 @@ public:
     }
 
     // Capacity
+    [[nodiscard]] static constexpr size_type max_size() noexcept {
+        return Capacity;
+    }
     [[nodiscard]] constexpr size_type size() const noexcept {
         return size_;
-    }
-    [[nodiscard]] constexpr size_type max_size() const noexcept {
-        return Capacity;
     }
     [[nodiscard]] constexpr size_type capacity() const noexcept {
         return Capacity;

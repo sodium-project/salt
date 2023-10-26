@@ -146,8 +146,8 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
         {
             constexpr fdn::static_vector<int, 5> v{};
             STATIC_REQUIRE(v.empty());
-            STATIC_REQUIRE(v.max_size() == 5);
             STATIC_REQUIRE(v.capacity() == 5);
+            STATIC_REQUIRE(decltype(v)::max_size() == 5);
         }
         {
             fdn::static_vector<int, 5> v{};
@@ -161,15 +161,15 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
         {
             fdn::static_vector<int, 5> v(5);
             CHECK_FALSE(v.empty());
-            CHECK(v.max_size() == 5);
             CHECK(v.capacity() == 5);
+            STATIC_REQUIRE(decltype(v)::max_size() == 5);
             CHECK(v == fdn::static_vector{0, 0, 0, 0, 0});
         }
         {
             fdn::static_vector<int, 5> v(5, 3);
             CHECK_FALSE(v.empty());
-            CHECK(v.max_size() == 5);
             CHECK(v.capacity() == 5);
+            STATIC_REQUIRE(decltype(v)::max_size() == 5);
             CHECK(v == fdn::static_vector{3, 3, 3, 3, 3});
         }
     }
@@ -180,7 +180,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
         CHECK(v[1] == 2);
         CHECK(v[2] == 3);
         CHECK(v.size() == 3);
-        CHECK(v.max_size() == 5);
+        CHECK(v.capacity() == 5);
     }
 
     SECTION("range constructor") {
