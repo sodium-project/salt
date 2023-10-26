@@ -6,7 +6,7 @@ namespace salt::meta {
 template <typename InputIterator, typename OutputIterator>
 struct [[nodiscard]] is_memcpyable final {
     using T = iter_value_t<OutputIterator>;
-    using U = decltype(detail::iter_move(std::declval<InputIterator&&>()));
+    using U = decltype(detail::iter_move(declval<InputIterator&&>()));
 
     static constexpr bool value = same_as<T, remove_ref_t<U>> and trivially_copyable<T>;
 };

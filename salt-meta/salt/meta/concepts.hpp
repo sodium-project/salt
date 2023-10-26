@@ -124,19 +124,8 @@ concept integer = std::integral<T> and not same_as<remove_cvref_t<T>, bool>;
 template <typename T>
 concept unsigned_integer = std::unsigned_integral<T> and not same_as<remove_cvref_t<T>, bool>;
 
-template <typename T>
-concept trivially_relocatable = trivially_copyable<T>;
-//                                trivially_move_constructible<remove_all_extents_t<T>> and
-//                                      trivially_destructible<remove_all_extents_t<T>>;
-template <typename T>
-concept relocatable = move_constructible<T> and destructible<T>; // trivially_copyable<T>
-
 template <typename T, typename U = T>
 concept not_volatile = std::is_volatile_v<T> and std::is_volatile_v<U>;
-
-template <typename T, typename U>
-concept same_trivially_relocatable =
-        is_same_uncvref_v<T, U> and trivially_relocatable<remove_cvref_t<U>> and not_volatile<T, U>;
 
 template <typename T, typename... Args>
 concept underlying_constructible = std::conjunction_v<is_constructible_from<T, Args>...>;

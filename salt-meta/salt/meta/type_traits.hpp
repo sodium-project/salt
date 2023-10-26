@@ -74,7 +74,7 @@ struct [[nodiscard]] is_equality_comparable : std::false_type {};
 
 template <typename T, typename U>
 struct [[nodiscard]] is_equality_comparable<
-        T, U, std::void_t<decltype(std::declval<T>() == std::declval<U>())>> : std::true_type {};
+        T, U, std::void_t<decltype(declval<T>() == declval<U>())>> : std::true_type {};
 
 template <typename T, typename U>
 inline constexpr bool is_equality_comparable_v = is_equality_comparable<T, U>::value;
@@ -135,7 +135,7 @@ using deduce_t = typename deduce<T>::type;
 
 template <typename T>
 struct [[nodiscard]] deref {
-    using type = decltype(*std::declval<T>());
+    using type = decltype(*declval<T>());
 };
 template <typename T>
 using deref_t = typename deref<T>::type;

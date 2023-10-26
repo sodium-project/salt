@@ -134,7 +134,7 @@ template <detail::dereferenceable T>
     requires requires(T& t) {
         { detail::iter_move(t) } -> detail::can_reference;
     }
-using iter_rvalue_reference_t = decltype(detail::iter_move(std::declval<T&>()));
+using iter_rvalue_reference_t = decltype(detail::iter_move(declval<T&>()));
 
 template <typename Iterator>
 concept input_or_output_iterator = requires(Iterator i) {
@@ -143,7 +143,8 @@ concept input_or_output_iterator = requires(Iterator i) {
 
 template <typename Iterator>
 using iter_value_t = iterator_traits<remove_cvref_t<Iterator>>::value_type;
-template <detail::dereferenceable T> using iter_reference_t = decltype(*std::declval<T&>());
+template <detail::dereferenceable T>
+using iter_reference_t = decltype(*declval<T&>());
 template <typename Iterator>
 using iter_diff_t = iterator_traits<remove_cvref_t<Iterator>>::difference_type;
 
