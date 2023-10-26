@@ -17,8 +17,8 @@ struct adapter {
 TEST_CASE("salt::fdn::detail::iterator_adapter", "[salt-foundation/iterator_adapter.hpp]") {
     using namespace salt::fdn::detail;
 
-    //using iterator       = iterator_adapter<dummy*, adapter>;
-    //using const_iterator = iterator_adapter<dummy const*, adapter>;
-    //STATIC_REQUIRE(salt::meta::random_access_iterator<iterator>);
-    //STATIC_REQUIRE(salt::meta::random_access_iterator<const_iterator>);
+    using iterator       = iterator_adapter<dummy*, adapter>;
+    using const_iterator = iterator_adapter<dummy const*, adapter>;
+    STATIC_REQUIRE(salt::meta::random_access_iterator<iterator>);
+    STATIC_REQUIRE(salt::meta::random_access_iterator<const_iterator>);
 }
