@@ -236,7 +236,7 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
                 return v;
             }();
             constexpr fdn::static_vector<nontrivial_int, 3> v2{meta::move(v1)};
-            STATIC_REQUIRE(v1 == v2);
+            STATIC_REQUIRE(v2 == fdn::static_vector{nontrivial_int(1), nontrivial_int(2)});
         }
         {
             fdn::static_vector<nontrivial_int, 3> v1;
@@ -244,12 +244,12 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
             v1.emplace_back(2);
 
             fdn::static_vector<nontrivial_int, 3> v2{meta::move(v1)};
-            CHECK(v1 == v2);
+            CHECK(v2 == fdn::static_vector{nontrivial_int(1), nontrivial_int(2)});
         }
         {
             fdn::static_vector<int, 5> v1{5, 6, 7};
             fdn::static_vector<int, 5> v2{meta::move(v1)};
-            CHECK(v1 == v2);
+            CHECK(v2 == fdn::static_vector{5, 6, 7});
         }
     }
 
@@ -295,13 +295,13 @@ TEST_CASE("salt::fdn::static_vector", "[salt-foundation/static_vector.hpp]") {
 
             fdn::static_vector<nontrivial_int, 3> v2;
             v2 = meta::move(v1);
-            CHECK(v1 == v2);
+            CHECK(v2 == fdn::static_vector{nontrivial_int(1), nontrivial_int(2)});
         }
         {
             fdn::static_vector<int, 5> v1{1, 2};
             fdn::static_vector<int, 5> v2;
             v2 = meta::move(v1);
-            CHECK(v1 == v2);
+            CHECK(v2 == fdn::static_vector{1, 2});
         }
     }
 
