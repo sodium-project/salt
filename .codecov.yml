@@ -21,3 +21,4 @@ ignore:
   - "**/launder.hpp"
   - "**/detail"
   - "**/meta"
+  - "**/logging"

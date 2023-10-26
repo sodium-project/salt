@@ -7,7 +7,7 @@ salt_static_library(memory
         SOURCE
             "salt/memory/dummy.cpp"
         LINK
-            salt::meta
+            salt::logging
             salt::platform)
 
 # code: language="CMake" insertSpaces=true tabSize=4

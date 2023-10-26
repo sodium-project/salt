@@ -9,6 +9,7 @@ using std::same_as;
 using std::movable;
 using std::common_reference_with;
 using std::derived_from;
+using std::default_initializable;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };

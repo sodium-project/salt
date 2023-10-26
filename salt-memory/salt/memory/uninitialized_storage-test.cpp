@@ -62,7 +62,7 @@ consteval int storage_accessors() noexcept {
 }
 
 TEST_CASE("salt::memory::uninitialized_storage", "[salt-memory/uninitialized_storage.hpp]") {
-    REQUIRE(true);
+
     SECTION("evaluate in constant expression") {
         STATIC_REQUIRE(10 == storage_construct());
         STATIC_REQUIRE(20 == storage_accessors());

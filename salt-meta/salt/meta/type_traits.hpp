@@ -15,6 +15,9 @@ using std::add_pointer_t;
 using std::void_t;
 
 template <typename T>
+inline constexpr bool is_class_v = std::is_class_v<T>;
+
+template <typename T>
 inline constexpr bool is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
 
 template <typename T, typename... Ts>
