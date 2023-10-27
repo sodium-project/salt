@@ -18,6 +18,7 @@ ignore:
   - "**/addressof.hpp"
   - "**/construct_at.hpp"
   - "**/launder.hpp"
+  - "**/debugging.cpp"
   - "**/detail"
   - "**/meta"
   - "**/logging"

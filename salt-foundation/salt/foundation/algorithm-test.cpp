@@ -107,6 +107,7 @@ TEST_CASE("salt::fdn::lexicographical_compare_three_way", "[salt-foundation/algo
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_fn, std::strong_order);
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_fn, std::weak_order);
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_fn, std::partial_order);
+
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::compare_three_way{});
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::strong_order);
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::weak_order);
@@ -120,6 +121,10 @@ TEST_CASE("salt::fdn::lexicographical_compare_three_way", "[salt-foundation/algo
         CHECK(lex_cmp_three_way_fn(arr1, arr1, arr3, arr3 + 3, cmp{}) == ordering::less);
         CHECK(lex_cmp_three_way_fn(arr3, arr3 + 3, arr1, arr1, cmp{}) == ordering::greater);
         CHECK(lex_cmp_three_way_fn(arr1, arr1, arr2, arr2, cmp{}) == ordering::equal);
+
+        CHECK(lex_cmp_three_way_slow_fn(arr1, arr1, arr3, arr3 + 3, cmp{}) == ordering::less);
+        CHECK(lex_cmp_three_way_slow_fn(arr3, arr3 + 3, arr1, arr1, cmp{}) == ordering::greater);
+        CHECK(lex_cmp_three_way_slow_fn(arr1, arr1, arr2, arr2, cmp{}) == ordering::equal);
     }
 
     SECTION("chars") {
