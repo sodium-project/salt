@@ -6,6 +6,9 @@
 
 namespace salt::memory {
 
+// __STDCPP_DEFAULT_NEW_ALIGNMENT__
+constexpr inline std::size_t max_alignment = alignof(std::max_align_t);
+
 // clang-format off
 template <meta::integral I>
 constexpr bool is_pow2(I value) noexcept {
@@ -38,11 +41,11 @@ constexpr auto ilog2_base(unsigned long long value) noexcept {
 } // namespace detail
 
 constexpr std::size_t ilog2(std::size_t value) noexcept {
-    return ilog2_base(value) - 1ull;
+    return detail::ilog2_base(value) - 1ull;
 }
 
 constexpr std::size_t ilog2_ceil(std::size_t value) noexcept {
-    return ilog2_base(value) - static_cast<std::size_t>(is_pow2(value));
+    return detail::ilog2_base(value) - static_cast<std::size_t>(is_pow2(value));
 }
 
 constexpr std::size_t alignment_for(std::size_t size) noexcept {
@@ -50,9 +53,8 @@ constexpr std::size_t alignment_for(std::size_t size) noexcept {
 }
 
 constexpr std::size_t align_offset(std::uintptr_t address, std::size_t alignment) noexcept {
-    static_assert(is_pow2(alignment));
-    auto misaligned = address & (alignment - 1);
-    return 0ull != misaligned ? (alignment - misaligned) : 0ull;
+    auto const offset = address & (alignment - 1);
+    return 0ull != offset ? (alignment - offset) : 0ull;
 }
 
 inline std::size_t align_offset(void* ptr, std::size_t alignment) noexcept {

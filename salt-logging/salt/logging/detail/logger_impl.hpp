@@ -1,8 +1,9 @@
 #pragma once
 #include <cstddef>
 
-#include <salt/meta.hpp>
 #include <salt/logging/detail/source_location.hpp>
+#include <salt/meta.hpp>
+
 
 // NOTE:
 //  This header is such a mess, it will need to be revisited in the future and probably refactored.
@@ -117,12 +118,12 @@ inline auto get_local_time() noexcept {
 }
 
 #define SALT_PRINT_LOGGER_HEADER_TO(output_file)                                                   \
-    println(output_file, left("+", 36, '-'), left("+", 63, '-'), left("+", 13, '-'),               \
-            left("+", 32, '-'));                                                                   \
-    println(output_file, "| ", left("Date / Time", 33), " | ", left("Location", 60), " | ",        \
-            left("Level", 10), " | Message");                                                      \
-    println(output_file, left("+", 36, '-'), left("+", 63, '-'), left("+", 13, '-'),               \
-            left("+", 32, '-'));
+    io::println(output_file, mnp::left("+", 36, '-'), mnp::left("+", 63, '-'),                     \
+                mnp::left("+", 13, '-'), mnp::left("+", 32, '-'));                                 \
+    io::println(output_file, "| ", mnp::left("Date / Time", 33), " | ", mnp::left("Location", 60), \
+                " | ", mnp::left("Level", 10), " | Message");                                      \
+    io::println(output_file, mnp::left("+", 36, '-'), mnp::left("+", 63, '-'),                     \
+                mnp::left("+", 13, '-'), mnp::left("+", 32, '-'));
 
 template <> struct [[maybe_unused]] default_logger<file_tag> final {
     constexpr default_logger(default_logger const&)            = delete;
@@ -135,14 +136,14 @@ template <> struct [[maybe_unused]] default_logger<file_tag> final {
     constexpr void log(Type                  type,
                        std::tuple<Args&&...> tuple_args,
                        fdn::source_location  location) noexcept {
-        using namespace fast_io::io;
-        using namespace fast_io::mnp;
+        using namespace fast_io;
+
         [[maybe_unused]] fast_io::io_flush_guard guard{output_file_};
         std::apply(
                 [&](auto&&... args) {
-                    println(output_file_, type.color, "  ", left(get_local_time(), 36),
-                            left(location, 63), left(std::string_view(type), 13),
-                            meta::forward<Args>(args)..., print_color::end());
+                    io::println(output_file_, type.color, "  ", mnp::left(get_local_time(), 36),
+                                mnp::left(location, 63), mnp::left(std::string_view(type), 13),
+                                meta::forward<Args>(args)..., print_color::end());
                 },
                 tuple_args);
     }
@@ -153,8 +154,7 @@ template <> struct [[maybe_unused]] default_logger<file_tag> final {
 
 private:
     constexpr default_logger() noexcept : output_file_("log.txt", fast_io::open_mode::app) {
-        using namespace fast_io::io;
-        using namespace fast_io::mnp;
+        using namespace fast_io;
         SALT_PRINT_LOGGER_HEADER_TO(output_file_)
     }
     constexpr ~default_logger() = default;
@@ -173,12 +173,12 @@ template <> struct [[maybe_unused]] default_logger<console_tag> final {
     constexpr void log(Type                  type,
                        std::tuple<Args&&...> tuple_args,
                        fdn::source_location  location) noexcept {
-        using namespace fast_io::io;
-        using namespace fast_io::mnp;
+        using namespace fast_io;
         std::apply(
                 [&](auto&&... args) {
-                    println(fast_io::out(), type.color, left(get_local_time(), 34), location, " ",
-                            std::string_view(type), " ", meta::forward<Args>(args)..., print_color::end());
+                    io::println(fast_io::out(), type.color, mnp::left(get_local_time(), 34),
+                                location, " ", std::string_view(type), " ",
+                                meta::forward<Args>(args)..., print_color::end());
                 },
                 tuple_args);
     }
