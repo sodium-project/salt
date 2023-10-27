@@ -9,7 +9,7 @@
 #    include <source_location>
 #else
 #    include <salt/logging/detail/strip_path.hpp>
-namespace salt::detail {
+namespace salt::log::detail {
 
 struct [[nodiscard]] source_location final {
 
@@ -52,7 +52,7 @@ private:
     char const*         function_name_ = "";
 };
 
-} // namespace salt::detail
+} // namespace salt::log::detail
 
 namespace fast_io {
 
@@ -84,7 +84,7 @@ print_reserve_define_source_location_impl(char*                        it,
 }
 
 inline constexpr salt_source_location_scatter
-print_alias_define_source_location_impl(salt::detail::source_location location) noexcept {
+print_alias_define_source_location_impl(salt::log::detail::source_location location) noexcept {
     using salt::detail::strip_path;
     return {{strip_path(location.file_name()), cstr_len(strip_path(location.file_name()))},
             {location.function_name(), cstr_len(location.function_name())},
@@ -107,23 +107,23 @@ inline constexpr char* print_reserve_define(io_reserve_type_t<char, salt_source_
 }
 
 inline constexpr salt_source_location_scatter
-print_alias_define(io_alias_t, salt::detail::source_location location) noexcept {
+print_alias_define(io_alias_t, salt::log::detail::source_location location) noexcept {
     return details::print_alias_define_source_location_impl(location);
 }
 
 namespace manipulators {
-inline constexpr auto cur_src_loc(salt::detail::source_location location =
-                                          salt::detail::source_location::current()) noexcept {
+inline constexpr auto cur_src_loc(salt::log::detail::source_location location =
+                                          salt::log::detail::source_location::current()) noexcept {
     return location;
 }
 } // namespace manipulators
 } // namespace fast_io
 #endif
 
-namespace salt::fdn {
+namespace salt::log {
 #if defined(__cpp_lib_source_location)
 using source_location = std::source_location;
 #else
 using source_location = detail::source_location;
 #endif
-} // namespace salt::fdn
+} // namespace salt::log

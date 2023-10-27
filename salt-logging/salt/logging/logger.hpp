@@ -34,8 +34,8 @@ static constexpr inline error_tag   error   = {.color = color::red   };
 
 // clang-format off
 template <typename Output>
-detail::default_logger<Output>& logger() noexcept {
-    static detail::default_logger<Output> instance;
+detail::dummy_logger<Output>& logger() noexcept {
+    static detail::dummy_logger<Output> instance;
     return instance;
 }
 // clang-format on
@@ -43,12 +43,12 @@ detail::default_logger<Output>& logger() noexcept {
 // clang-format off
 template <typename... Args> struct [[maybe_unused]] trace final {
     constexpr explicit
-    trace(Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    trace(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<console_tag>().log(log_level::trace, std::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
-    trace(file_tag, Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    trace(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
         logger<file_tag>().log(log_level::trace, std::forward_as_tuple(meta::move(args)...),
                                location);
     }
@@ -56,12 +56,12 @@ template <typename... Args> struct [[maybe_unused]] trace final {
 
 template <typename... Args> struct [[maybe_unused]] debug final {
     constexpr explicit
-    debug(Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    debug(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<console_tag>().log(log_level::debug, std::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
-    debug(file_tag, Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    debug(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
         logger<file_tag>().log(log_level::debug, std::forward_as_tuple(meta::move(args)...),
                                location);
     }
@@ -69,12 +69,12 @@ template <typename... Args> struct [[maybe_unused]] debug final {
 
 template <typename... Args> struct [[maybe_unused]] warning final {
     constexpr explicit
-    warning(Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    warning(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<console_tag>().log(log_level::warning, std::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
-    warning(file_tag, Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    warning(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
         logger<file_tag>().log(log_level::warning, std::forward_as_tuple(meta::move(args)...),
                                location);
     }
@@ -82,16 +82,16 @@ template <typename... Args> struct [[maybe_unused]] warning final {
 
 template <typename... Args> struct [[maybe_unused]] error final {
     [[noreturn]] constexpr explicit
-    error(Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    error(Args&&... args, source_location location = source_location::current()) noexcept {
         logger<console_tag>().log(log_level::error, std::forward_as_tuple(meta::move(args)...),
                                   location);
-        __builtin_trap();
+        __builtin_abort();
     }
     [[noreturn]] constexpr explicit
-    error(file_tag, Args&&... args, fdn::source_location location = fdn::source_location::current()) noexcept {
+    error(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
         logger<file_tag>().log(log_level::error, std::forward_as_tuple(meta::move(args)...),
                                location);
-        __builtin_trap();
+        __builtin_abort();
     }
 };
 // clang-format on

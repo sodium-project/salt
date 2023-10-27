@@ -102,13 +102,13 @@ concept log_type =
 namespace detail {
 // clang-format off
 template <typename Output>
-struct [[maybe_unused]] default_logger;
+struct [[maybe_unused]] dummy_logger;
 // clang-format on
 } // namespace detail
 
 // clang-format off
 template <typename Output>
-detail::default_logger<Output>& logger() noexcept;
+detail::dummy_logger<Output>& logger() noexcept;
 // clang-format on
 
 namespace detail {
@@ -126,17 +126,18 @@ inline auto get_local_time() noexcept {
     io::println(output_file, mnp::left("+", 36, '-'), mnp::left("+", 63, '-'),                     \
                 mnp::left("+", 13, '-'), mnp::left("+", 32, '-'));
 
-template <> struct [[maybe_unused]] default_logger<file_tag> final {
-    constexpr default_logger(default_logger const&)            = delete;
-    constexpr default_logger(default_logger&&)                 = delete;
-    constexpr default_logger& operator=(default_logger const&) = delete;
-    constexpr default_logger& operator=(default_logger&&)      = delete;
+// clang-format off
+template <>
+struct [[maybe_unused]] dummy_logger<file_tag> final {
+    constexpr dummy_logger(dummy_logger const&)            = delete;
+    constexpr dummy_logger(dummy_logger&&)                 = delete;
+    constexpr dummy_logger& operator=(dummy_logger const&) = delete;
+    constexpr dummy_logger& operator=(dummy_logger&&)      = delete;
 
-    // clang-format off
     template <log_type Type, typename... Args>
     constexpr void log(Type                  type,
                        std::tuple<Args&&...> tuple_args,
-                       fdn::source_location  location) noexcept {
+                       log::source_location  location) noexcept {
         using namespace fast_io;
 
         [[maybe_unused]] fast_io::io_flush_guard guard{output_file_};
@@ -150,30 +151,29 @@ template <> struct [[maybe_unused]] default_logger<file_tag> final {
     }
 
     template <typename Output>
-    friend default_logger<Output>& salt::log::logger() noexcept;
-    // clang-format on
+    friend dummy_logger<Output>& salt::log::logger() noexcept;
 
 private:
-    constexpr default_logger() noexcept : output_file_("log.txt", fast_io::open_mode::app) {
+    constexpr dummy_logger() noexcept : output_file_("log.txt", fast_io::open_mode::app) {
         using namespace fast_io;
         SALT_PRINT_LOGGER_HEADER_TO(output_file_)
     }
-    constexpr ~default_logger() = default;
+    constexpr ~dummy_logger() = default;
 
     fast_io::obuf_file output_file_;
 };
 
-template <> struct [[maybe_unused]] default_logger<console_tag> final {
-    constexpr default_logger(default_logger const&)            = delete;
-    constexpr default_logger(default_logger&&)                 = delete;
-    constexpr default_logger& operator=(default_logger const&) = delete;
-    constexpr default_logger& operator=(default_logger&&)      = delete;
+template <>
+struct [[maybe_unused]] dummy_logger<console_tag> final {
+    constexpr dummy_logger(dummy_logger const&)            = delete;
+    constexpr dummy_logger(dummy_logger&&)                 = delete;
+    constexpr dummy_logger& operator=(dummy_logger const&) = delete;
+    constexpr dummy_logger& operator=(dummy_logger&&)      = delete;
 
-    // clang-format off
     template <log_type Type, typename... Args>
     constexpr void log(Type                  type,
                        std::tuple<Args&&...> tuple_args,
-                       fdn::source_location  location) noexcept {
+                       log::source_location  location) noexcept {
         using namespace fast_io;
         std::apply(
                 [&](auto&&... args) {
@@ -185,13 +185,13 @@ template <> struct [[maybe_unused]] default_logger<console_tag> final {
     }
 
     template <typename Output>
-    friend default_logger<Output>& salt::log::logger() noexcept;
-    // clang-format on
+    friend dummy_logger<Output>& salt::log::logger() noexcept;
 
 private:
-    constexpr default_logger() noexcept = default;
-    constexpr ~default_logger()         = default;
+    constexpr dummy_logger() noexcept = default;
+    constexpr ~dummy_logger()         = default;
 };
+// clang-format on
 
 #undef SALT_PRINT_LOGGER_HEADER_TO_FILE
 
