@@ -1,22 +1,15 @@
 #pragma once
-#include <salt/config/memory_support.hpp>
 #include <salt/meta.hpp>
+#include <salt/config/memory_support.hpp>
+#include <salt/memory/detail/utility.hpp>
 
 #include <atomic>
-#include <cstdint>
 
 namespace salt::memory {
 
 struct [[nodiscard]] allocator_info;
 
 enum class debug_magic : std::uint8_t;
-
-template <typename T, typename Other = T>
-constexpr T exchange(T& obj, Other&& new_value) noexcept {
-    T old_value = static_cast<T&&>(obj);
-    obj         = static_cast<Other&&>(new_value);
-    return old_value;
-}
 
 namespace detail {
 

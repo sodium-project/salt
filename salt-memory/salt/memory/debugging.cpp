@@ -1,7 +1,6 @@
 #include <salt/logging/logger.hpp>
 #include <salt/memory/debugging.hpp>
 
-
 #include <atomic>
 
 namespace salt::memory {
