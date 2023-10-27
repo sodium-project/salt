@@ -39,6 +39,7 @@ TEST_CASE("salt::fdn::equal", "[salt-foundation/algorithm.hpp]") {
 
     SECTION("user-defined equality comparable types") {
         STATIC_REQUIRE(test_equal<dummy>());
+        CHECK(test_equal<dummy>());
     }
 
     SECTION("user-defined types with virtual base") {
@@ -107,6 +108,9 @@ TEST_CASE("salt::fdn::lexicographical_compare_three_way", "[salt-foundation/algo
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_fn, std::weak_order);
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_fn, std::partial_order);
         test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::compare_three_way{});
+        test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::strong_order);
+        test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::weak_order);
+        test_three_way_for_integrals<int, int>(lex_cmp_three_way_slow_fn, std::partial_order);
 
         using ordering = std::strong_ordering;
         using cmp      = std::compare_three_way;
