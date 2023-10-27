@@ -3,6 +3,7 @@
 #include <salt/meta.hpp>
 
 #include <atomic>
+#include <cstdint>
 
 namespace salt::memory {
 
