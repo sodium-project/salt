@@ -5,18 +5,18 @@ namespace salt::log {
 
 namespace output {
 
-static constexpr inline file_tag    file    = {};
-static constexpr inline console_tag console = {};
+inline constexpr file_tag    file    = {};
+inline constexpr console_tag console = {};
 
 } // namespace output
 
 namespace color {
 
 // clang-format off
-static constexpr inline print_color cyan   = {0  , 200, 240, 255};
-static constexpr inline print_color white  = {255, 255, 255, 255};
-static constexpr inline print_color yellow = {231, 231, 31 , 255};
-static constexpr inline print_color red    = {231, 31 , 31 , 255};
+inline constexpr print_color cyan   = {0  , 200, 240, 255};
+inline constexpr print_color white  = {255, 255, 255, 255};
+inline constexpr print_color yellow = {231, 231, 31 , 255};
+inline constexpr print_color red    = {231, 31 , 31 , 255};
 // clang-format on
 
 } // namespace color
@@ -24,10 +24,10 @@ static constexpr inline print_color red    = {231, 31 , 31 , 255};
 namespace log_level {
 
 // clang-format off
-static constexpr inline trace_tag   trace   = {.color = color::cyan  };
-static constexpr inline debug_tag   debug   = {.color = color::white };
-static constexpr inline warning_tag warning = {.color = color::yellow};
-static constexpr inline error_tag   error   = {.color = color::red   };
+inline constexpr trace_tag   trace   = {.color = color::cyan  };
+inline constexpr debug_tag   debug   = {.color = color::white };
+inline constexpr warning_tag warning = {.color = color::yellow};
+inline constexpr error_tag   error   = {.color = color::red   };
 // clang-format on
 
 } // namespace log_level
