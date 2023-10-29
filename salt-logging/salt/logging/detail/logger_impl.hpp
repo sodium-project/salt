@@ -1,10 +1,9 @@
 #pragma once
-#include <salt/logging/detail/source_location.hpp>
 #include <salt/meta.hpp>
+#include <salt/logging/detail/source_location.hpp>
 
 #include <cstddef>
 #include <string_view>
-#include <tuple>
 
 // NOTE:
 //  This header is such a mess, it will need to be revisited in the future and probably refactored.
@@ -135,13 +134,13 @@ struct [[maybe_unused]] dummy_logger<file_tag> final {
     constexpr dummy_logger& operator=(dummy_logger&&)      = delete;
 
     template <log_type Type, typename... Args>
-    constexpr void log(Type                  type,
-                       std::tuple<Args&&...> tuple_args,
-                       log::source_location  location) noexcept {
+    constexpr void log(Type                   type,
+                       meta::tuple<Args&&...> tuple_args,
+                       source_location        location) noexcept {
         using namespace fast_io;
 
         [[maybe_unused]] fast_io::io_flush_guard guard{output_file_};
-        std::apply(
+        meta::apply(
                 [&](auto&&... args) {
                     io::println(output_file_, type.color, "  ", mnp::left(get_local_time(), 36),
                                 mnp::left(location, 63), mnp::left(std::string_view(type), 13),
@@ -171,11 +170,11 @@ struct [[maybe_unused]] dummy_logger<console_tag> final {
     constexpr dummy_logger& operator=(dummy_logger&&)      = delete;
 
     template <log_type Type, typename... Args>
-    constexpr void log(Type                  type,
-                       std::tuple<Args&&...> tuple_args,
-                       log::source_location  location) noexcept {
+    constexpr void log(Type                   type,
+                       meta::tuple<Args&&...> tuple_args,
+                       source_location        location) noexcept {
         using namespace fast_io;
-        std::apply(
+        meta::apply(
                 [&](auto&&... args) {
                     io::println(fast_io::out(), type.color, mnp::left(get_local_time(), 34),
                                 location, " ", std::string_view(type), " ",

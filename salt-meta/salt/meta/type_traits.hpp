@@ -13,6 +13,8 @@ using std::remove_cvref_t;
 using std::remove_all_extents_t;
 using std::add_pointer_t;
 using std::void_t;
+using std::tuple;
+using std::apply;
 
 template <typename T>
 inline constexpr bool is_class_v = std::is_class_v<T>;

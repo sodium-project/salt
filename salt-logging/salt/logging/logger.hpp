@@ -44,12 +44,12 @@ detail::dummy_logger<Output>& logger() noexcept {
 template <typename... Args> struct [[maybe_unused]] trace final {
     constexpr explicit
     trace(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<console_tag>().log(log_level::trace, std::forward_as_tuple(meta::move(args)...),
+        logger<console_tag>().log(log_level::trace, meta::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
     trace(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<file_tag>().log(log_level::trace, std::forward_as_tuple(meta::move(args)...),
+        logger<file_tag>().log(log_level::trace, meta::forward_as_tuple(meta::move(args)...),
                                location);
     }
 };
@@ -57,12 +57,12 @@ template <typename... Args> struct [[maybe_unused]] trace final {
 template <typename... Args> struct [[maybe_unused]] debug final {
     constexpr explicit
     debug(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<console_tag>().log(log_level::debug, std::forward_as_tuple(meta::move(args)...),
+        logger<console_tag>().log(log_level::debug, meta::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
     debug(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<file_tag>().log(log_level::debug, std::forward_as_tuple(meta::move(args)...),
+        logger<file_tag>().log(log_level::debug, meta::forward_as_tuple(meta::move(args)...),
                                location);
     }
 };
@@ -70,12 +70,12 @@ template <typename... Args> struct [[maybe_unused]] debug final {
 template <typename... Args> struct [[maybe_unused]] warning final {
     constexpr explicit
     warning(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<console_tag>().log(log_level::warning, std::forward_as_tuple(meta::move(args)...),
+        logger<console_tag>().log(log_level::warning, meta::forward_as_tuple(meta::move(args)...),
                                   location);
     }
     constexpr explicit
     warning(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<file_tag>().log(log_level::warning, std::forward_as_tuple(meta::move(args)...),
+        logger<file_tag>().log(log_level::warning, meta::forward_as_tuple(meta::move(args)...),
                                location);
     }
 };
@@ -83,13 +83,13 @@ template <typename... Args> struct [[maybe_unused]] warning final {
 template <typename... Args> struct [[maybe_unused]] error final {
     [[noreturn]] constexpr explicit
     error(Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<console_tag>().log(log_level::error, std::forward_as_tuple(meta::move(args)...),
+        logger<console_tag>().log(log_level::error, meta::forward_as_tuple(meta::move(args)...),
                                   location);
         __builtin_abort();
     }
     [[noreturn]] constexpr explicit
     error(file_tag, Args&&... args, source_location location = source_location::current()) noexcept {
-        logger<file_tag>().log(log_level::error, std::forward_as_tuple(meta::move(args)...),
+        logger<file_tag>().log(log_level::error, meta::forward_as_tuple(meta::move(args)...),
                                location);
         __builtin_abort();
     }

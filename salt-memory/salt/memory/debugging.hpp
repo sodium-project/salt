@@ -10,11 +10,11 @@ namespace salt::memory {
 // constants for the different types.
 enum class debug_magic : std::uint8_t {
     // Marks internal memory used by the allocator - "allocated block".
-    internal_memory = 0xAB,
+    internal_allocated_memory = 0xAB,
     // Marks internal memory currently not used by the allocator - "freed block".
     internal_freed_memory = 0xFB,
     // Marks allocated, but not yet used memory - "clean memory".
-    new_memory = 0xCD,
+    allocated_memory = 0xCD,
     // Marks freed memory - "dead memory".
     freed_memory = 0xDD,
     // Marks buffer memory used to ensure proper alignment.
