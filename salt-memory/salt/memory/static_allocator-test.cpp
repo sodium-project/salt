@@ -8,16 +8,24 @@ TEST_CASE("salt::memory::memory_block", "[salt-memory/memory_block.hpp]") {
     char arr[5] = {};
 
     {
+        memory_block block{};
+        CHECK(block.memory == nullptr);
+        CHECK(block.size == 0);
+        CHECK_FALSE(block.contains(arr));
+    }
+    {
         memory_block block{arr, 5};
         CHECK(block.memory == arr);
         CHECK(block.size == 5);
         CHECK(block.contains(arr));
+        CHECK_FALSE(block.contains(arr + 5));
     }
     {
         memory_block block{arr, arr + 4};
         CHECK(block.memory == arr);
         CHECK(block.size == 4);
         CHECK(block.contains(arr + 2));
+        CHECK_FALSE(block.contains(arr + 5));
     }
 }
 
