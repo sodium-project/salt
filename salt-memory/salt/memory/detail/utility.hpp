@@ -1,11 +1,11 @@
 #pragma once
-#include <salt/config/assert.hpp>
-#include <salt/logging/logger.hpp>
+#include <salt/config.hpp>
+#include <salt/logging.hpp>
 
 #include <cstddef>
 #include <cstdint>
 
-namespace salt::memory {
+namespace salt::memory::detail {
 
 // A load operation copies data from a pointer to an integer.
 inline std::uintptr_t load_int(void* address) noexcept {
@@ -71,4 +71,4 @@ constexpr T exchange(T& obj, Other&& new_value) noexcept {
     return old_value;
 }
 
-} // namespace salt::memory
+} // namespace salt::memory::detail

@@ -8,6 +8,8 @@ using remove_ref_t = std::remove_reference_t<T>;
 template <typename... T>
 using common_type = std::common_type_t<T...>;
 
+using std::true_type;
+using std::false_type;
 using std::remove_cv_t;
 using std::remove_cvref_t;
 using std::remove_all_extents_t;
@@ -26,7 +28,7 @@ template <typename T, typename... Ts>
 struct [[nodiscard]] are_distinct
         : std::conjunction<std::negation<std::is_same<T, Ts>>..., are_distinct<Ts...>> {};
 
-template <typename T> struct [[nodiscard]] are_distinct<T> : std::true_type {};
+template <typename T> struct [[nodiscard]] are_distinct<T> : true_type {};
 
 template <typename... Ts>
 inline constexpr bool are_distinct_v = are_distinct<Ts...>::value;
@@ -56,10 +58,10 @@ template <bool Condition, typename T, typename F>
 using condition = typename detail::if_<Condition>::template type<T, F>;
 
 template <typename T, template <typename...> typename Template>
-struct [[nodiscard]] is_specialization : std::false_type {};
+struct [[nodiscard]] is_specialization : false_type {};
 
 template <template <typename...> typename Template, typename... Args>
-struct [[nodiscard]] is_specialization<Template<Args...>, Template> : std::true_type {};
+struct [[nodiscard]] is_specialization<Template<Args...>, Template> : true_type {};
 
 template <typename T, template <typename...> typename Template>
 inline constexpr bool is_specialization_v = is_specialization<T, Template>::value;
@@ -75,18 +77,18 @@ using remove_all_pointers_t = typename remove_all_pointers<T>::type;
 // clang-format on
 
 template <typename T, typename U, typename = void>
-struct [[nodiscard]] is_equality_comparable : std::false_type {};
+struct [[nodiscard]] is_equality_comparable : false_type {};
 
 template <typename T, typename U>
 struct [[nodiscard]] is_equality_comparable<
-        T, U, std::void_t<decltype(declval<T>() == declval<U>())>> : std::true_type {};
+        T, U, std::void_t<decltype(declval<T>() == declval<U>())>> : true_type {};
 
 template <typename T, typename U>
 inline constexpr bool is_equality_comparable_v = is_equality_comparable<T, U>::value;
 
 // clang-format off
 template <typename T, typename U>
-struct [[nodiscard]] is_trivially_equality_comparable_impl : std::false_type {};
+struct [[nodiscard]] is_trivially_equality_comparable_impl : false_type {};
 // clang-format on
 
 template <typename T>
@@ -101,7 +103,7 @@ struct [[nodiscard]] is_trivially_equality_comparable_impl<T, T>
 };
 
 template <typename T>
-struct [[nodiscard]] is_trivially_equality_comparable_impl<T*, T*> : std::true_type {};
+struct [[nodiscard]] is_trivially_equality_comparable_impl<T*, T*> : true_type {};
 
 // clang-format off
 template <typename T, typename U>
