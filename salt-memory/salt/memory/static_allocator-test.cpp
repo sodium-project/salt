@@ -4,6 +4,23 @@
 
 using namespace salt::memory;
 
+TEST_CASE("salt::memory::memory_block", "[salt-memory/memory_block.hpp]") {
+    char arr[5] = {};
+
+    {
+        memory_block block{arr, 5};
+        CHECK(block.memory == arr);
+        CHECK(block.size == 5);
+        CHECK(block.contains(arr));
+    }
+    {
+        memory_block block{arr, arr + 4};
+        CHECK(block.memory == arr);
+        CHECK(block.size == 4);
+        CHECK(block.contains(arr + 2));
+    }
+}
+
 TEST_CASE("salt::memory::static_allocator", "[salt-memory/static_allocator.hpp]") {
     static_allocator_storage<1024> storage;
     static_allocator               allocator{storage};
@@ -47,7 +64,7 @@ TEST_CASE("salt::memory::static_block_allocator", "[salt-memory/static_allocator
         CHECK(block.size == block_size);
         other.deallocate_block(block);
     }
-    
+
     static_block_allocator allocator2{16, storage};
     allocator2 = salt::meta::move(other);
     for (std::size_t i = 0u; i < 5u; ++i) {
