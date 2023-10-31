@@ -1,4 +1,4 @@
-#include <salt/memory/detail/free_memory_list.hpp>
+#include <salt/memory/detail/free_list.hpp>
 #include <salt/memory/static_allocator.hpp>
 
 #include <catch2/catch.hpp>
@@ -121,7 +121,7 @@ void check_move(MemoryList& list) {
     list3.deallocate(ptr);
 }
 
-void use_list_array(detail::ordered_free_memory_list& list) {
+void use_list_array(detail::ordered_free_list& list) {
     std::vector<void*> ptrs;
     auto               capacity = list.capacity();
     // We would need capacity / 3 nodes, but the memory might not be contiguous.
@@ -180,23 +180,23 @@ void use_list_array(detail::ordered_free_memory_list& list) {
 }
 // clang-format on
 
-TEST_CASE("salt::memory::detail::free_memory_list", "[salt-memory/free_memory_list.hpp]") {
+TEST_CASE("salt::memory::detail::free_list", "[salt-memory/free_list.hpp]") {
     SECTION("construct") {
-        detail::free_memory_list list(4);
+        detail::free_list list(4);
         REQUIRE(list.empty());
         REQUIRE(list.node_size() >= 4);
         REQUIRE(list.capacity() == 0u);
     }
     SECTION("normal insert") {
         static_allocator_storage<1024> memory;
-        detail::free_memory_list       list(4);
+        detail::free_list       list(4);
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
     SECTION("uneven insert") {
         static_allocator_storage<1023> memory; // not dividable
-        detail::free_memory_list       list(4);
+        detail::free_list       list(4);
         check_list(list, &memory, 1023);
 
         check_move(list);
@@ -205,7 +205,7 @@ TEST_CASE("salt::memory::detail::free_memory_list", "[salt-memory/free_memory_li
         static_allocator_storage<1024> a;
         static_allocator_storage<100>  b;
         static_allocator_storage<1337> c;
-        detail::free_memory_list       list(4);
+        detail::free_list       list(4);
 
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
@@ -215,9 +215,9 @@ TEST_CASE("salt::memory::detail::free_memory_list", "[salt-memory/free_memory_li
     }
 }
 
-TEST_CASE("salt::memory::detail::ordered_free_memory_list", "[salt-memory/free_memory_list.hpp]") {
+TEST_CASE("salt::memory::detail::ordered_free_list", "[salt-memory/free_list.hpp]") {
     SECTION("construct") {
-        detail::ordered_free_memory_list list(4);
+        detail::ordered_free_list list(4);
         REQUIRE(list.empty());
         REQUIRE(list.node_size() >= 4);
         REQUIRE(list.capacity() == 0u);
@@ -225,7 +225,7 @@ TEST_CASE("salt::memory::detail::ordered_free_memory_list", "[salt-memory/free_m
 
     SECTION("normal insert") {
         static_allocator_storage<1024>   memory;
-        detail::ordered_free_memory_list list(4);
+        detail::ordered_free_list list(4);
         check_list(list, &memory, 1024);
         use_list_array(list);
 
@@ -233,7 +233,7 @@ TEST_CASE("salt::memory::detail::ordered_free_memory_list", "[salt-memory/free_m
     }
     SECTION("uneven insert") {
         static_allocator_storage<1023>   memory; // not dividable
-        detail::ordered_free_memory_list list(4);
+        detail::ordered_free_list list(4);
         check_list(list, &memory, 1023);
         use_list_array(list);
 
@@ -243,7 +243,7 @@ TEST_CASE("salt::memory::detail::ordered_free_memory_list", "[salt-memory/free_m
         static_allocator_storage<1024>   a;
         static_allocator_storage<100>    b;
         static_allocator_storage<1337>   c;
-        detail::ordered_free_memory_list list(4);
+        detail::ordered_free_list list(4);
 
         check_list(list, &a, 1024);
         use_list_array(list);

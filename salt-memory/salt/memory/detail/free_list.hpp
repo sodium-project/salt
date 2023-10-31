@@ -5,13 +5,13 @@
 #include <salt/memory/detail/debug_helpers.hpp>
 #include <salt/memory/detail/utility.hpp>
 
-#include <salt/memory/detail/free_memory_list_helpers.hpp>
+#include <salt/memory/detail/free_list_helpers.hpp>
 
 namespace salt::memory::detail {
 
 // clang-format off
 // Stores free blocks for a memory pool, memory blocks are fragmented and stored in a list.
-struct [[nodiscard]] free_memory_list final {
+struct [[nodiscard]] free_list final {
     using byte_type      = std::byte;
     using size_type      = std::size_t;
     using iterator       = byte_type*;
@@ -24,25 +24,25 @@ struct [[nodiscard]] free_memory_list final {
         return (node_size < min_size ? min_size : node_size) * node_count;
     }
 
-    constexpr explicit free_memory_list(size_type node_size) noexcept
+    constexpr explicit free_list(size_type node_size) noexcept
             : first_    {nullptr},
               node_size_{node_size > min_size ? node_size : min_size},
               capacity_ {0u} {}
 
-    constexpr free_memory_list(size_type node_size, void* memory, size_type size) noexcept
-            : free_memory_list{node_size} {
+    constexpr free_list(size_type node_size, void* memory, size_type size) noexcept
+            : free_list{node_size} {
         insert(memory, size);
     }
 
-    constexpr ~free_memory_list() = default;
+    constexpr ~free_list() = default;
 
-    constexpr free_memory_list(free_memory_list&& other) noexcept
+    constexpr free_list(free_list&& other) noexcept
             : first_    {detail::exchange(other.first_, nullptr)},
               node_size_{other.node_size_},
               capacity_ {detail::exchange(other.capacity_, 0u)} {}
 
-    constexpr free_memory_list& operator=(free_memory_list&& other) noexcept {
-        free_memory_list tmp{meta::move(other)};
+    constexpr free_list& operator=(free_list&& other) noexcept {
+        free_list tmp{meta::move(other)};
         first_     = tmp.first_;
         node_size_ = tmp.node_size_;
         capacity_  = tmp.capacity_;
@@ -140,7 +140,7 @@ private:
 
 // Stores free blocks for a memory pool, memory blocks are fragmented and stored in a list. Keeps
 // the nodes ordered this allows array allocations, that is, consecutive nodes.
-struct [[nodiscard]] ordered_free_memory_list final {
+struct [[nodiscard]] ordered_free_list final {
     using byte_type      = std::byte;
     using size_type      = std::size_t;
     using iterator       = byte_type*;
@@ -153,21 +153,21 @@ struct [[nodiscard]] ordered_free_memory_list final {
         return (node_size < min_size ? min_size : node_size) * node_count;
     }
 
-    constexpr explicit ordered_free_memory_list(size_type node_size) noexcept
+    constexpr explicit ordered_free_list(size_type node_size) noexcept
             : node_size_{node_size > min_size ? node_size : min_size}, capacity_{0u},
               last_dealloc_{end_node()}, last_dealloc_prev_{begin_node()} {
         xor_set_next(begin_node(), nullptr, end_node());
         xor_set_next(end_node(), begin_node(), nullptr);
     }
 
-    constexpr ordered_free_memory_list(size_type node_size, void* memory, size_type size) noexcept
-            : ordered_free_memory_list{node_size} {
+    constexpr ordered_free_list(size_type node_size, void* memory, size_type size) noexcept
+            : ordered_free_list{node_size} {
         insert(memory, size);
     }
 
-    constexpr ~ordered_free_memory_list() = default;
+    constexpr ~ordered_free_list() = default;
 
-    constexpr ordered_free_memory_list(ordered_free_memory_list&& other) noexcept
+    constexpr ordered_free_list(ordered_free_list&& other) noexcept
             : node_size_{other.node_size_}, capacity_{detail::exchange(other.capacity_, 0u)} {
         if (!other.empty()) {
             auto* begin = xor_get_next(other.begin_node(), nullptr);
@@ -189,8 +189,8 @@ struct [[nodiscard]] ordered_free_memory_list final {
         last_dealloc_      = xor_get_next(last_dealloc_prev_, nullptr);
     }
 
-    constexpr ordered_free_memory_list& operator=(ordered_free_memory_list&& other) noexcept {
-        ordered_free_memory_list tmp{meta::move(other)};
+    constexpr ordered_free_list& operator=(ordered_free_list&& other) noexcept {
+        ordered_free_list tmp{meta::move(other)};
         node_size_         = tmp.node_size_;
         capacity_          = tmp.capacity_;
         last_dealloc_      = tmp.last_dealloc_;
@@ -254,7 +254,7 @@ struct [[nodiscard]] ordered_free_memory_list final {
         auto node_next = static_cast<iterator>(debug_fill_free(memory, node_size_, 0));
 
         auto node =
-                find_node(allocator_info{"salt::detail::ordered_free_memory_list", this}, node_next,
+                find_node(allocator_info{"salt::detail::ordered_free_list", this}, node_next,
                           {begin_node(), end_node()}, last_dealloc_, last_dealloc_prev_);
         // Links new node between prev and next
         xor_set_next(node_next, node.prev, node.next);
@@ -303,7 +303,7 @@ private:
         auto node_count = size / node_size_;
         SALT_ASSERT(node_count > 0);
 
-        auto node = find_node(allocator_info{"salt::detail::ordered_free_memory_list", this},
+        auto node = find_node(allocator_info{"salt::detail::ordered_free_list", this},
                               static_cast<iterator>(memory), {begin_node(), end_node()},
                               last_dealloc_, last_dealloc_prev_);
         xor_link_block(memory, node_size_, node_count, node);
@@ -332,11 +332,11 @@ private:
 // clang-format on
 
 #if SALT_MEMORY_DEBUG_DOUBLE_FREE
-using  node_free_list = ordered_free_memory_list;
-using array_free_list = ordered_free_memory_list;
+using  node_free_list = ordered_free_list;
+using array_free_list = ordered_free_list;
 #else
-using  node_free_list = free_memory_list;
-using array_free_list = ordered_free_memory_list;
+using  node_free_list = free_list;
+using array_free_list = ordered_free_list;
 #endif
 
 } // namespace salt::memory::detail

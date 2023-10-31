@@ -7,18 +7,18 @@
 namespace salt::memory::detail {
 
 // Simple memory stack implementation that does not support growing.
-struct [[nodiscard]] fixed_memory_stack final {
-    constexpr fixed_memory_stack() noexcept : current_{nullptr} {}
+struct [[nodiscard]] fixed_stack final {
+    constexpr fixed_stack() noexcept : current_{nullptr} {}
 
-    constexpr explicit fixed_memory_stack(void* const memory) noexcept
+    constexpr explicit fixed_stack(void* const memory) noexcept
             : current_{static_cast<std::byte*>(memory)} {}
 
-    constexpr fixed_memory_stack(fixed_memory_stack&& other) noexcept
+    constexpr fixed_stack(fixed_stack&& other) noexcept
             : current_{detail::exchange(other.current_, nullptr)} {}
 
-    constexpr ~fixed_memory_stack() = default;
+    constexpr ~fixed_stack() = default;
 
-    constexpr fixed_memory_stack& operator=(fixed_memory_stack&& other) noexcept {
+    constexpr fixed_stack& operator=(fixed_stack&& other) noexcept {
         current_ = detail::exchange(other.current_, nullptr);
         return *this;
     }

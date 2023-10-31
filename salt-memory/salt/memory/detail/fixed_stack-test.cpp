@@ -1,17 +1,17 @@
-#include <salt/memory/detail/fixed_memory_stack.hpp>
+#include <salt/memory/detail/fixed_stack.hpp>
 #include <salt/memory/static_allocator.hpp>
 
 #include <catch2/catch.hpp>
 
 using namespace salt::memory;
 
-TEST_CASE("salt::memory::detail::fixed_memory_stack", "[salt-memory/fixed_memory_stack.hpp]") {
-    detail::fixed_memory_stack stack;
+TEST_CASE("salt::memory::detail::fixed_stack", "[salt-memory/fixed_stack.hpp]") {
+    detail::fixed_stack stack;
     REQUIRE(stack.top() == nullptr);
 
     SECTION("allocate") {
         static_allocator_storage<1024> memory;
-        stack    = detail::fixed_memory_stack{&memory};
+        stack    = detail::fixed_stack{&memory};
         auto end = stack.top() + 1024;
 
         CHECK(stack.top() == reinterpret_cast<std::byte*>(&memory));
@@ -56,7 +56,7 @@ TEST_CASE("salt::memory::detail::fixed_memory_stack", "[salt-memory/fixed_memory
         static_allocator_storage<1024> memory;
         auto                           end = reinterpret_cast<std::byte*>(&memory) + 1024;
 
-        detail::fixed_memory_stack other(reinterpret_cast<std::byte*>(&memory));
+        detail::fixed_stack other(reinterpret_cast<std::byte*>(&memory));
         CHECK(other.top() == reinterpret_cast<std::byte*>(&memory));
 
         stack = salt::meta::move(other);

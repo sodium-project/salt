@@ -1,7 +1,7 @@
 #pragma once
 #include <salt/meta.hpp>
 
-#include <salt/memory/detail/fixed_memory_stack.hpp>
+#include <salt/memory/detail/fixed_stack.hpp>
 #include <salt/memory/memory_block.hpp>
 
 namespace salt::memory {
@@ -45,7 +45,7 @@ struct [[nodiscard]] static_allocator {
     }
 
 private:
-    detail::fixed_memory_stack stack_;
+    detail::fixed_stack stack_;
     std::byte const*           end_;
 };
 
