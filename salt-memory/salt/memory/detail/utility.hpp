@@ -64,11 +64,29 @@ inline void xor_exchange(void* address, std::byte* old_ptr, std::byte* new_ptr) 
     xor_set_next(address, next, new_ptr);
 }
 
+// clang-format off
 template <typename T, typename Other = T>
 constexpr T exchange(T& obj, Other&& new_value) noexcept {
     T old_value = static_cast<T&&>(obj);
     obj         = static_cast<Other&&>(new_value);
     return old_value;
+}
+// clang-format on
+
+constexpr bool less(void* a, void* b) noexcept {
+    return std::less<void*>()(a, b);
+}
+
+constexpr bool less_equal(void* a, void* b) noexcept {
+    return a == b || less(a, b);
+}
+
+constexpr bool greater(void* a, void* b) noexcept {
+    return std::greater<void*>()(a, b);
+}
+
+constexpr bool greater_equal(void* a, void* b) noexcept {
+    return a == b || greater(a, b);
 }
 
 } // namespace salt::memory::detail

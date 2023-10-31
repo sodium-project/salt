@@ -4,6 +4,7 @@ salt_static_library(memory
             "salt/memory/detail/constexpr_memcpy-test.cpp"
             "salt/memory/detail/debug_helpers-test.cpp"
             "salt/memory/detail/fixed_memory_stack-test.cpp"
+            "salt/memory/detail/free_memory_list-test.cpp"
             "salt/memory/align-test.cpp"
             "salt/memory/static_allocator-test.cpp"
             "salt/memory/uninitialized_construct-test.cpp"
