@@ -8,35 +8,35 @@ using namespace salt::memory;
 TEST_CASE("salt::memory::Memory_block_stack", "[salt-memory/memory_arena.hpp]") {
     using memory_block_stack = detail::memory_block_stack;
     memory_block_stack stack;
-    CHECK(stack.empty());
+    REQUIRE(stack.empty());
 
     static_allocator_storage<1024> memory;
 
     stack.push({&memory, 1024});
-    CHECK(!stack.empty());
+    REQUIRE(!stack.empty());
 
     auto top = stack.top();
-    CHECK(top.memory >= static_cast<void*>(&memory));
-    CHECK(top.size <= 1024);
-    CHECK(is_aligned(top.memory, max_alignment));
+    REQUIRE(top.memory >= static_cast<void*>(&memory));
+    REQUIRE(top.size <= 1024);
+    REQUIRE(is_aligned(top.memory, max_alignment));
 
     SECTION("pop") {
         auto block = stack.pop();
-        CHECK(block.size == 1024);
-        CHECK(block.memory == static_cast<void*>(&memory));
+        REQUIRE(block.size == 1024);
+        REQUIRE(block.memory == static_cast<void*>(&memory));
     }
 
     SECTION("steal_top") {
         memory_block_stack other;
 
         other.steal_top(stack);
-        CHECK(stack.empty());
-        CHECK(!other.empty());
+        REQUIRE(stack.empty());
+        REQUIRE(!other.empty());
 
         auto other_top = other.top();
-        CHECK(other_top.memory >= static_cast<void*>(&memory));
-        CHECK(other_top.size <= 1024);
-        CHECK(is_aligned(other_top.memory, max_alignment));
+        REQUIRE(other_top.memory >= static_cast<void*>(&memory));
+        REQUIRE(other_top.size <= 1024);
+        REQUIRE(is_aligned(other_top.memory, max_alignment));
     }
 
     static_allocator_storage<1024> a, b, c;
@@ -46,13 +46,13 @@ TEST_CASE("salt::memory::Memory_block_stack", "[salt-memory/memory_arena.hpp]") 
 
     SECTION("multiple pop") {
         auto block = stack.pop();
-        CHECK(block.memory == static_cast<void*>(&c));
+        REQUIRE(block.memory == static_cast<void*>(&c));
         block = stack.pop();
-        CHECK(block.memory == static_cast<void*>(&b));
+        REQUIRE(block.memory == static_cast<void*>(&b));
         block = stack.pop();
-        CHECK(block.memory == static_cast<void*>(&a));
+        REQUIRE(block.memory == static_cast<void*>(&a));
         block = stack.pop();
-        CHECK(block.memory == static_cast<void*>(&memory));
+        REQUIRE(block.memory == static_cast<void*>(&memory));
     }
 
     SECTION("multiple steal_from") {
@@ -63,32 +63,32 @@ TEST_CASE("salt::memory::Memory_block_stack", "[salt-memory/memory_arena.hpp]") 
         other.steal_top(stack);
         other.steal_top(stack);
 
-        CHECK(stack.empty());
+        REQUIRE(stack.empty());
 
         auto block = other.pop();
-        CHECK(block.memory == static_cast<void*>(&memory));
+        REQUIRE(block.memory == static_cast<void*>(&memory));
         block = other.pop();
-        CHECK(block.memory == static_cast<void*>(&a));
+        REQUIRE(block.memory == static_cast<void*>(&a));
         block = other.pop();
-        CHECK(block.memory == static_cast<void*>(&b));
+        REQUIRE(block.memory == static_cast<void*>(&b));
         block = other.pop();
-        CHECK(block.memory == static_cast<void*>(&c));
+        REQUIRE(block.memory == static_cast<void*>(&c));
     }
 
     SECTION("move") {
         memory_block_stack other = salt::meta::move(stack);
-        CHECK(stack.empty());
-        CHECK(!other.empty());
+        REQUIRE(stack.empty());
+        REQUIRE(!other.empty());
 
         auto block = other.pop();
-        CHECK(block.memory == static_cast<void*>(&c));
+        REQUIRE(block.memory == static_cast<void*>(&c));
 
         stack = salt::meta::move(other);
-        CHECK(other.empty());
-        CHECK(!stack.empty());
+        REQUIRE(other.empty());
+        REQUIRE(!stack.empty());
 
         block = stack.pop();
-        CHECK(block.memory == static_cast<void*>(&b));
+        REQUIRE(block.memory == static_cast<void*>(&b));
     }
 }
 
@@ -102,16 +102,16 @@ template <std::size_t N> struct test_block_allocator {
     explicit test_block_allocator(size_type) {}
 
     ~test_block_allocator() {
-        CHECK(i == 0u);
+        REQUIRE(i == 0u);
     }
 
     memory_block allocate_block() noexcept {
-        CHECK(i < N);
+        REQUIRE(i < N);
         return {&blocks[i++], 1024};
     }
 
     void deallocate_block(memory_block block) noexcept {
-        CHECK(static_cast<void*>(&blocks[i - 1]) == block.memory);
+        REQUIRE(static_cast<void*>(&blocks[i - 1]) == block.memory);
         --i;
     }
 
@@ -124,57 +124,57 @@ TEST_CASE("salt::memory::memory_arena_cached", "[salt-memory/memory_arena.hpp]")
     using memory_arena_cached = memory_arena<test_block_allocator<10>>;
     SECTION("basic") {
         memory_arena_cached arena(1024);
-        CHECK(arena.allocator().i == 0u);
-        CHECK(arena.size() == 0u);
-        CHECK(arena.capacity() == 0u);
+        REQUIRE(arena.allocator().i == 0u);
+        REQUIRE(arena.size() == 0u);
+        REQUIRE(arena.capacity() == 0u);
 
         [[maybe_unused]] auto block1 = arena.allocate_block();
-        CHECK(arena.allocator().i == 1u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 1u);
+        REQUIRE(arena.allocator().i == 1u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 1u);
 
         [[maybe_unused]] auto block2 = arena.allocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 2u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 2u);
+        REQUIRE(arena.capacity() == 2u);
 
         arena.deallocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 2u);
 
         [[maybe_unused]] auto block3 = arena.allocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 2u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 2u);
+        REQUIRE(arena.capacity() == 2u);
 
         arena.deallocate_block();
         arena.deallocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 0u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 0u);
+        REQUIRE(arena.capacity() == 2u);
 
         arena.shrink_to_fit();
-        CHECK(arena.allocator().i == 0u);
-        CHECK(arena.size() == 0u);
-        CHECK(arena.capacity() == 0u);
+        REQUIRE(arena.allocator().i == 0u);
+        REQUIRE(arena.size() == 0u);
+        REQUIRE(arena.capacity() == 0u);
 
         [[maybe_unused]] auto block4 = arena.allocate_block();
-        CHECK(arena.allocator().i == 1u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 1u);
+        REQUIRE(arena.allocator().i == 1u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 1u);
     }
 
     SECTION("small arena") {
         memory_arena_cached small_arena(memory_arena_cached::min_block_size(1));
-        CHECK(small_arena.allocator().i == 0u);
-        CHECK(small_arena.size() == 0u);
-        CHECK(small_arena.capacity() == 0u);
+        REQUIRE(small_arena.allocator().i == 0u);
+        REQUIRE(small_arena.size() == 0u);
+        REQUIRE(small_arena.capacity() == 0u);
 
         [[maybe_unused]] auto block1 = small_arena.allocate_block();
-        CHECK(small_arena.allocator().i == 1u);
-        CHECK(small_arena.size() == 1u);
-        CHECK(small_arena.capacity() == 1u);
+        REQUIRE(small_arena.allocator().i == 1u);
+        REQUIRE(small_arena.size() == 1u);
+        REQUIRE(small_arena.capacity() == 1u);
     }
 }
 
@@ -182,52 +182,52 @@ TEST_CASE("salt::memory::memory_arena_not_cached", "[salt-memory/memory_arena.hp
     using memory_arena_not_cached = memory_arena<test_block_allocator<10>, /* cached: */ false>;
     SECTION("basic") {
         memory_arena_not_cached arena(1024);
-        CHECK(arena.allocator().i == 0u);
-        CHECK(arena.size() == 0u);
-        CHECK(arena.capacity() == 0u);
+        REQUIRE(arena.allocator().i == 0u);
+        REQUIRE(arena.size() == 0u);
+        REQUIRE(arena.capacity() == 0u);
 
         [[maybe_unused]] auto block1 = arena.allocate_block();
-        CHECK(arena.allocator().i == 1u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 1u);
+        REQUIRE(arena.allocator().i == 1u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 1u);
 
         [[maybe_unused]] auto block2 = arena.allocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 2u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 2u);
+        REQUIRE(arena.capacity() == 2u);
 
         arena.deallocate_block();
-        CHECK(arena.allocator().i == 1u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 1u);
+        REQUIRE(arena.allocator().i == 1u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 1u);
 
         [[maybe_unused]] auto block3 = arena.allocate_block();
-        CHECK(arena.allocator().i == 2u);
-        CHECK(arena.size() == 2u);
-        CHECK(arena.capacity() == 2u);
+        REQUIRE(arena.allocator().i == 2u);
+        REQUIRE(arena.size() == 2u);
+        REQUIRE(arena.capacity() == 2u);
 
         arena.deallocate_block();
         arena.deallocate_block();
-        CHECK(arena.allocator().i == 0u);
-        CHECK(arena.size() == 0u);
-        CHECK(arena.capacity() == 0u);
+        REQUIRE(arena.allocator().i == 0u);
+        REQUIRE(arena.size() == 0u);
+        REQUIRE(arena.capacity() == 0u);
 
         [[maybe_unused]] auto block4 = arena.allocate_block();
-        CHECK(arena.allocator().i == 1u);
-        CHECK(arena.size() == 1u);
-        CHECK(arena.capacity() == 1u);
+        REQUIRE(arena.allocator().i == 1u);
+        REQUIRE(arena.size() == 1u);
+        REQUIRE(arena.capacity() == 1u);
     }
 
     SECTION("small arena") {
         memory_arena_not_cached small_arena(memory_arena_not_cached::min_block_size(1));
-        CHECK(small_arena.allocator().i == 0u);
-        CHECK(small_arena.size() == 0u);
-        CHECK(small_arena.capacity() == 0u);
+        REQUIRE(small_arena.allocator().i == 0u);
+        REQUIRE(small_arena.size() == 0u);
+        REQUIRE(small_arena.capacity() == 0u);
 
         [[maybe_unused]] auto block1 = small_arena.allocate_block();
-        CHECK(small_arena.allocator().i == 1u);
-        CHECK(small_arena.size() == 1u);
-        CHECK(small_arena.capacity() == 1u);
+        REQUIRE(small_arena.allocator().i == 1u);
+        REQUIRE(small_arena.size() == 1u);
+        REQUIRE(small_arena.capacity() == 1u);
     }
 }
 
@@ -242,9 +242,9 @@ using raw_block_allocator = growing_block_allocator<RawAllocator>;
 
 TEST_CASE("salt::memory::make_block_allocator", "[salt-memory/memory_arena.hpp]") {
     growing_block_allocator<heap_allocator> a1 = make_block_allocator<heap_allocator>(1024);
-    CHECK(a1.block_size() == 1024);
+    REQUIRE(a1.block_size() == 1024);
 
     growing_block_allocator<heap_allocator> a2 =
             make_block_allocator<raw_block_allocator, heap_allocator>(1024);
-    CHECK(a2.block_size() == 1024);
+    REQUIRE(a2.block_size() == 1024);
 }
