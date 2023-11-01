@@ -11,6 +11,9 @@
 #define SALT_HAS_ATTRIBUTE_ALWAYS_INLINE  (0)
 #define SALT_HAS_ATTRIBUTE_DLLIMPORT      (0)
 #define SALT_HAS_ATTRIBUTE_STDCALL        (0)
+#define SALT_HAS_ATTRIBUTE_MALLOC         (0)
+#define SALT_HAS_ATTRIBUTE_CONST          (0)
+#define SALT_HAS_ATTRIBUTE_NONNULL        (0)
 
 #if __has_cpp_attribute(clang::assume)
 #    undef SALT_HAS_ATTRIBUTE_ASSUME
@@ -35,6 +38,21 @@
 #if __has_cpp_attribute(gnu::stdcall) && !defined(__WINE__)
 #    undef SALT_HAS_ATTRIBUTE_STDCALL
 #    define SALT_HAS_ATTRIBUTE_STDCALL (1)
+#endif
+
+#if __has_cpp_attribute(gnu::malloc)
+#    undef SALT_HAS_ATTRIBUTE_MALLOC
+#    define SALT_HAS_ATTRIBUTE_MALLOC (1)
+#endif
+
+#if __has_cpp_attribute(gnu::const)
+#    undef SALT_HAS_ATTRIBUTE_CONST
+#    define SALT_HAS_ATTRIBUTE_CONST (1)
+#endif
+
+#if __has_cpp_attribute(gnu::returns_nonnull)
+#    undef SALT_HAS_ATTRIBUTE_NONNULL
+#    define SALT_HAS_ATTRIBUTE_NONNULL (1)
 #endif
 
 #define SALT_HAS_ATTRIBUTE(X) SALT_JOIN(SALT_HAS_ATTRIBUTE_, X)
