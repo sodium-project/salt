@@ -8,6 +8,7 @@ using remove_ref_t = std::remove_reference_t<T>;
 template <typename... T>
 using common_type = std::common_type_t<T...>;
 
+using std::bool_constant;
 using std::true_type;
 using std::false_type;
 using std::remove_cv_t;
@@ -20,6 +21,8 @@ using std::apply;
 
 template <typename T>
 inline constexpr bool is_class_v = std::is_class_v<T>;
+template <typename T>
+inline constexpr bool is_empty_v = std::is_empty_v<T>;
 
 template <typename T>
 inline constexpr bool is_lvalue_reference_v = std::is_lvalue_reference_v<T>;
