@@ -24,8 +24,8 @@ TEST_CASE("salt::memory::memory_block", "[salt-memory/memory_block.hpp]") {
         memory_block block{arr, arr + 4};
         CHECK(block.memory == arr);
         CHECK(block.size == 4);
-        CHECK(block.contains(arr + 2));
-        CHECK_FALSE(block.contains(arr + 5));
+        CHECK(block.contains(arr + 3));
+        CHECK_FALSE(block.contains(arr + 4));
     }
 }
 
