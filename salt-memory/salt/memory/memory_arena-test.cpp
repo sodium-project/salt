@@ -127,8 +127,13 @@ template <std::size_t N> struct test_block_allocator {
     }
 };
 
-struct not_cached : detail::memory_arena_cache<false> {
-    using base = detail::memory_arena_cache<false>;
+template <bool IsCached> struct arena_cache : detail::memory_arena_cache<IsCached> {
+    using base = detail::memory_arena_cache<IsCached>;
+
+    constexpr void steal(detail::memory_block_stack& used, int n = 1) noexcept {
+        return base::deallocate_block(n, used);
+    }
+
     constexpr std::size_t block_size() const noexcept {
         return base::block_size();
     }
@@ -139,9 +144,20 @@ struct not_cached : detail::memory_arena_cache<false> {
 };
 
 TEST_CASE("salt::memory::detail::memory_arena_cache", "[salt-memory/memory_arena.hpp]") {
-    not_cached cache;
-    CHECK(cache.block_size() == 0u);
-    CHECK(cache.empty());
+    using memory_block_stack = detail::memory_block_stack;
+
+    arena_cache<false> not_cached;
+    CHECK(not_cached.block_size() == 0u);
+    CHECK(not_cached.empty());
+
+    memory_block_stack             stack;
+    static_allocator_storage<1024> memory;
+    stack.push({&memory, 1024});
+
+    arena_cache<true> cached;
+    cached.steal(stack);
+    CHECK(cached.block_size() == 1008u);
+    CHECK_FALSE(cached.empty());
 }
 
 TEST_CASE("salt::memory::memory_arena_cached", "[salt-memory/memory_arena.hpp]") {
@@ -193,19 +209,19 @@ TEST_CASE("salt::memory::memory_arena_cached", "[salt-memory/memory_arena.hpp]")
         CHECK(arena.allocator().i == 1u);
         CHECK(arena.size() == 1u);
         CHECK(arena.capacity() == 1u);
-    }    
+    }
 
     SECTION("move") {
         memory_arena_cached arena(1024);
         CHECK(arena.allocator().i == 0u);
         CHECK(arena.size() == 0u);
         CHECK(arena.capacity() == 0u);
-        
+
         memory_arena_cached new_arena(salt::meta::move(arena));
         CHECK(new_arena.allocator().i == 0u);
         CHECK(new_arena.size() == 0u);
         CHECK(new_arena.capacity() == 0u);
-        
+
         memory_arena_cached other(1024);
         other = salt::meta::move(new_arena);
         CHECK(other.allocator().i == 0u);
@@ -295,21 +311,47 @@ using raw_block_allocator = growing_block_allocator<RawAllocator>;
 // clang-format on
 
 TEST_CASE("salt::memory::make_block_allocator", "[salt-memory/memory_arena.hpp]") {
-    growing_block_allocator<heap_allocator> a1 = make_block_allocator<heap_allocator>(1024);
-    CHECK(a1.block_size() == 1024);
+    test_block_allocator<10> test = make_block_allocator<test_block_allocator<10>>(1024);
+    CHECK(test.block_size() == 1024);
 
-    growing_block_allocator<heap_allocator> a2 =
-            make_block_allocator<raw_block_allocator, heap_allocator>(1024);
-    CHECK(a2.block_size() == 1024);
+    SECTION("growing_block_allocator") {
+        growing_block_allocator<heap_allocator> a1 = make_block_allocator<heap_allocator>(1024);
+        CHECK(a1.block_size() == 1024);
+        CHECK(sizeof(a1.allocator()) == 1);
+
+        auto block = a1.allocate_block();
+        CHECK(block.memory != nullptr);
+        CHECK(block.size == 1024);
+        a1.deallocate_block(block);
+
+        CHECK(growing_block_allocator<heap_allocator>::growth_factor() == 2.0f);
+        CHECK(growing_block_allocator<heap_allocator>::new_block_size(a1.block_size()) == 4096u);
+
+        growing_block_allocator<heap_allocator> a2 =
+                make_block_allocator<raw_block_allocator, heap_allocator>(1024);
+        CHECK(a2.block_size() == 1024);
+    }
+
+    SECTION("fixed_block_allocator") {
+        fixed_block_allocator<heap_allocator> fa =
+                make_block_allocator<fixed_block_allocator, heap_allocator>(1024);
+        CHECK(fa.block_size() == 1024);
+        CHECK(sizeof(fa.allocator()) == 1);
+
+        auto block = fa.allocate_block();
+        CHECK(block.memory != nullptr);
+        CHECK(block.size == 1024);
+        fa.deallocate_block(block);
+    }
 }
 
 TEST_CASE("salt::memory::literals", "[salt-memory/memory_arena.hpp]") {
     using namespace literals;
 
     CHECK(1_KiB == 1024u);
-    CHECK(1_KB  == 1000u);
+    CHECK(1_KB == 1000u);
     CHECK(1_MiB == 1048576u);
-    CHECK(1_MB  == 1000000u);
+    CHECK(1_MB == 1000000u);
     CHECK(1_GiB == 1073741824u);
-    CHECK(1_GB  == 1000000000u);
+    CHECK(1_GB == 1000000000u);
 }

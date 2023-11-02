@@ -321,7 +321,7 @@ public:
         return *this;
     }
 
-    static inline auto growth_factor() noexcept {
+    static constexpr auto growth_factor() noexcept {
         static constexpr auto factor = float(Numerator) / Denominator;
         return factor;
     }
@@ -355,7 +355,7 @@ public:
             : allocator_type{meta::move(allocator)}, block_size_{block_size} {}
 
     constexpr memory_block allocate_block() noexcept {
-        SALT_ASSERT(!block_size_, "salt::memory::fixed_block_allocator ran out of memory.");
+        SALT_ASSERT(block_size_, "salt::memory::fixed_block_allocator ran out of memory.");
         auto memory = allocator_traits::allocate_array(allocator(), block_size_, 1, max_alignment);
         memory_block block(memory, block_size_);
         block_size_ = 0u;
@@ -391,12 +391,14 @@ using default_block_allocator = growing_block_allocator<RawAllocator>;
 
 namespace detail {
 
-template <template <typename...> typename Wrapper, block_allocator Allocator, typename... Args>
+template <template <typename...> typename Wrapper, typename Allocator, typename... Args>
+    requires is_block_allocator<Allocator>
 constexpr auto make_block_allocator_impl(std::size_t block_size, Args&&... args) {
     return Allocator{block_size, meta::forward<Args>(args)...};
 }
 
 template <template <typename...> typename Wrapper, typename RawAllocator>
+    requires(not is_block_allocator<RawAllocator>)
 constexpr auto make_block_allocator_impl(std::size_t  block_size,
                                          RawAllocator allocator = RawAllocator()) {
     return Wrapper<RawAllocator>{block_size, meta::move(allocator)};
