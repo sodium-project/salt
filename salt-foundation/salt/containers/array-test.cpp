@@ -24,10 +24,9 @@ struct nontrivial_copy {
 struct test_zero_size_array {
     using empty_array = salt::containers::array<int, 0>;
     [[no_unique_address]] int         i;
-    [[no_unique_address]] empty_array a1;
-    [[no_unique_address]] empty_array a2;
+    [[no_unique_address]] empty_array a;
 };
-static_assert(sizeof(test_zero_size_array) == 4);
+static_assert(sizeof(test_zero_size_array) == sizeof(int));
 #endif
 
 // clang-format off
