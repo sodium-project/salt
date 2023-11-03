@@ -22,9 +22,10 @@ struct nontrivial_copy {
 
 #if __has_cpp_attribute(no_unique_address)
 struct test_zero_size_array {
-    [[no_unique_address]] int                      i;
-    [[no_unique_address]] salt::fdn::array<int, 0> a;
-    [[no_unique_address]] salt::fou::array<int, 0> a;
+    using empty_array = salt::containers::array<int, 0>;
+    [[no_unique_address]] int         i;
+    [[no_unique_address]] empty_array a1;
+    [[no_unique_address]] empty_array a2;
 };
 static_assert(sizeof(test_zero_size_array) == 4);
 #endif
