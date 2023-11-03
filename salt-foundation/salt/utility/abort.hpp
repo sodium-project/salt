@@ -3,7 +3,7 @@
 #    include <cstdlib>
 #endif
 
-namespace salt::fdn {
+namespace salt::utility {
 
 [[noreturn]] inline void abort() noexcept {
 // @see: https://llvm.org/doxygen/Compiler_8h_source.html
@@ -16,12 +16,4 @@ namespace salt::fdn {
 #endif
 }
 
-[[noreturn]] inline void unreachable() noexcept {
-#if __has_builtin(__builtin_unreachable)
-    __builtin_unreachable();
-#else
-    __assume(false);
-#endif
-}
-
-} // namespace salt::fdn
+} // namespace salt::utility

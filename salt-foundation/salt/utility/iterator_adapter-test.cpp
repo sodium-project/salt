@@ -1,5 +1,6 @@
+#include <salt/utility/iterator_adapter.hpp>
+
 #include <catch2/catch.hpp>
-#include <salt/foundation/detail/iterator_adapter.hpp>
 
 struct dummy {
     int a = 1;
@@ -14,8 +15,8 @@ struct adapter {
     }
 };
 
-TEST_CASE("salt::fdn::detail::iterator_adapter", "[salt-foundation/iterator_adapter.hpp]") {
-    using namespace salt::fdn::detail;
+TEST_CASE("salt::utility::iterator_adapter", "[salt-utility/iterator_adapter.hpp]") {
+    using namespace salt::utility;
 
     using iterator       = iterator_adapter<dummy*, adapter>;
     using const_iterator = iterator_adapter<dummy const*, adapter>;

@@ -3,7 +3,7 @@
 
 #include <compare>
 
-namespace salt::fdn::detail {
+namespace salt::algorithm::detail {
 
 template <typename T, typename U>
 constexpr auto synth_three_way(T const& t, U const& u) noexcept
@@ -26,4 +26,4 @@ constexpr auto synth_three_way(T const& t, U const& u) noexcept
 template <typename T, typename U = T>
 using synth_three_way_result = decltype(synth_three_way(meta::declval<T&>(), meta::declval<U&>()));
 
-} // namespace salt::fdn::detail
+} // namespace salt::algorithm::detail

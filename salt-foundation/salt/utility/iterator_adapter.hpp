@@ -1,19 +1,20 @@
 #pragma once
-#include <salt/memory/addressof.hpp>
 #include <salt/meta.hpp>
 
-namespace salt::fdn::detail {
+#include <salt/memory/addressof.hpp>
 
-template <meta::random_access_iterator Iterator, meta::default_constructible Adapter>
+namespace salt::utility {
+
+template <meta::random_access_iterator Iterator, typename Adapter>
 class iterator_adapter final {
-    using iterator_type   = Iterator;
-    using adapter_type    = Adapter;
+    using iterator_type = Iterator;
+    using adapter_type  = Adapter;
 
 public:
     using reference         = meta::deduce_t<Adapter(meta::deref_t<Iterator>)>;
     using value_type        = meta::remove_cvref_t<reference>;
     using pointer           = meta::add_pointer_t<value_type>;
-    using difference_type   = meta::iterator_traits<Iterator>::difference_type;
+    using difference_type   = meta::iter_diff_t<Iterator>;
     using iterator_category = meta::random_access_iterator_tag;
     using iterator_concept  = meta::contiguous_iterator_tag;
 
@@ -77,26 +78,23 @@ public:
         return {it_ - off, adapter_};
     }
 
-    // clang-format off
-    [[nodiscard]]
-    constexpr difference_type operator-(iterator_adapter const& other) const noexcept {
+    [[nodiscard]] constexpr difference_type
+    operator-(iterator_adapter const& other) const noexcept {
         return it_ - other.it_;
     }
 
-    [[nodiscard]]
-    constexpr std::strong_ordering operator<=>(iterator_adapter const& other) const noexcept {
+    [[nodiscard]] constexpr std::strong_ordering
+    operator<=>(iterator_adapter const& other) const noexcept {
         return it_ <=> other.it_;
     }
 
-    [[nodiscard]]
-    constexpr bool operator==(iterator_adapter const& other) const noexcept {
+    [[nodiscard]] constexpr bool operator==(iterator_adapter const& other) const noexcept {
         return it_ == other.it_;
     }
-    // clang-format on
 
     friend constexpr auto operator+(difference_type off, iterator_adapter const& it) noexcept {
         return iterator_adapter{it.it_ + off, it.adapter_};
     }
 };
 
-} // namespace salt::fdn::detail
+} // namespace salt::utility

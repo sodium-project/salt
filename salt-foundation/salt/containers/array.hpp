@@ -1,10 +1,11 @@
 #pragma once
-#include <salt/foundation/algorithm.hpp>
+#include <salt/algorithm.hpp>
 
 #include <cassert>
 
-namespace salt::fdn {
+namespace salt::containers {
 
+// clang-format off
 template <typename T, std::size_t Size>
 struct [[nodiscard]] array {
     using value_type      = T;
@@ -160,6 +161,7 @@ struct [[nodiscard]] array<T, 0> {
         return 0;
     }
 };
+// clang-format on
 
 // N4687 26.3.7.2 [array.cons]/2:
 //  * Requires: (is_same_v<T, U> && ...) is true. Otherwise the program is ill-formed.
@@ -169,18 +171,19 @@ array(T, Args...) -> array<meta::enforce_same_t<T, Args...>, 1 + sizeof...(Args)
 template <typename T, std::size_t Size>
 [[nodiscard]] constexpr bool operator==(array<T, Size> const& lhs,
                                         array<T, Size> const& rhs) noexcept {
-    return equal(lhs.begin(), lhs.end(), rhs.begin());
+    return algorithm::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
 template <typename T, std::size_t Size>
 [[nodiscard]] constexpr auto operator<=>(array<T, Size> const& lhs,
                                          array<T, Size> const& rhs) noexcept
-        -> detail::synth_three_way_result<T> {
-    return lexicographical_compare_three_way(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
-                                             detail::synth_three_way<T, T>);
+        -> algorithm::detail::synth_three_way_result<T> {
+    using  algorithm::detail::synth_three_way;
+    return algorithm::lexicographical_compare_three_way(
+                lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), synth_three_way<T, T>);
 }
 
 // TODO:
 //  Add begin() and end() functions for arrays.
 
-} // namespace salt::fdn
+} // namespace salt::containers

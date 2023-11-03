@@ -1,14 +1,12 @@
 #pragma once
-#include <initializer_list>
-
+#include <salt/containers/array.hpp>
 #include <salt/memory/uninitialized_construct.hpp>
 #include <salt/memory/uninitialized_storage.hpp>
+#include <salt/utility.hpp>
 
-#include <salt/foundation/array.hpp>
-#include <salt/foundation/detail/distance.hpp>
-#include <salt/foundation/detail/iterator_adapter.hpp>
+#include <initializer_list>
 
-namespace salt::fdn {
+namespace salt::containers {
 
 template <meta::object T, std::size_t Capacity>
 class [[nodiscard, clang::trivial_abi]] static_vector final {
@@ -28,7 +26,7 @@ class [[nodiscard, clang::trivial_abi]] static_vector final {
     };
 
     template <typename Iterator>
-    using iterator_adapter = detail::iterator_adapter<Iterator, mapper>;
+    using iterator_adapter = utility::iterator_adapter<Iterator, mapper>;
 
 public:
     using value_type      = T;
@@ -66,7 +64,7 @@ public:
 
     template <meta::input_iterator InputIterator>
     constexpr static_vector(InputIterator first, InputIterator last) noexcept : static_vector() {
-        check_free_space(udistance(first, last));
+        check_free_space(utility::udistance(first, last));
         auto d_begin = begin();
         auto new_end = memory::uninitialized_copy_no_overlap(first, last, d_begin);
         size_        = size_type(new_end - d_begin);
@@ -86,7 +84,7 @@ public:
     constexpr static_vector(static_vector&& other) noexcept : static_vector() {
         if constexpr (meta::relocatable<T>) {
             memory::uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
-            size_ = exchange(other.size_, 0);
+            size_ = utility::exchange(other.size_, 0u);
         } else {
             memory::uninitialized_move(other.begin(), other.end(), begin());
             size_ = other.size_;
@@ -110,7 +108,7 @@ public:
         clear();
         if constexpr (meta::relocatable<T>) {
             memory::uninitialized_relocate_no_overlap(other.begin(), other.end(), begin());
-            size_ = exchange(other.size_, 0);
+            size_ = utility::exchange(other.size_, 0u);
         } else {
             memory::uninitialized_move(other.begin(), other.end(), begin());
             size_ = other.size_;
@@ -189,7 +187,7 @@ public:
     template <meta::forward_iterator ForwardIterator>
     constexpr iterator insert(const_iterator position, ForwardIterator first,
                               ForwardIterator last) noexcept {
-        auto const count           = udistance(first, last);
+        auto const count           = utility::udistance(first, last);
         auto const insert_position = move_elements(position, count);
         memory::uninitialized_copy_no_overlap(first, last, insert_position);
         return insert_position;
@@ -314,14 +312,15 @@ public:
         if (size() != other.size())
             return false;
 
-        return equal(begin(), end(), other.begin());
+        return algorithm::equal(begin(), end(), other.begin());
     }
 
     template <size_type OtherCapacity>
     [[nodiscard]] constexpr auto
     operator<=>(static_vector<T, OtherCapacity> const& other) const noexcept {
-        return lexicographical_compare_three_way(begin(), end(), other.begin(), other.end(),
-                                                 detail::synth_three_way<T, T>);
+        using  algorithm::detail::synth_three_way;
+        return algorithm::lexicographical_compare_three_way(
+                begin(), end(), other.begin(), other.end(), synth_three_way<T, T>);
     }
 
 private:
@@ -381,4 +380,4 @@ private:
 template <typename T, typename... Args>
 static_vector(T, Args...) -> static_vector<meta::enforce_same_t<T, Args...>, 1 + sizeof...(Args)>;
 
-} // namespace salt::fdn
+} // namespace salt::containers

@@ -1,9 +1,10 @@
-#include <catch2/catch.hpp>
-#include <salt/foundation/array.hpp>
-#include <salt/foundation/detail/iterator_adapter.hpp>
 
+#include <salt/containers/array.hpp>
 #include <salt/memory/uninitialized_construct.hpp>
 #include <salt/memory/uninitialized_storage.hpp>
+#include <salt/utility.hpp>
+
+#include <catch2/catch.hpp>
 
 struct empty {};
 
@@ -23,17 +24,21 @@ struct nontrivial_copy {
 struct test_zero_size_array {
     [[no_unique_address]] int                      i;
     [[no_unique_address]] salt::fdn::array<int, 0> a;
+    [[no_unique_address]] salt::fou::array<int, 0> a;
 };
 static_assert(sizeof(test_zero_size_array) == 4);
 #endif
 
-template <typename T> constexpr void check_trivially_copyable() noexcept {
+// clang-format off
+template <typename T>
+constexpr void check_trivially_copyable() noexcept {
     using namespace salt;
-    STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 0>>);
-    STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 1>>);
-    STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 2>>);
-    STATIC_REQUIRE(meta::trivially_copyable<fdn::array<T, 3>>);
+    STATIC_REQUIRE(meta::trivially_copyable<containers::array<T, 0>>);
+    STATIC_REQUIRE(meta::trivially_copyable<containers::array<T, 1>>);
+    STATIC_REQUIRE(meta::trivially_copyable<containers::array<T, 2>>);
+    STATIC_REQUIRE(meta::trivially_copyable<containers::array<T, 3>>);
 }
+// clang-format on
 
 consteval bool uninitialized_relocate_array() noexcept {
     using namespace salt;
@@ -46,8 +51,8 @@ consteval bool uninitialized_relocate_array() noexcept {
     // clang-format on
     auto const N      = 5u;
     using storage     = memory::uninitialized_storage<dummy>;
-    using source      = fdn::array<storage, N>;
-    using destination = fdn::array<storage, N>;
+    using source      = containers::array<storage, N>;
+    using destination = containers::array<storage, N>;
 
     struct [[nodiscard]] adapter final {
         constexpr dummy& operator()(storage& value) const noexcept {
@@ -57,7 +62,7 @@ consteval bool uninitialized_relocate_array() noexcept {
             return get<dummy const&>(value);
         }
     };
-    using It = fdn::detail::iterator_adapter<typename source::iterator, adapter>;
+    using It = utility::iterator_adapter<typename source::iterator, adapter>;
 
     source      src;
     destination dest;
@@ -79,7 +84,7 @@ consteval bool uninitialized_relocate_array() noexcept {
     return constructed;
 }
 
-TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
+TEST_CASE("salt::containers::array", "[salt-containers/array.hpp]") {
 
     SECTION("relocate array") {
         STATIC_REQUIRE(uninitialized_relocate_array());
@@ -94,15 +99,15 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
 
     SECTION("only array of zero size is trivially copyable when T is not") {
         using namespace salt;
-        STATIC_REQUIRE(meta::trivially_copyable<fdn::array<nontrivial_copy, 0>>);
-        STATIC_REQUIRE_FALSE(meta::trivially_copyable<fdn::array<nontrivial_copy, 1>>);
-        STATIC_REQUIRE_FALSE(meta::trivially_copyable<fdn::array<nontrivial_copy, 2>>);
-        STATIC_REQUIRE_FALSE(meta::trivially_copyable<fdn::array<nontrivial_copy, 3>>);
+        STATIC_REQUIRE(meta::trivially_copyable<containers::array<nontrivial_copy, 0>>);
+        STATIC_REQUIRE_FALSE(meta::trivially_copyable<containers::array<nontrivial_copy, 1>>);
+        STATIC_REQUIRE_FALSE(meta::trivially_copyable<containers::array<nontrivial_copy, 2>>);
+        STATIC_REQUIRE_FALSE(meta::trivially_copyable<containers::array<nontrivial_copy, 3>>);
     }
 
     SECTION("basic functionality at compile time") {
         using namespace salt;
-        constexpr fdn::array a = {1, 2, 3};
+        constexpr containers::array a = {1, 2, 3};
         STATIC_REQUIRE_FALSE(a.empty());
         STATIC_REQUIRE(a.size() == 3);
         STATIC_REQUIRE(a.max_size() == 3);
@@ -117,7 +122,7 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
 
     SECTION("basic functionality at run time") {
         using namespace salt;
-        fdn::array a = {1, 2, 3};
+        containers::array a = {1, 2, 3};
         CHECK_FALSE(a.empty());
         CHECK(a.size() == 3);
         CHECK(a.max_size() == 3);
@@ -149,9 +154,9 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
 
     SECTION("compare") {
         using namespace salt;
-        fdn::array const a = {1, 2, 3};
-        fdn::array const b = {1, 2, 3};
-        fdn::array const c = {4, 5, 6};
+        containers::array const a = {1, 2, 3};
+        containers::array const b = {1, 2, 3};
+        containers::array const c = {4, 5, 6};
 
         CHECK_FALSE(a.empty());
         CHECK(a.size() == 3);
@@ -194,9 +199,9 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
     SECTION("lexicographical compare") {
         {
             using namespace salt;
-            constexpr fdn::array a = {'a', 'b', 'c'};
-            constexpr fdn::array b = {'a', 'b', 'c'};
-            constexpr fdn::array c = {'A', 'B', 'C'};
+            constexpr containers::array a = {'a', 'b', 'c'};
+            constexpr containers::array b = {'a', 'b', 'c'};
+            constexpr containers::array c = {'A', 'B', 'C'};
 
             STATIC_REQUIRE(a == b);
             STATIC_REQUIRE(b == a);
@@ -212,9 +217,9 @@ TEST_CASE("salt::fdn::array", "[salt-foundation/array.hpp]") {
         }
         {
             using namespace salt;
-            fdn::array a = {'a', 'b', 'c'};
-            fdn::array b = {'a', 'b', 'c'};
-            fdn::array c = {'A', 'B', 'C'};
+            containers::array a = {'a', 'b', 'c'};
+            containers::array b = {'a', 'b', 'c'};
+            containers::array c = {'A', 'B', 'C'};
             CHECK(a == b);
             CHECK(b == a);
             CHECK(c != a);
