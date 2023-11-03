@@ -18,7 +18,7 @@ ignore:
   - "**/config"
   - "**/meta"
   - "**/salt/utility"
-  - "**/memory/salt/logging"
+  - "**/salt/logging"
   - "**/memory/addressof.hpp"
   - "**/memory/construct_at.hpp"
   - "**/memory/launder.hpp"
