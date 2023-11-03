@@ -13,7 +13,6 @@ salt_static_library(memory
             "salt/memory/uninitialized_construct-test.cpp"
             "salt/memory/uninitialized_storage-test.cpp"
         SOURCE
-            "salt/memory/dummy.cpp"
             "salt/memory/debugging.cpp"
             "salt/memory/detail/debug_helpers.cpp"
         LINK

@@ -12,14 +12,22 @@ namespace salt::memory::detail {
 inline std::uintptr_t load_int(void* address) noexcept {
     SALT_ASSERT(address);
     std::uintptr_t value;
+#if __has_builtin(__builtin_memcpy)
     __builtin_memcpy(&value, address, sizeof(std::uintptr_t));
+#else
+    std::memcpy(&value, address, sizeof(std::uintptr_t));
+#endif
     return value;
 }
 
 // A store operation copies data from an integer to a pointer.
 inline void store_int(void* address, std::uintptr_t value) noexcept {
     SALT_ASSERT(address);
+#if __has_builtin(__builtin_memcpy)
     __builtin_memcpy(address, &value, sizeof(std::uintptr_t));
+#else
+    std::memcpy(address, &value, sizeof(std::uintptr_t));
+#endif
 }
 
 // clang-format off

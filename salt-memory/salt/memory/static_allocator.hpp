@@ -46,7 +46,7 @@ struct [[nodiscard]] static_allocator {
 
 private:
     detail::fixed_stack stack_;
-    std::byte const*           end_;
+    std::byte const*    end_;
 };
 
 // An allocator that allocates the blocks from a fixed size storage. Deallocations are only allowed
