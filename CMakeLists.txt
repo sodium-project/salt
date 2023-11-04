@@ -29,8 +29,6 @@ endif()
 add_subdirectory("salt-config")
 add_subdirectory("salt-core")
 add_subdirectory("salt-foundation")
-add_subdirectory("salt-logging")
-add_subdirectory("salt-memory")
 add_subdirectory("salt-meta")
 add_subdirectory("salt-platform")
 

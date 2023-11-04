@@ -14,12 +14,13 @@ comment:
 
 ignore:
   - "**/*-test.cpp"  # ignore test harness code
-  - "**/abort.hpp"
-  - "**/addressof.hpp"
-  - "**/construct_at.hpp"
-  - "**/launder.hpp"
-  - "**/debugging.cpp"
   - "**/detail"
-  - "**/meta"
-  - "**/logging"
   - "**/config"
+  - "**/meta"
+  - "**/foundation/utility"
+  - "**/foundation/logging"
+  - "**/foundation/memory/addressof.hpp"
+  - "**/foundation/memory/construct_at.hpp"
+  - "**/foundation/memory/debugging.cpp"
+  - "**/foundation/memory/launder.hpp"
+  - "**/foundation/memory/memory_block.hpp"
