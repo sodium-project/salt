@@ -2,8 +2,6 @@
 #include <salt/config.hpp>
 
 #include <cstdint>
-#include <fast_io.h>
-#include <fast_io_device.h>
 
 #if defined(__cpp_lib_source_location)
 #    include <source_location>

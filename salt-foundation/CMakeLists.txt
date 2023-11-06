@@ -12,6 +12,10 @@ salt_static_library(foundation
             "salt/foundation/containers/array-test.cpp"
             "salt/foundation/containers/static_vector-test.cpp"
 
+            # io sub-module tests
+            "salt/foundation/io/manipulators-test.cpp"
+            "salt/foundation/io/print-test.cpp"
+
             # memory sub-module tests
             "salt/foundation/memory/detail/constexpr_memcpy-test.cpp"
             "salt/foundation/memory/detail/debug_helpers-test.cpp"

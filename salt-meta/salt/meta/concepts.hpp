@@ -108,6 +108,10 @@ concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) 
 
 template <typename T>
 concept object = std::is_object_v<T>;
+template <typename T>
+concept function = std::is_function_v<T>;
+template <typename T>
+concept member_function = std::is_member_function_pointer_v<T>;
 
 template <typename T>
 concept reference = std::is_reference_v<T>;

@@ -1,5 +1,7 @@
 #pragma once
 #include <salt/meta.hpp>
+
+#include <salt/foundation/io.hpp>
 #include <salt/foundation/logging/detail/source_location.hpp>
 
 #include <cstddef>
@@ -118,12 +120,12 @@ inline auto get_local_time() noexcept {
 }
 
 #define SALT_PRINT_LOGGER_HEADER_TO(output_file)                                                   \
-    io::println(output_file, mnp::left("+", 36, '-'), mnp::left("+", 63, '-'),                     \
-                mnp::left("+", 13, '-'), mnp::left("+", 32, '-'));                                 \
-    io::println(output_file, "| ", mnp::left("Date / Time", 33), " | ", mnp::left("Location", 60), \
-                " | ", mnp::left("Level", 10), " | Message");                                      \
-    io::println(output_file, mnp::left("+", 36, '-'), mnp::left("+", 63, '-'),                     \
-                mnp::left("+", 13, '-'), mnp::left("+", 32, '-'));
+    println(output_file, left("+", 36, '-'), left("+", 63, '-'), left("+", 13, '-'),               \
+            left("+", 32, '-'));                                                                   \
+    println(output_file, "| ", left("Date / Time", 33), " | ", left("Location", 60), " | ",        \
+            left("Level", 10), " | Message");                                                      \
+    println(output_file, left("+", 36, '-'), left("+", 63, '-'), left("+", 13, '-'),               \
+            left("+", 32, '-'));
 
 // clang-format off
 template <>
@@ -137,14 +139,13 @@ struct [[maybe_unused]] dummy_logger<file_tag> final {
     constexpr void log(Type                   type,
                        meta::tuple<Args&&...> tuple_args,
                        source_location        location) noexcept {
-        using namespace fast_io;
-
-        [[maybe_unused]] fast_io::io_flush_guard guard{output_file_};
+        using namespace io;
+        [[maybe_unused]] io_flush_guard guard{output_file_};
         meta::apply(
                 [&](auto&&... args) {
-                    io::println(output_file_, type.color, "  ", mnp::left(get_local_time(), 36),
-                                mnp::left(location, 63), mnp::left(std::string_view(type), 13),
-                                meta::forward<Args>(args)..., print_color::end());
+                    println(output_file_, type.color, "  ", left(get_local_time(), 36),
+                            left(location, 63), left(std::string_view(type), 13),
+                            meta::forward<Args>(args)..., print_color::end());
                 },
                 tuple_args);
     }
@@ -153,13 +154,13 @@ struct [[maybe_unused]] dummy_logger<file_tag> final {
     friend dummy_logger<Output>& salt::log::logger() noexcept;
 
 private:
-    constexpr dummy_logger() noexcept : output_file_("log.txt", fast_io::open_mode::app) {
-        using namespace fast_io;
+    constexpr dummy_logger() noexcept : output_file_{"log.txt", io::open_mode::app} {
+        using namespace io;
         SALT_PRINT_LOGGER_HEADER_TO(output_file_)
     }
     constexpr ~dummy_logger() = default;
 
-    fast_io::obuf_file output_file_;
+    io::obuf_file output_file_;
 };
 
 template <>
@@ -173,12 +174,12 @@ struct [[maybe_unused]] dummy_logger<console_tag> final {
     constexpr void log(Type                   type,
                        meta::tuple<Args&&...> tuple_args,
                        source_location        location) noexcept {
-        using namespace fast_io;
+        using namespace io;
         meta::apply(
                 [&](auto&&... args) {
-                    io::println(fast_io::out(), type.color, mnp::left(get_local_time(), 34),
-                                location, " ", std::string_view(type), " ",
-                                meta::forward<Args>(args)..., print_color::end());
+                    println(out(), type.color, left(get_local_time(), 34),
+                            location, " ", std::string_view(type), " ",
+                            meta::forward<Args>(args)..., print_color::end());
                 },
                 tuple_args);
     }
