@@ -72,7 +72,7 @@ struct [[nodiscard]] memory_block_stack final {
     constexpr bool contains(void const* ptr) const noexcept {
         auto* address = static_cast<std::byte const*>(ptr);
         for (auto* node = head_; node; node = node->prev) {
-            auto* memory = static_cast<std::byte*>(static_cast<void*>(node));
+            auto* memory = static_cast<std::byte*>(static_cast<void*>(node)) + offset();
             if (address >= memory && address < memory + node->size)
                 return true;
         }

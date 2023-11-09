@@ -21,7 +21,7 @@ TEST_CASE("salt::memory::memory_block_stack", "[salt-memory/memory_arena.hpp]") 
     CHECK(is_aligned(top.memory, max_alignment));
 
     SECTION("contains") {
-        CHECK(stack.contains(&memory));
+        CHECK(stack.contains(top.memory));
 
         static_allocator_storage<1024> other;
         CHECK_FALSE(stack.contains(&other));

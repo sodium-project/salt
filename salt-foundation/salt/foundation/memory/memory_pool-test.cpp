@@ -6,9 +6,11 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
     using memory_pool = salt::memory::memory_pool<>;
     {
         memory_pool pool{4, memory_pool::min_block_size(4, 25)};
+        CHECK(memory_pool::min_node_size == 8u);
         CHECK(pool.node_size() >= 4u);
         CHECK(pool.capacity() >= 25 * 4u);
         CHECK(pool.size() >= 25 * 4u);
+        CHECK(pool.allocator().growth_factor() == 2.0f);
 
         SECTION("normal alloc/dealloc") {
             std::vector<void*> ptrs;
@@ -26,6 +28,26 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
             }
             CHECK(pool.capacity() == capacity);
         }
+
+        SECTION("try alloc/dealloc") {
+            std::vector<void*> ptrs;
+            auto               capacity = pool.capacity();
+            CHECK(capacity / 4 >= 25);
+            for (std::size_t i = 0u; i < 25; ++i) {
+                auto memory = pool.try_allocate_node();
+                CHECK(memory);
+                ptrs.push_back(memory);
+            }
+            CHECK_FALSE(pool.try_allocate_node());
+            CHECK(pool.capacity() >= 0u);
+
+            for (auto ptr : ptrs) {
+                CHECK(pool.try_deallocate_node(ptr));
+            }
+            CHECK_FALSE(pool.try_deallocate_node(nullptr));
+            CHECK(pool.capacity() == capacity);
+        }
+
         SECTION("multiple block alloc/dealloc") {
             std::vector<void*> ptrs;
             auto               capacity = pool.capacity();
@@ -84,8 +106,10 @@ TEST_CASE("salt::memory::memory_pool_array", "[salt-memory/memory_pool.hpp]") {
         auto* array = pool.try_allocate_array(25);
         CHECK(array);
         CHECK(pool.capacity() == 0u);
+        CHECK_FALSE(pool.try_allocate_array(5));
 
         CHECK(pool.try_deallocate_array(array, 25));
+        CHECK_FALSE(pool.try_deallocate_array(nullptr, 25));
         CHECK(pool.capacity() == capacity);
     }
 }
