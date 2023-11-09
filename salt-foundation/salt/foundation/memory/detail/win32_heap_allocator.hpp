@@ -1,5 +1,6 @@
 #pragma once
 #include <salt/foundation/memory/debugging.hpp>
+#include <salt/foundation/utility/terminate.hpp>
 
 #include <salt/platform/win32/api.hpp>
 
@@ -15,7 +16,7 @@ win32_heapalloc_common(std::size_t size, std::uint_least32_t flag) noexcept {
 
     auto* memory = win32::HeapAlloc(win32::GetProcessHeap(), flag, size);
     if (!memory) [[unlikely]]
-        __builtin_trap();
+        utility::terminate();
 
     return memory;
 }
@@ -32,7 +33,7 @@ win32_heaprealloc_common(void* address, std::size_t size, std::uint_least32_t fl
 
     auto* memory = win32::HeapReAlloc(win32::GetProcessHeap(), flag, address, size);
     if (!memory) [[unlikely]]
-        __builtin_trap();
+        utility::terminate();
 
     return memory;
 }
@@ -52,6 +53,10 @@ struct [[nodiscard]] win32_heap_allocator final {
 #endif
     static inline void* allocate(size_type size, size_type) noexcept {
         return win32_heapalloc_common(size, 0u);
+    }
+
+    static inline void* reallocate(void* memory, size_type size) noexcept {
+        return win32_heaprealloc_common(memory, size, 0u);
     }
 
     static inline void deallocate(void* memory, size_type, size_type) noexcept {

@@ -3,7 +3,9 @@
 
 #include <cstdint>
 
-#if defined(__cpp_lib_source_location)
+#define SALT_USE_STD_SOURCE_LOCATION (1)
+
+#if defined(__cpp_lib_source_location) && defined(SALT_USE_STD_SOURCE_LOCATION)
 #    include <source_location>
 #else
 #    include <salt/foundation/logging/detail/strip_path.hpp>
@@ -119,7 +121,7 @@ inline constexpr auto cur_src_loc(salt::log::detail::source_location location =
 #endif
 
 namespace salt::log {
-#if defined(__cpp_lib_source_location)
+#if defined(__cpp_lib_source_location) && defined(SALT_USE_STD_SOURCE_LOCATION)
 using source_location = std::source_location;
 #else
 using source_location = detail::source_location;

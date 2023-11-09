@@ -1,5 +1,6 @@
 #pragma once
 #include <salt/foundation/memory/debugging.hpp>
+#include <salt/foundation/utility/terminate.hpp>
 
 namespace salt::memory::detail {
 
@@ -17,9 +18,27 @@ struct [[nodiscard]] malloc_allocator final {
     [[gnu::returns_nonnull]]
 #endif
     static inline void* allocate(size_type size, size_type) noexcept {
-        auto* memory = __builtin_malloc(size);
+        void* memory = 
+#    if __has_builtin(__builtin_malloc)
+        __builtin_malloc(size);
+#    else
+        std::malloc(size);
+#    endif
         if (!memory) [[unlikely]]
-            __builtin_trap();
+            utility::terminate();
+
+        return memory;
+    }
+
+    static inline void* reallocate(void* memory, size_type size) noexcept {
+        memory = 
+#    if __has_builtin(__builtin_realloc)
+        __builtin_realloc(memory, size);
+#    else
+        std::realloc(memory, size);
+#    endif
+        if (!memory) [[unlikely]]
+            utility::terminate();
 
         return memory;
     }
@@ -28,7 +47,11 @@ struct [[nodiscard]] malloc_allocator final {
         if (!memory)
             return;
 
+#    if __has_builtin(__builtin_free)
         __builtin_free(memory);
+#    else
+        std::free(memory);
+#    endif
     }
 
     static inline size_type max_size() noexcept {

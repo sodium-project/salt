@@ -5,7 +5,7 @@
 
 using namespace salt::memory;
 
-TEST_CASE("salt::memory::Memory_block_stack", "[salt-memory/memory_arena.hpp]") {
+TEST_CASE("salt::memory::memory_block_stack", "[salt-memory/memory_arena.hpp]") {
     using memory_block_stack = detail::memory_block_stack;
     memory_block_stack stack;
     CHECK(stack.empty());
@@ -99,7 +99,8 @@ TEST_CASE("salt::memory::Memory_block_stack", "[salt-memory/memory_arena.hpp]") 
     }
 }
 
-template <std::size_t N> struct test_block_allocator {
+template <std::size_t N>
+struct test_block_allocator {
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
 
@@ -127,7 +128,8 @@ template <std::size_t N> struct test_block_allocator {
     }
 };
 
-template <bool IsCached> struct arena_cache : detail::memory_arena_cache<IsCached> {
+template <bool IsCached>
+struct arena_cache : detail::memory_arena_cache<IsCached> {
     using base = detail::memory_arena_cache<IsCached>;
 
     constexpr void steal(detail::memory_block_stack& used, int n = 1) noexcept {
