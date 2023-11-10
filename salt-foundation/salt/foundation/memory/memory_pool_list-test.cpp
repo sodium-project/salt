@@ -16,6 +16,9 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
     }
 
     SECTION("normal alloc/dealloc") {
+        CHECK_FALSE(pool.try_allocate_node(max_size + 1));
+        CHECK_FALSE(pool.try_deallocate_node(nullptr, 1));
+
         std::vector<void*> a, b;
         for (auto i = 0u; i < 5u; ++i) {
             a.push_back(pool.allocate_node(1));
@@ -36,6 +39,9 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
     }
 
     SECTION("single array alloc") {
+        CHECK_FALSE(pool.try_allocate_array(1, max_size + 1));
+        CHECK_FALSE(pool.try_deallocate_array(nullptr, 1, 1));
+
         auto memory = pool.allocate_array(4, 4);
         CHECK(memory);
         pool.deallocate_array(memory, 4, 4);
