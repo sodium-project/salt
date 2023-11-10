@@ -1,32 +1,9 @@
 #pragma once
 #include <salt/foundation/memory/align.hpp>
-#include <salt/foundation/memory/detail/debug_helpers.hpp>
-#include <salt/foundation/memory/detail/free_list.hpp>
 #include <salt/foundation/memory/memory_arena.hpp>
+#include <salt/foundation/memory/memory_pool_type.hpp>
 
 namespace salt::memory {
-
-namespace detail {
-struct [[nodiscard]] memory_pool_leak_handler {
-    inline void operator()(std::ptrdiff_t amount) noexcept {
-        get_leak_handler()({"salt::memory::memory_pool", this}, amount);
-    }
-};
-} // namespace detail
-
-// Tag type defining a memory pool optimized for nodes. It does not support array allocations that
-// great and may trigger a growth even if there is enough memory. But it is the fastest pool type.
-struct [[nodiscard]] node_pool final : meta::true_type {
-    using type = detail::node_free_list;
-};
-
-// Tag type defining a memory pool optimized for arrays. It keeps the nodes oredered inside the
-// free list and searches the list for an appropriate memory block. Array allocations are still
-// pretty slow, if the array gets big enough it can get slower than `new`. Node allocations are
-// still fast, unless there is deallocation in random order.
-struct [[nodiscard]] array_pool final : meta::true_type {
-    using type = detail::array_free_list;
-};
 
 // It uses a `memory_arena` with a given `BlockOrRawAllocator` defaulted to `growing_block_allocator`,
 // subdivides them in small nodes of given size and puts them onto a free list. Allocation and

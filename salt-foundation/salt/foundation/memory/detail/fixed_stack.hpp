@@ -2,7 +2,8 @@
 #include <salt/foundation/memory/align.hpp>
 #include <salt/foundation/memory/debugging.hpp>
 #include <salt/foundation/memory/detail/debug_helpers.hpp>
-#include <salt/foundation/memory/detail/utility.hpp>
+
+#include <salt/foundation/utility/exchange.hpp>
 
 namespace salt::memory::detail {
 
@@ -14,12 +15,12 @@ struct [[nodiscard]] fixed_stack final {
             : current_{static_cast<std::byte*>(memory)} {}
 
     constexpr fixed_stack(fixed_stack&& other) noexcept
-            : current_{detail::exchange(other.current_, nullptr)} {}
+            : current_{utility::exchange(other.current_, nullptr)} {}
 
     constexpr ~fixed_stack() = default;
 
     constexpr fixed_stack& operator=(fixed_stack&& other) noexcept {
-        current_ = detail::exchange(other.current_, nullptr);
+        current_ = utility::exchange(other.current_, nullptr);
         return *this;
     }
 

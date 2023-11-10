@@ -1,4 +1,7 @@
 #pragma once
+#include <salt/config.hpp>
+#include <salt/foundation/logging.hpp>
+
 #include <salt/foundation/memory/allocator_traits.hpp>
 #include <salt/foundation/memory/construct_at.hpp>
 #include <salt/foundation/memory/default_allocator.hpp>
@@ -21,10 +24,10 @@ struct [[nodiscard]] memory_block_stack final {
     constexpr ~memory_block_stack()         = default;
 
     constexpr memory_block_stack(memory_block_stack&& other) noexcept
-            : head_{detail::exchange(other.head_, nullptr)} {}
+            : head_{utility::exchange(other.head_, nullptr)} {}
 
     constexpr memory_block_stack& operator=(memory_block_stack&& other) noexcept {
-        head_ = detail::exchange(other.head_, nullptr);
+        head_ = utility::exchange(other.head_, nullptr);
         return *this;
     }
 

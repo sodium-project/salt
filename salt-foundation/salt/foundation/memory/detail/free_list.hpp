@@ -3,9 +3,9 @@
 #include <salt/foundation/memory/debugging.hpp>
 
 #include <salt/foundation/memory/detail/debug_helpers.hpp>
-#include <salt/foundation/memory/detail/utility.hpp>
-
 #include <salt/foundation/memory/detail/free_list_helpers.hpp>
+
+#include <salt/foundation/utility/exchange.hpp>
 
 namespace salt::memory::detail {
 
@@ -37,9 +37,9 @@ struct [[nodiscard]] free_list final {
     constexpr ~free_list() = default;
 
     constexpr free_list(free_list&& other) noexcept
-            : first_    {detail::exchange(other.first_, nullptr)},
+            : first_    {utility::exchange(other.first_, nullptr)},
               node_size_{other.node_size_},
-              capacity_ {detail::exchange(other.capacity_, 0u)} {}
+              capacity_ {utility::exchange(other.capacity_, 0u)} {}
 
     constexpr free_list& operator=(free_list&& other) noexcept {
         free_list tmp{meta::move(other)};

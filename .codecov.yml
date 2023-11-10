@@ -24,3 +24,4 @@ ignore:
   - "**/foundation/memory/debugging.cpp"
   - "**/foundation/memory/launder.hpp"
   - "**/foundation/memory/memory_block.hpp"
+  - "**/foundation/memory/memory_pool_type.hpp"

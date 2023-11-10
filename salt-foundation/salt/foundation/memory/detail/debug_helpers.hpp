@@ -1,7 +1,7 @@
 #pragma once
 #include <salt/meta.hpp>
 #include <salt/config/memory_support.hpp>
-#include <salt/foundation/memory/detail/utility.hpp>
+#include <salt/foundation/utility/exchange.hpp>
 
 #include <atomic>
 
@@ -93,7 +93,7 @@ struct [[maybe_unused]] object_leak_detector : Handler {
     constexpr object_leak_detector() noexcept : allocated_{0} {}
 
     constexpr object_leak_detector(object_leak_detector&& other) noexcept
-            : allocated_{exchange(other.allocated_, 0)} {}
+            : allocated_{utility::exchange(other.allocated_, 0)} {}
 
     constexpr ~object_leak_detector() {
         if (allocated_ != 0)

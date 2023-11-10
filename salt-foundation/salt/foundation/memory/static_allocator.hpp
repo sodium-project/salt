@@ -1,8 +1,11 @@
 #pragma once
+#include <salt/config.hpp>
 #include <salt/meta.hpp>
 
-#include <salt/foundation/memory/detail/fixed_stack.hpp>
+#include <salt/foundation/logging.hpp>
 #include <salt/foundation/memory/memory_block.hpp>
+
+#include <salt/foundation/memory/detail/fixed_stack.hpp>
 
 namespace salt::memory {
 
@@ -70,9 +73,9 @@ struct [[nodiscard]] static_block_allocator {
     }
 
     constexpr static_block_allocator(static_block_allocator&& other) noexcept
-            : current_   {detail::exchange(other.current_   , nullptr)},
-              end_       {detail::exchange(other.end_       , nullptr)},
-              block_size_{detail::exchange(other.block_size_, 0u     )} {}
+            : current_   {utility::exchange(other.current_   , nullptr)},
+              end_       {utility::exchange(other.end_       , nullptr)},
+              block_size_{utility::exchange(other.block_size_, 0u     )} {}
     // clang-format on
 
     constexpr static_block_allocator& operator=(static_block_allocator&& other) noexcept {
