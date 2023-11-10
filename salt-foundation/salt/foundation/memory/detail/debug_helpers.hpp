@@ -4,6 +4,7 @@
 #include <salt/foundation/utility/exchange.hpp>
 
 #include <atomic>
+#include <cstdint>
 
 namespace salt::memory {
 
