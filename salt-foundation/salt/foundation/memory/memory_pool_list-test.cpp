@@ -96,4 +96,14 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         CHECK(memory);
         new_pool.deallocate_node(memory, 8);
     }
+
+    SECTION("try_reserve_memory") {
+        memory_pool_list small_pool{8, 128};
+        CHECK(small_pool.max_node_size() == 8);
+        CHECK(small_pool.capacity() <= 128u);
+        CHECK(small_pool.size() >= 128u);
+
+        CHECK(small_pool.try_allocate_array(1, 4));
+        CHECK_FALSE(small_pool.try_allocate_array(16, 8));
+    }
 }

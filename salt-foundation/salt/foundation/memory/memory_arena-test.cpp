@@ -9,6 +9,7 @@ TEST_CASE("salt::memory::memory_block_stack", "[salt-memory/memory_arena.hpp]") 
     using memory_block_stack = detail::memory_block_stack;
     memory_block_stack stack;
     CHECK(stack.empty());
+    CHECK(memory_block_stack::offset() == 16);
 
     static_allocator_storage<1024> memory;
 
