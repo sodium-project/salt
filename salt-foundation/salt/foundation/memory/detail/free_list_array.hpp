@@ -41,12 +41,12 @@ struct [[nodiscard]] free_list_array final {
     constexpr ~free_list_array() = default;
 
     constexpr free_list_array(free_list_array&& other) noexcept
-            : array_{utility::exchange(other.array_, nullptr)},
-              size_ {utility::exchange(other.size_ , 0u     )} {}
+            : size_ {utility::exchange(other.size_ , 0u     )},
+              array_{utility::exchange(other.array_, nullptr)} {}
 
     constexpr free_list_array& operator=(free_list_array&& other) noexcept {
-        array_ = utility::exchange(other.array_, nullptr);
         size_  = utility::exchange(other.size_ , 0u);
+        array_ = utility::exchange(other.array_, nullptr);
         return *this;
     }
     // clang-format on

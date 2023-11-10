@@ -133,8 +133,8 @@ public:
 
     constexpr void reserve(size_type node_size, size_type capacity) noexcept {
         SALT_ASSERT(node_size <= max_node_size());
-        auto& pool = lists_[node_size];
-        reserve_memory(pool, capacity);
+        auto&                 pool  = lists_[node_size];
+        [[maybe_unused]] auto block = reserve_memory(pool, capacity);
     }
 
     constexpr size_type max_node_size() const noexcept {
@@ -155,7 +155,7 @@ public:
     }
 
     constexpr allocator_type& allocator() noexcept {
-        return arena_.get_allocator();
+        return arena_.allocator();
     }
 
 private:
@@ -177,9 +177,8 @@ private:
     }
 
     constexpr bool fill(typename pool_type::type& pool) noexcept {
-        if (auto remaining = size_type(block_end() - stack_.top())) {
-            auto offset = align_offset(stack_.top(), max_alignment);
-            if (offset < remaining) {
+        if (auto const remaining = static_cast<size_type>(block_end() - stack_.top())) {
+            if (auto const offset = align_offset(stack_.top(), max_alignment); offset < remaining) {
                 detail::debug_fill(stack_.top(), offset, debug_magic::alignment_memory);
                 pool.insert(stack_.top() + offset, remaining - offset);
                 return true;
