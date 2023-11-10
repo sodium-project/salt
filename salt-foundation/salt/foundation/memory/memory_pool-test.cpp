@@ -4,9 +4,9 @@
 
 TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
     using memory_pool = salt::memory::memory_pool<>;
+    CHECK(memory_pool::min_node_size == 8u);
     {
         memory_pool pool{4, memory_pool::min_block_size(4, 25)};
-        CHECK(memory_pool::min_node_size == 8u);
         CHECK(pool.node_size() >= 4u);
         CHECK(pool.capacity() >= 25 * 4u);
         CHECK(pool.size() >= 25 * 4u);
@@ -66,6 +66,17 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
             }
             CHECK(pool.capacity() >= capacity);
         }
+
+        SECTION("move") {
+            memory_pool new_pool{salt::meta::move(pool)};
+            CHECK(new_pool.node_size() >= 4u);
+            CHECK(new_pool.capacity() >= 25 * 4u);
+            CHECK(new_pool.size() >= 25 * 4u);
+
+            auto* ptr = new_pool.allocate_node();
+            CHECK(ptr);
+            new_pool.deallocate_node(ptr);
+        }
     }
     {
         memory_pool pool{16, memory_pool::min_block_size(16, 1)};
@@ -119,7 +130,7 @@ template <typename PoolType>
 void use_min_block_size(std::size_t node_size, std::size_t number_of_nodes) {
     using memory_pool = salt::memory::memory_pool<PoolType>;
 
-    auto min_size = memory_pool::min_block_size(node_size, number_of_nodes);
+    auto        min_size = memory_pool::min_block_size(node_size, number_of_nodes);
     memory_pool pool{node_size, min_size};
     CHECK(pool.capacity() >= node_size * number_of_nodes);
 

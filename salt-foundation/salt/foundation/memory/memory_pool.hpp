@@ -54,12 +54,12 @@ public:
     using pool_type       = PoolType;
 
     template <typename... Args>
-    constexpr memory_pool(size_type node_size, size_type block_size, Args&&... args)
+    constexpr memory_pool(size_type node_size, size_type block_size, Args&&... args) noexcept
             : arena_{block_size, meta::forward<Args>(args)...}, list_{node_size} {
         allocate_block();
     }
 
-    constexpr ~memory_pool() {}
+    constexpr ~memory_pool() = default;
 
     constexpr memory_pool(memory_pool&& other) noexcept
             : leak_detector{meta::move(other)       },

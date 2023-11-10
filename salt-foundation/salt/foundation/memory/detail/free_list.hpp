@@ -168,7 +168,7 @@ struct [[nodiscard]] ordered_free_list final {
     constexpr ~ordered_free_list() = default;
 
     constexpr ordered_free_list(ordered_free_list&& other) noexcept
-            : node_size_{other.node_size_}, capacity_{detail::exchange(other.capacity_, 0u)} {
+            : node_size_{other.node_size_}, capacity_{other.capacity_} {
         if (!other.empty()) {
             auto* begin = xor_get_next(other.begin_node(), nullptr);
             auto* end   = xor_get_next(other.end_node(), nullptr);
@@ -178,6 +178,7 @@ struct [[nodiscard]] ordered_free_list final {
             xor_exchange(end, other.end_node(), end_node());
             xor_set_next(end_node(), end, nullptr);
 
+            other.capacity_ = 0u;
             xor_set_next(other.begin_node(), nullptr, other.end_node());
             xor_set_next(other.end_node(), other.begin_node(), nullptr);
         } else {

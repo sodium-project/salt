@@ -105,14 +105,14 @@ void check_move(MemoryList& list) {
     CHECK(is_aligned(ptr, list.alignment()));
     auto capacity = list.capacity();
 
-    auto list2 = std::move(list);
+    MemoryList list2(salt::meta::move(list));
     CHECK(list.empty());
     CHECK(list.capacity() == 0u);
     CHECK(!list2.empty());
     CHECK(list2.capacity() == capacity);
 
     MemoryList list3(4);
-    list3 = std::move(list2);
+    list3 = salt::meta::move(list2);
     CHECK(list2.empty());
     CHECK(list2.capacity() == 0u);
     CHECK(!list3.empty());
@@ -138,8 +138,9 @@ void use_list_array(detail::ordered_free_list& list) {
 
         std::reverse(ptrs.begin(), ptrs.end());
 
-        for (auto p : ptrs)
+        for (auto p : ptrs) {
             list.deallocate(p, 3 * list.node_size());
+        }
         REQUIRE(list.capacity() == capacity);
         ptrs.clear();
     }
@@ -153,8 +154,9 @@ void use_list_array(detail::ordered_free_list& list) {
             ptrs.push_back(ptr);
         }
 
-        for (auto p : ptrs)
+        for (auto p : ptrs) {
             list.deallocate(p, 3 * list.node_size());
+        }
         REQUIRE(list.capacity() == capacity);
         REQUIRE(!list.empty());
         ptrs.clear();
@@ -171,8 +173,9 @@ void use_list_array(detail::ordered_free_list& list) {
 
         std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
 
-        for (auto p : ptrs)
+        for (auto p : ptrs) {
             list.deallocate(p, 3 * list.node_size());
+        }
         REQUIRE(list.capacity() == capacity);
         REQUIRE(!list.empty());
         ptrs.clear();
@@ -187,31 +190,44 @@ TEST_CASE("salt::memory::detail::free_list", "[salt-memory/free_list.hpp]") {
         REQUIRE(list.node_size() >= 4);
         REQUIRE(list.capacity() == 0u);
     }
+
     SECTION("normal insert") {
         static_allocator_storage<1024> memory;
-        detail::free_list       list(4);
+        detail::free_list              list(4);
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
+
     SECTION("uneven insert") {
         static_allocator_storage<1023> memory; // not dividable
-        detail::free_list       list(4);
+        detail::free_list              list(4);
         check_list(list, &memory, 1023);
 
         check_move(list);
     }
+
     SECTION("multiple insert") {
         static_allocator_storage<1024> a;
         static_allocator_storage<100>  b;
         static_allocator_storage<1337> c;
-        detail::free_list       list(4);
+        detail::free_list              list(4);
 
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
         check_list(list, &c, 1337);
 
         check_move(list);
+    }
+
+    SECTION("move") {
+        static_allocator_storage<1024> memory;
+        detail::free_list              list(4);
+        check_list(list, &memory, 1024);
+
+        static_allocator_storage<1024> new_memory;
+        detail::free_list new_list(salt::meta::move(list));
+        check_list(new_list, &new_memory, 1024);
     }
 }
 
@@ -224,26 +240,28 @@ TEST_CASE("salt::memory::detail::ordered_free_list", "[salt-memory/free_list.hpp
     }
 
     SECTION("normal insert") {
-        static_allocator_storage<1024>   memory;
-        detail::ordered_free_list list(4);
+        static_allocator_storage<1024> memory;
+        detail::ordered_free_list      list(4);
         check_list(list, &memory, 1024);
         use_list_array(list);
 
         check_move(list);
     }
+
     SECTION("uneven insert") {
-        static_allocator_storage<1023>   memory; // not dividable
-        detail::ordered_free_list list(4);
+        static_allocator_storage<1023> memory; // not dividable
+        detail::ordered_free_list      list(4);
         check_list(list, &memory, 1023);
         use_list_array(list);
 
         check_move(list);
     }
+
     SECTION("multiple insert") {
-        static_allocator_storage<1024>   a;
-        static_allocator_storage<100>    b;
-        static_allocator_storage<1337>   c;
-        detail::ordered_free_list list(4);
+        static_allocator_storage<1024> a;
+        static_allocator_storage<100>  b;
+        static_allocator_storage<1337> c;
+        detail::ordered_free_list      list(4);
 
         check_list(list, &a, 1024);
         use_list_array(list);
@@ -253,5 +271,17 @@ TEST_CASE("salt::memory::detail::ordered_free_list", "[salt-memory/free_list.hpp
         use_list_array(list);
 
         check_move(list);
+    }
+
+    SECTION("move") {
+        static_allocator_storage<1024> memory;
+        detail::ordered_free_list      list(4);
+        check_list(list, &memory, 1023);
+        use_list_array(list);
+
+        static_allocator_storage<1024> new_memory;
+        detail::ordered_free_list new_list(salt::meta::move(list));
+        check_list(new_list, &new_memory, 1024);
+        use_list_array(new_list);
     }
 }
