@@ -81,16 +81,13 @@ public:
         auto* memory = pool.empty() ? nullptr : pool.allocate(count * node_size);
         if (!memory) {
             auto block = reserve_memory(pool, next_capacity());
-            pool.insert(block.memory, block.size);
-
-            memory = pool.allocate(count * node_size);
-            if (!memory) {
+            if (!block) {
                 block = reserve_memory(pool, count * node_size);
-                pool.insert(block.memory, block.size);
-
-                memory = pool.allocate(count * node_size);
-                SALT_ASSERT(memory);
             }
+
+            pool.insert(block.memory, block.size);
+            memory = pool.allocate(count * node_size);
+            SALT_ASSERT(memory);
         }
         return memory;
     }
@@ -204,7 +201,9 @@ private:
             fill(pool);
             stack_ = allocate_block();
             memory = stack_.allocate(block_end(), capacity, max_alignment);
-            SALT_ASSERT(memory);
+
+            if (!memory)
+                return {};
         }
         return {memory, capacity};
     }

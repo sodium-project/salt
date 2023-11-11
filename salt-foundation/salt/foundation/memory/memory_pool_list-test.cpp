@@ -2,11 +2,6 @@
 
 #include <catch2/catch.hpp>
 
-struct dummy {
-    std::size_t arr[6];
-};
-static_assert(sizeof(dummy) == 6 * 8);
-
 TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]") {
     using memory_pool_list    = salt::memory::memory_pool_list<>;
     const auto       max_size = 16u;
@@ -94,6 +89,17 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         auto memory = new_pool.allocate_node(8);
         CHECK(memory);
         new_pool.deallocate_node(memory, 8);
+    }
+
+    SECTION("reserve_memory") {
+        memory_pool_list small_pool{8, 128};
+        CHECK(small_pool.max_node_size() == 8);
+        CHECK(small_pool.capacity() <= 128u);
+        CHECK(small_pool.size() >= 128u);
+
+        auto memory = small_pool.allocate_array(6, 8);
+        CHECK(memory);
+        //small_pool.deallocate_array(memory, 6, 8);
     }
 
     SECTION("try_reserve_memory array") {
