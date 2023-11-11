@@ -2,6 +2,11 @@
 
 #include <catch2/catch.hpp>
 
+struct dummy {
+    std::size_t arr[6];
+};
+static_assert(sizeof(dummy) == 6 * 8);
+
 TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]") {
     using memory_pool_list    = salt::memory::memory_pool_list<>;
     const auto       max_size = 16u;
@@ -16,9 +21,6 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
     }
 
     SECTION("normal alloc/dealloc") {
-        CHECK_FALSE(pool.try_allocate_node(max_size + 1));
-        CHECK_FALSE(pool.try_deallocate_node(nullptr, 1));
-
         std::vector<void*> a, b;
         for (auto i = 0u; i < 5u; ++i) {
             a.push_back(pool.allocate_node(1));
@@ -39,9 +41,6 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
     }
 
     SECTION("single array alloc") {
-        CHECK_FALSE(pool.try_allocate_array(1, max_size + 1));
-        CHECK_FALSE(pool.try_deallocate_array(nullptr, 1, 1));
-
         auto memory = pool.allocate_array(4, 4);
         CHECK(memory);
         pool.deallocate_array(memory, 4, 4);
@@ -97,13 +96,37 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         new_pool.deallocate_node(memory, 8);
     }
 
-    SECTION("try_reserve_memory") {
+    SECTION("try_reserve_memory array") {
         memory_pool_list small_pool{8, 128};
         CHECK(small_pool.max_node_size() == 8);
         CHECK(small_pool.capacity() <= 128u);
         CHECK(small_pool.size() >= 128u);
 
-        CHECK(small_pool.try_allocate_array(1, 4));
+        auto memory = small_pool.try_allocate_array(6, 8);
+        CHECK(memory);
+        CHECK_FALSE(small_pool.try_allocate_array(1, 1));
+        CHECK(small_pool.try_deallocate_array(memory, 6, 8));
+
         CHECK_FALSE(small_pool.try_allocate_array(16, 8));
+        CHECK_FALSE(small_pool.try_allocate_array(1, max_size + 1));
+        CHECK_FALSE(small_pool.try_deallocate_array(nullptr, 1, 1));
+    }
+
+    SECTION("try_reserve_memory node") {
+        memory_pool_list small_pool{8, 128};
+        CHECK(small_pool.max_node_size() == 8);
+        CHECK(small_pool.capacity() <= 128u);
+        CHECK(small_pool.size() >= 128u);
+
+        std::vector<void*> a;
+        for (auto i = 0; i < 6; ++i) {
+            auto memory = small_pool.try_allocate_node(8);
+            CHECK(memory);
+            a.push_back(memory);
+        }
+        CHECK_FALSE(small_pool.try_allocate_node(1));
+        
+        CHECK_FALSE(small_pool.try_allocate_node(max_size + 1));
+        CHECK_FALSE(small_pool.try_deallocate_node(nullptr, 1));
     }
 }

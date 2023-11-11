@@ -176,18 +176,21 @@ private:
         return static_cast<const_iterator>(block.memory) + block.size;
     }
 
-    constexpr bool fill(typename pool_type::type& pool) noexcept {
-        if (auto const remaining = static_cast<size_type>(block_end() - stack_.top())) {
-            if (auto const offset = align_offset(stack_.top(), max_alignment); offset < remaining) {
-                detail::debug_fill(stack_.top(), offset, debug_magic::alignment_memory);
-                pool.insert(stack_.top() + offset, remaining - offset);
+    constexpr bool fill(free_list& pool) noexcept {
+        auto const top = stack_.top();
+        if (auto const remaining = static_cast<size_type>(block_end() - top)) {
+            if (auto const offset = align_offset(top, max_alignment); offset < remaining) {
+                stack_.advance(offset, debug_magic::alignment_memory);
+
+                auto const size = remaining - offset;
+                pool.insert(stack_.advance_return(size, debug_magic::internal_memory), size);
                 return true;
             }
         }
         return false;
     }
 
-    constexpr void try_reserve_memory(typename pool_type::type& pool, size_type capacity) noexcept {
+    constexpr void try_reserve_memory(free_list& pool, size_type capacity) noexcept {
         auto* memory = stack_.allocate(block_end(), capacity, max_alignment);
         if (!memory)
             fill(pool);
@@ -195,8 +198,7 @@ private:
             pool.insert(memory, capacity);
     }
 
-    constexpr memory_block reserve_memory(typename pool_type::type& pool,
-                                          size_type                 capacity) noexcept {
+    constexpr memory_block reserve_memory(free_list& pool, size_type capacity) noexcept {
         auto* memory = stack_.allocate(block_end(), capacity, max_alignment);
         if (!memory) {
             fill(pool);
@@ -214,7 +216,6 @@ private:
     friend allocator_traits<memory_pool_list>;
     friend composable_traits<memory_pool_list>;
 };
-
 
 // clang-format off
 template <typename PoolType, typename BucketType, typename RawAllocator>
