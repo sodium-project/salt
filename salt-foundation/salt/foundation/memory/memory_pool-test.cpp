@@ -123,6 +123,13 @@ TEST_CASE("salt::memory::memory_pool_array", "[salt-memory/memory_pool.hpp]") {
         CHECK_FALSE(pool.try_deallocate_array(nullptr, 25));
         CHECK(pool.capacity() == capacity);
     }
+
+    SECTION("allocate_array small") {
+        memory_pool small_pool{memory_pool::min_node_size, memory_pool::min_block_size(1, 1)};
+        auto*       array = small_pool.allocate_array(3);
+        CHECK(array);
+        pool.deallocate_array(array, 3);
+    }
 }
 
 namespace {
