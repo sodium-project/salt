@@ -9,7 +9,7 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
         memory_pool pool{4, memory_pool::min_block_size(4, 25)};
         CHECK(pool.node_size() >= 4u);
         CHECK(pool.capacity() >= 25 * 4u);
-        CHECK(pool.size() >= 25 * 4u);
+        CHECK(pool.next_capacity() >= 25 * 4u);
         CHECK(pool.allocator().growth_factor() == 2.0f);
 
         SECTION("normal alloc/dealloc") {
@@ -71,7 +71,7 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
             memory_pool new_pool{salt::meta::move(pool)};
             CHECK(new_pool.node_size() >= 4u);
             CHECK(new_pool.capacity() >= 25 * 4u);
-            CHECK(new_pool.size() >= 25 * 4u);
+            CHECK(new_pool.next_capacity() >= 25 * 4u);
 
             auto* ptr = new_pool.allocate_node();
             CHECK(ptr);
@@ -82,7 +82,7 @@ TEST_CASE("salt::memory::memory_pool", "[salt-memory/memory_pool.hpp]") {
         memory_pool pool{16, memory_pool::min_block_size(16, 1)};
         CHECK(pool.node_size() == 16u);
         CHECK(pool.capacity() == 16u);
-        CHECK(pool.size() >= 16u);
+        CHECK(pool.next_capacity() >= 16u);
 
         auto* ptr = pool.allocate_node();
         CHECK(ptr);
@@ -97,7 +97,7 @@ TEST_CASE("salt::memory::memory_pool_array", "[salt-memory/memory_pool.hpp]") {
     memory_pool pool{4, memory_pool::min_block_size(4, 25)};
     CHECK(pool.node_size() >= 4u);
     CHECK(pool.capacity() >= 25 * 4u);
-    CHECK(pool.size() >= 25 * 4u);
+    CHECK(pool.next_capacity() >= 25 * 4u);
 
     SECTION("normal alloc/dealloc") {
         auto capacity = pool.capacity();

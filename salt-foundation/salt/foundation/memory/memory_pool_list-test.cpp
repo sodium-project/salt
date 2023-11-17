@@ -8,7 +8,7 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
     memory_pool_list pool{max_size, 4000};
     CHECK(pool.max_node_size() == max_size);
     CHECK(pool.capacity() <= 4000u);
-    CHECK(pool.size() >= 4000u);
+    CHECK(pool.next_capacity() >= 4000u);
     CHECK(pool.allocator().growth_factor() == 2.0f);
 
     for (auto node_size = 0u; node_size < max_size; ++node_size) {
@@ -83,7 +83,7 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         memory_pool_list new_pool{salt::meta::move(pool)};
         CHECK(new_pool.max_node_size() == max_size);
         CHECK(new_pool.capacity() <= 4000u);
-        CHECK(new_pool.size() >= 4000u);
+        CHECK(new_pool.next_capacity() >= 4000u);
 
         new_pool.reserve(8, 1);
         auto memory = new_pool.allocate_node(8);
@@ -95,7 +95,7 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         memory_pool_list small_pool{8, 128};
         CHECK(small_pool.max_node_size() == 8);
         CHECK(small_pool.capacity() <= 128u);
-        CHECK(small_pool.size() >= 128u);
+        CHECK(small_pool.next_capacity() >= 128u);
 
         auto memory = small_pool.allocate_array(6, 8);
         CHECK(memory);
@@ -106,7 +106,7 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         memory_pool_list small_pool{8, 128};
         CHECK(small_pool.max_node_size() == 8);
         CHECK(small_pool.capacity() <= 128u);
-        CHECK(small_pool.size() >= 128u);
+        CHECK(small_pool.next_capacity() >= 128u);
 
         auto memory = small_pool.try_allocate_array(6, 8);
         CHECK(memory);
@@ -122,7 +122,7 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         memory_pool_list small_pool{8, 128};
         CHECK(small_pool.max_node_size() == 8);
         CHECK(small_pool.capacity() <= 128u);
-        CHECK(small_pool.size() >= 128u);
+        CHECK(small_pool.next_capacity() >= 128u);
 
         std::vector<void*> a;
         for (auto i = 0; i < 6; ++i) {

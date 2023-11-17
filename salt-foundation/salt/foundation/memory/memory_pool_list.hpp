@@ -55,7 +55,7 @@ public:
     constexpr void* allocate_node(size_type node_size) noexcept {
         auto& pool = lists_[node_size];
         if (pool.empty()) {
-            auto block = reserve_memory(pool, next_capacity());
+            auto block = reserve_memory(pool, block_size());
             pool.insert(block.memory, block.size);
         }
 
@@ -70,7 +70,7 @@ public:
 
         auto& pool = lists_[node_size];
         if (pool.empty()) {
-            try_reserve_memory(pool, next_capacity());
+            try_reserve_memory(pool, block_size());
             return pool.empty() ? nullptr : pool.allocate();
         }
         return pool.allocate();
@@ -80,7 +80,7 @@ public:
         auto& pool   = lists_[node_size];
         auto* memory = pool.empty() ? nullptr : pool.allocate(count * node_size);
         if (!memory) {
-            auto block = reserve_memory(pool, next_capacity());
+            auto block = reserve_memory(pool, block_size());
             if (!block) {
                 block = reserve_memory(pool, count * node_size);
             }
@@ -98,7 +98,7 @@ public:
 
         auto& pool = lists_[node_size];
         if (pool.empty()) {
-            try_reserve_memory(pool, next_capacity());
+            try_reserve_memory(pool, block_size());
             return pool.empty() ? nullptr : pool.allocate(count * node_size);
         }
         return pool.allocate(count * node_size);
@@ -134,21 +134,28 @@ public:
         [[maybe_unused]] auto block = reserve_memory(pool, capacity);
     }
 
+    // Returns the maximum node size for which there is a free list.
     constexpr size_type max_node_size() const noexcept {
         return lists_.max_node_size();
     }
 
-    constexpr size_type size() const noexcept {
-        return arena_.next_block_size();
-    }
-
+    // Returns the amount of nodes available in the free list for nodes of given size.
+    // Array allocations may lead to a growth even if the capacity is big enough.
     constexpr size_type capacity(size_type node_size) const noexcept {
         SALT_ASSERT(node_size <= max_node_size());
         return lists_[node_size].capacity();
     }
 
+    // Returns the amount of memory available in the arena not inside the free lists.
+    // This is the size that can be inserted into the free lists without requesting more memory.
+    // Array allocations may lead to a growth even if the capacity is big enough.
     constexpr size_type capacity() const noexcept {
         return size_type(block_end() - stack_.top());
+    }
+
+    // Returns the size of the next memory block after `capacity()` arena grows.
+    constexpr size_type next_capacity() const noexcept {
+        return arena_.next_block_size();
     }
 
     constexpr allocator_type& allocator() noexcept {
@@ -160,15 +167,15 @@ private:
         return allocator_info{"salt::memory::memory_pool_list", this};
     }
 
-    constexpr auto next_capacity() const noexcept {
-        return arena_.next_block_size() / lists_.size();
+    constexpr auto block_size() const noexcept {
+        return next_capacity() / lists_.size();
     }
 
     constexpr auto allocate_block() noexcept {
         return fixed_stack{arena_.allocate_block().memory};
     }
 
-    constexpr const_iterator block_end() const noexcept {
+    constexpr auto block_end() const noexcept {
         auto block = arena_.current_block();
         return static_cast<const_iterator>(block.memory) + block.size;
     }
@@ -275,7 +282,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
     }
 
     static constexpr size_type max_array_size(allocator_type const& allocator) noexcept {
-        return allocator.size();
+        return allocator.next_capacity();
     }
 
     static constexpr size_type max_alignment(allocator_type const& allocator) noexcept {

@@ -82,16 +82,22 @@ public:
         return try_deallocate_array(ptr, count, node_size());
     }
 
+    // Returns the node size in the pool, this is either the same value as
+    // in the constructor or `min_node_size` if the value was too small.
     constexpr size_type node_size() const noexcept {
         return list_.node_size();
     }
 
-    constexpr size_type size() const noexcept {
-        return list_.usable_size(arena_.next_block_size());
-    }
-
+    // Returns the total amount of bytes remaining on the free list.
+    // Divide it by `node_size()` to get the number of nodes that can be allocated.
+    // Array allocations may lead to a growth even if the capacity_left left is big enough.
     constexpr size_type capacity() const noexcept {
         return list_.capacity() * node_size();
+    }
+
+    // Returns the size of the next memory block after the free list gets empty and the arena grows.
+    constexpr size_type next_capacity() const noexcept {
+        return list_.usable_size(arena_.next_block_size());
     }
 
     constexpr allocator_type& allocator() noexcept {
@@ -203,7 +209,7 @@ struct [[nodiscard]] allocator_traits<memory_pool<PoolType, RawAllocator>> final
     }
 
     static constexpr size_type max_array_size(allocator_type const& allocator) noexcept {
-        return allocator.size();
+        return allocator.next_capacity();
     }
 
     static constexpr size_type max_alignment(allocator_type const& allocator) noexcept {
