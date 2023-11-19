@@ -8,91 +8,121 @@ namespace salt::memory {
 namespace detail {
 
 // clang-format off
+template <typename Allocator, typename T = meta::template_parameter_t<Allocator>>
+concept has_cxx98_construct =
+    requires(Allocator allocator, T* ptr, T const& value) {
+        { allocator.construct(ptr, value) } -> meta::same_as<void>;
+    };
 template <typename Allocator, typename T = int>
-concept has_construct =
-    requires(Allocator allocator) {
-        { allocator.construct(meta::declval<T*>()) } -> meta::same_as<void>;
+concept has_cxx11_construct =
+    requires(Allocator allocator, T* ptr) {
+        { allocator.construct(ptr) } -> meta::same_as<void>;
     };
 
+template <typename Allocator, typename T = meta::template_parameter_t<Allocator>>
+concept has_cxx98_destroy =
+    requires(Allocator allocator, T* ptr) {
+        { allocator.destroy(ptr) } -> meta::same_as<void>;
+    };
 template <typename Allocator, typename T = int>
-concept has_destroy =
-    requires(Allocator allocator) {
-        { allocator.destroy(meta::declval<T*>()) } -> meta::same_as<void>;
+concept has_cxx11_destroy =
+    requires(Allocator allocator, T* ptr) {
+        { allocator.destroy(ptr) } -> meta::same_as<void>;
     };
 
 template <typename Allocator>
-concept standard_allocator =
-    not has_construct<Allocator> and
-    not has_destroy  <Allocator>;
+concept has_construct =
+    has_cxx98_construct<Allocator> or
+    has_cxx11_construct<Allocator>;
+template <typename Allocator>
+concept has_destroy =
+    has_cxx98_destroy<Allocator> or
+    has_cxx11_destroy<Allocator>;
+
+template <typename Allocator>
+concept deprecated_allocator =
+    has_construct<Allocator> and
+    has_destroy  <Allocator>;
 // clang-format on
 
 } // namespace detail
 
+// Traits variable that checks whether an `allocator` can be used as a `concept raw_allocator`.
+// It checks for deprecated `construct` and `destroy` functions, if provided, it cannot be used
+// since it would not be called.
+// Specialize it for custom `allocator` types to override this check. For example:
+// ```c++
+// template <typename T>
+// inline constexpr bool allocator_is_raw_allocator<std::allocator<T>> = true;
+// ```
 template <typename Allocator>
-concept raw_allocator = detail::standard_allocator<Allocator>;
+inline constexpr bool allocator_is_raw_allocator = not detail::deprecated_allocator<Allocator>;
+
 template <typename Allocator>
-static constexpr inline bool is_raw_allocator = raw_allocator<Allocator>;
+concept raw_allocator = allocator_is_raw_allocator<Allocator>;
+template <typename Allocator>
+inline constexpr bool is_raw_allocator = raw_allocator<Allocator>;
 
 namespace detail {
 
 // clang-format off
 template <typename Allocator>
 concept has_allocate =
-    requires(Allocator allocator, std::size_t size) {
+    requires(Allocator&& allocator, std::size_t size) {
         { allocator.allocate(size) };
     };
 
 template <typename Allocator>
 concept has_void_deallocate =
-    requires(Allocator allocator, void* ptr, std::size_t size) {
+    requires(Allocator&& allocator, void* ptr, std::size_t size) {
         { allocator.deallocate(ptr, size) };
     };
 
-template <typename Allocator>
+template <typename Allocator, typename T = meta::template_parameter_t<Allocator>>
 concept has_typed_deallocate =
-    requires(Allocator allocator, meta::template_parameter_t<Allocator>* ptr, std::size_t size) {
+    requires(Allocator&& allocator, T* ptr, std::size_t size) {
         { allocator.deallocate(ptr, size) };
     };
 
 template <typename Allocator>
 concept has_allocate_node =
-    requires(Allocator allocator, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, std::size_t size, std::size_t align) {
         { allocator.allocate_node(size, align) };
     };
 
 template <typename Allocator>
 concept has_deallocate_node =
-    requires(Allocator allocator, void* ptr, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, void* ptr, std::size_t size, std::size_t align) {
         { allocator.deallocate_node(ptr, size, align) };
     };
 
 template <typename Allocator>
 concept has_allocate_array =
-    requires(Allocator allocator, std::size_t count, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, std::size_t count, std::size_t size, std::size_t align) {
         { allocator.allocate_array(count, size, align) };
     };
 
 template <typename Allocator>
 concept has_deallocate_array =
-    requires(Allocator allocator, void* ptr, std::size_t count, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, void* ptr, std::size_t count, std::size_t size, std::size_t align) {
         { allocator.deallocate_array(ptr, count, size, align) };
     };
 
 template <typename Allocator>
 concept has_max_node_size =
-    requires(Allocator allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_node_size() } noexcept -> meta::integer;
     };
 
 template <typename Allocator>
 concept has_max_array_size =
-    requires(Allocator allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_array_size() } noexcept -> meta::integer;
     };
 
 template <typename Allocator>
 concept has_max_alignment =
-    requires(Allocator allocator) {
+    requires(Allocator&& allocator) {
         { allocator.max_alignment() } noexcept -> meta::integer;
     };
 // clang-format on
@@ -105,7 +135,7 @@ concept empty_allocator =
     meta::is_empty_v           <Allocator> and
     meta::default_constructible<Allocator>;
 template <typename Allocator>
-static constexpr inline bool is_empty_allocator = empty_allocator<Allocator>;
+inline constexpr bool is_empty_allocator = empty_allocator<Allocator>;
 
 template <typename Allocator>
 concept stateful_allocator =
@@ -113,7 +143,7 @@ concept stateful_allocator =
     requires { typename Allocator::is_stateful; } and
     Allocator::is_stateful::value == true;
 template <typename Allocator>
-static constexpr inline bool is_stateful_allocator = stateful_allocator<Allocator>;
+inline constexpr bool is_stateful_allocator = stateful_allocator<Allocator>;
 
 template <typename Allocator>
 struct [[nodiscard]] allocator_traits final {
@@ -203,25 +233,25 @@ namespace detail {
 // clang-format off
 template <typename Allocator>
 concept has_try_allocate_node =
-    requires(Allocator allocator, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, std::size_t size, std::size_t align) {
         { allocator.try_allocate_node(size, align) } noexcept;
     };
 
 template <typename Allocator>
 concept has_try_deallocate_node =
-    requires(Allocator allocator, void* ptr, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, void* ptr, std::size_t size, std::size_t align) {
         { allocator.try_deallocate_node(ptr, size, align) } noexcept;
     };
 
 template <typename Allocator>
 concept has_try_allocate_array =
-    requires(Allocator allocator, std::size_t count, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, std::size_t count, std::size_t size, std::size_t align) {
         { allocator.try_allocate_array(count, size, align) } noexcept;
     };
 
 template <typename Allocator>
 concept has_try_deallocate_array =
-    requires(Allocator allocator, void* ptr, std::size_t count, std::size_t size, std::size_t align) {
+    requires(Allocator&& allocator, void* ptr, std::size_t count, std::size_t size, std::size_t align) {
         { allocator.try_deallocate_array(ptr, count, size, align) } noexcept;
     };
 // clang-format on
@@ -286,7 +316,7 @@ concept composable_allocator =
     detail::has_try_allocate_node  <Allocator> and
     detail::has_try_deallocate_node<Allocator>;
 template <typename Allocator>
-static constexpr inline bool is_composable_allocator = composable_allocator<Allocator>;
+inline constexpr bool is_composable_allocator = composable_allocator<Allocator>;
 // clang-format on
 
 } // namespace salt::memory

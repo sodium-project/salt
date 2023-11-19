@@ -45,23 +45,20 @@ struct test_allocator {
     }
 
     void reset() noexcept {
-        last_valid_ = true;
+        last_valid_    = true;
+        dealloc_count_ = 0u;
     }
 
     memory_info last_allocated() const noexcept {
         return last_allocated_;
     }
 
-    size_type no_allocated() const noexcept {
+    size_type allocated_count() const noexcept {
         return allocated_.size();
     }
 
-    size_type no_deallocated() const noexcept {
+    size_type deallocated_count() const noexcept {
         return dealloc_count_;
-    }
-
-    void reset_deallocation_count() noexcept {
-        dealloc_count_ = 0u;
     }
 
 private:
@@ -73,7 +70,7 @@ private:
 };
 
 template <typename Allocator>
-void do_allocate_node(salt::memory::allocator_reference<Allocator> ref) {
+void check_allocate_node(salt::memory::allocator_reference<Allocator> ref) {
     auto* node = ref.allocate_node(sizeof(int), alignof(int));
     CHECK(node);
     CHECK(salt::memory::is_aligned(node, 4u));
@@ -85,26 +82,26 @@ static_assert(salt::memory::is_raw_allocator<std::allocator<int>>);
 TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp]") {
     using namespace salt;
 
-    // SECTION("test is_composable()") {
-    //     memory::allocator_reference<test_allocator> ref;
-    //     CHECK_FALSE(ref.is_composable());
-    // }
+    SECTION("test is_composable()") {
+        memory::allocator_reference<test_allocator> ref;
+        CHECK_FALSE(ref.is_composable());
+    }
 
-    // SECTION("test stateful reference") {
-    //     test_allocator                              allocator;
-    //     memory::allocator_reference<test_allocator> ref_stateful(allocator);
-    //     do_allocate_node(ref_stateful);
-    // }
+    SECTION("test stateful reference") {
+        test_allocator                              allocator;
+        memory::allocator_reference<test_allocator> ref_stateful(allocator);
+        check_allocate_node(ref_stateful);
+    }
 
-    // SECTION("test stateless reference") {
-    //     using allocator = salt::memory::heap_allocator;
-    //     memory::allocator_reference<allocator> ref_stateless(allocator{});
-    //     do_allocate_node(ref_stateless);
-    // }
+    SECTION("test stateless reference") {
+        using allocator = salt::memory::heap_allocator;
+        memory::allocator_reference<allocator> ref_stateless(allocator{});
+        check_allocate_node(ref_stateless);
+    }
 
     SECTION("test any allocator reference") {
         memory::any_allocator_reference any_ref{std::allocator<int>{}};
         CHECK_FALSE(any_ref.is_composable());
-        do_allocate_node(any_ref);
+        check_allocate_node(any_ref);
     }
 }

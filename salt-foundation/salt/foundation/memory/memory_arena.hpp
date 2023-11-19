@@ -12,8 +12,8 @@
 namespace salt::memory {
 
 // clang-format off
-static constexpr inline bool  enable_caching = true;
-static constexpr inline bool disable_caching = false;
+inline constexpr bool  enable_caching = true;
+inline constexpr bool disable_caching = false;
 // clang-format on
 
 namespace detail {
@@ -182,7 +182,7 @@ concept block_allocator =
         { allocator.deallocate_block(block) } noexcept;
     };
 template <typename Allocator>
-static constexpr inline bool is_block_allocator = block_allocator<Allocator>;
+inline constexpr bool is_block_allocator = block_allocator<Allocator>;
 // clang-format on
 
 // A memory arena that manages huge memory blocks for a higher-level allocator. Some allocators,

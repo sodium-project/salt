@@ -31,7 +31,7 @@ struct [[nodiscard]] no_mutex {
 template <typename RawAllocator>
 concept thread_safe_allocator = not allocator_traits<RawAllocator>::is_stateful::value;
 template <typename Allocator>
-static constexpr inline bool is_thread_safe_allocator = thread_safe_allocator<Allocator>;
+inline constexpr bool is_thread_safe_allocator = thread_safe_allocator<Allocator>;
 
 namespace detail {
 

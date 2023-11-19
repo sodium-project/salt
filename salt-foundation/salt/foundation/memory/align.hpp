@@ -8,7 +8,7 @@
 namespace salt::memory {
 
 // __STDCPP_DEFAULT_NEW_ALIGNMENT__
-constexpr inline std::size_t max_alignment = alignof(std::max_align_t);
+inline constexpr auto max_alignment = alignof(std::max_align_t);
 
 // clang-format off
 template <meta::integral I>
