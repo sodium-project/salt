@@ -4,9 +4,6 @@
 
 namespace salt::memory {
 
-template <typename T>
-struct debug_template_t;
-
 // An `allocator_storage` that stores another allocator.
 // NOTE:
 // - `StorageType` defines the allocator type being stored and how it is stored;
@@ -35,11 +32,11 @@ public:
     constexpr allocator_storage(Allocator&& allocator) noexcept
             : storage_type{meta::forward<Allocator>(allocator)} {}
 
-    template <typename OtherPolicy>
-        requires requires(allocator_storage<OtherPolicy, Mutex> const& other) {
+    template <typename OtherStorage>
+        requires requires(allocator_storage<OtherStorage, Mutex> const& other) {
             new storage_type{other.allocator()};
         }
-    constexpr allocator_storage(allocator_storage<OtherPolicy, Mutex> const& other) noexcept
+    constexpr allocator_storage(allocator_storage<OtherStorage, Mutex> const& other) noexcept
             : storage_type{other.allocator()} {}
 
     constexpr allocator_storage(allocator_storage&& other) noexcept
@@ -159,6 +156,8 @@ struct [[nodiscard]] any_allocator final {
     using difference_type = std::ptrdiff_t;
 };
 
+// A `StorageType` that stores the `allocator` directly.
+// It embeds the allocator inside it, i.e. moving the storage will move the allocator.
 template <raw_allocator RawAllocator>
     requires(not meta::same_as<RawAllocator, any_allocator>)
 struct [[nodiscard]] direct_storage : allocator_traits<RawAllocator>::allocator_type {
@@ -192,6 +191,9 @@ protected:
     }
 };
 
+// An alias template for `allocator_storage` using the `direct_storage` policy without a `mutex`.
+// It has the effect of giving any `concept raw_allocator` the interface with all member functions,
+// avoiding the need to wrap it inside the `allocator_traits`.
 template <raw_allocator RawAllocator>
 using allocator_adapter = allocator_storage<direct_storage<RawAllocator>, no_mutex>;
 
@@ -227,7 +229,7 @@ template <raw_allocator RawAllocator, typename Tag>
 struct [[nodiscard]] reference_storage_base;
 // clang-format on
 
-// Stores a pointer to an `allocator`.
+// Reference to stateful allocator: stores a pointer to `RawAllocator`.
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] reference_storage_base<RawAllocator, reference_stateful> {
 protected:
@@ -249,7 +251,7 @@ private:
     RawAllocator* allocator_;
 };
 
-// Stores `RawAllocator` in static base.
+// Reference to stateless allocator: stores `RawAllocator` statically.
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] reference_storage_base<RawAllocator, reference_stateless> {
 protected:
@@ -267,11 +269,11 @@ protected:
     }
 };
 
-// Stores `RawAllocator` directly.
+// Reference to shared allocator: stores `RawAllocator` directly.
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] reference_storage_base<RawAllocator, reference_shared> {
 protected:
-    constexpr reference_storage_base() noexcept = default;
+    constexpr reference_storage_base() noexcept : allocator_{} {}
 
     constexpr explicit reference_storage_base(RawAllocator const& allocator) noexcept
             : allocator_{allocator} {}
@@ -345,6 +347,8 @@ protected:
     }
 };
 
+// Specialization of the class template `reference_storage` that is type-erased.
+// It can store a reference to _any_ allocator type.
 template <>
 class [[nodiscard]] reference_storage<any_allocator> {
     // clang-format off
@@ -418,9 +422,6 @@ class [[nodiscard]] reference_storage<any_allocator> {
         }
 
         constexpr void* allocate_node(size_type size, size_type alignment) noexcept override {
-            //debug_template_t<decltype(allocator())>{};
-            //static_assert(detail::has_allocate_node<decltype(allocator())>);
-            //static_assert(detail::has_allocate<decltype(allocator())>);
             return allocator_traits::allocate_node(allocator(), size, alignment);
         }
 
