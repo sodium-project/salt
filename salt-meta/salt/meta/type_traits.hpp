@@ -11,6 +11,7 @@ using common_type = std::common_type_t<T...>;
 using std::bool_constant;
 using std::true_type;
 using std::false_type;
+using std::decay_t;
 using std::remove_cv_t;
 using std::remove_cvref_t;
 using std::remove_all_extents_t;
@@ -163,5 +164,16 @@ template <typename T, typename U>
 struct [[nodiscard]] is_constructible_from
         : std::bool_constant<std::is_nothrow_destructible_v<T> && std::is_constructible_v<T, U>> {
 };
+
+template <typename T>
+struct [[nodiscard]] template_parameter;
+
+template <template <typename ...> class C, typename T>
+struct [[nodiscard]] template_parameter<C<T>> final {
+    using type = T;
+};
+
+template <typename T>
+using template_parameter_t = typename template_parameter<T>::type;
 
 } // namespace salt::meta

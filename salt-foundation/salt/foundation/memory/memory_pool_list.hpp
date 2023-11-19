@@ -104,15 +104,15 @@ public:
         return pool.allocate(count * node_size);
     }
 
-    constexpr void deallocate_node(void* node, size_type node_size) noexcept {
-        lists_[node_size].deallocate(node);
+    constexpr void deallocate_node(void* ptr, size_type node_size) noexcept {
+        lists_[node_size].deallocate(ptr);
     }
 
-    constexpr bool try_deallocate_node(void* node, size_type node_size) noexcept {
-        if (node_size > max_node_size() || !arena_.contains(node))
+    constexpr bool try_deallocate_node(void* ptr, size_type node_size) noexcept {
+        if (node_size > max_node_size() || !arena_.contains(ptr))
             return false;
 
-        lists_[node_size].deallocate(node);
+        lists_[node_size].deallocate(ptr);
         return true;
     }
 

@@ -23,6 +23,7 @@ salt_static_library(foundation
             "salt/foundation/memory/detail/free_list_array-test.cpp"
             "salt/foundation/memory/detail/free_list-test.cpp"
             "salt/foundation/memory/align-test.cpp"
+            "salt/foundation/memory/allocator_storage-test.cpp"
             "salt/foundation/memory/heap_allocator-test.cpp"
             "salt/foundation/memory/memory_arena-test.cpp"
             "salt/foundation/memory/memory_pool-test.cpp"

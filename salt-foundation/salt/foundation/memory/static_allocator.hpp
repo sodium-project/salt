@@ -1,11 +1,9 @@
 #pragma once
 #include <salt/config.hpp>
-#include <salt/meta.hpp>
 
 #include <salt/foundation/logging.hpp>
-#include <salt/foundation/memory/memory_block.hpp>
-
 #include <salt/foundation/memory/detail/fixed_stack.hpp>
+#include <salt/foundation/memory/memory_block.hpp>
 
 namespace salt::memory {
 
@@ -25,8 +23,8 @@ struct [[nodiscard]] static_allocator {
 
     // clang-format off
     template <std::size_t Size> requires
-        meta::same_size     <static_allocator_storage<Size>, Size> and
-        meta::same_alignment<static_allocator_storage<Size>, max_alignment>
+        meta::same_size <static_allocator_storage<Size>, Size> and
+        meta::same_align<static_allocator_storage<Size>, max_alignment>
     constexpr explicit static_allocator(static_allocator_storage<Size>& storage) noexcept
             : stack_{&storage}, end_{stack_.top() + Size} {}
     // clang-format on
@@ -60,8 +58,8 @@ struct [[nodiscard]] static_block_allocator {
 
     // clang-format off
     template <std::size_t Size> requires
-        meta::same_size     <static_allocator_storage<Size>, Size> and
-        meta::same_alignment<static_allocator_storage<Size>, max_alignment>
+        meta::same_size <static_allocator_storage<Size>, Size> and
+        meta::same_align<static_allocator_storage<Size>, max_alignment>
     constexpr static_block_allocator(size_type                       block_size,
                                      static_allocator_storage<Size>& storage) noexcept
             : current_   {static_cast<std::byte*>(static_cast<void*>(&storage))},
@@ -90,7 +88,7 @@ struct [[nodiscard]] static_block_allocator {
         SALT_ASSERT(current_ + block_size_ <= end_,
                     "salt::memory::static_allocator ran out of memory.");
         auto memory = current_;
-        current_   += block_size_;
+        current_ += block_size_;
         return {memory, block_size_};
     }
 

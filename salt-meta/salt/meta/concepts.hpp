@@ -2,21 +2,21 @@
 
 namespace salt::meta {
 
+using std::common_reference_with;
 using std::constructible_from;
 using std::convertible_to;
-using std::integral;
-using std::same_as;
-using std::movable;
-using std::common_reference_with;
-using std::derived_from;
 using std::default_initializable;
+using std::derived_from;
+using std::integral;
+using std::movable;
 using std::predicate;
+using std::same_as;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
 
 template <typename T, std::size_t Alignment>
-concept same_alignment = requires { requires alignof(T) == Alignment; };
+concept same_align = requires { requires alignof(T) == Alignment; };
 
 template <typename... Ts>
 concept distinct = are_distinct_v<Ts...>;
@@ -135,5 +135,8 @@ concept not_volatile = std::is_volatile_v<T> and std::is_volatile_v<U>;
 
 template <typename T, typename... Args>
 concept underlying_constructible = std::conjunction_v<is_constructible_from<T, Args>...>;
+
+template <typename T, typename... Args>
+concept only_constructible = requires(Args&&... args) { new T{std::forward<Args>(args)...}; };
 
 } // namespace salt::meta

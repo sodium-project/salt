@@ -63,14 +63,14 @@ public:
         return try_allocate_array(count, node_size());
     }
 
-    constexpr void deallocate_node(void* node) noexcept {
-        list_.deallocate(node);
+    constexpr void deallocate_node(void* ptr) noexcept {
+        list_.deallocate(ptr);
     }
 
-    constexpr bool try_deallocate_node(void* node) noexcept {
-        if (!arena_.contains(node)) [[unlikely]]
+    constexpr bool try_deallocate_node(void* ptr) noexcept {
+        if (!arena_.contains(ptr)) [[unlikely]]
             return false;
-        list_.deallocate(node);
+        list_.deallocate(ptr);
         return true;
     }
 
