@@ -44,7 +44,7 @@ TEST_CASE("salt::memory::is_aligned", "[salt-memory/align.hpp]") {
 }
 
 TEST_CASE("salt::memory::alignment_for", "[salt-memory/align.hpp]") {
-    static_assert(max_alignment >= 8, "test case not working");
+    static_assert(detail::max_alignment >= 8, "test case not working");
     REQUIRE(alignment_for(1) == 1);
     REQUIRE(alignment_for(2) == 2);
     REQUIRE(alignment_for(3) == 2);
@@ -54,7 +54,7 @@ TEST_CASE("salt::memory::alignment_for", "[salt-memory/align.hpp]") {
     REQUIRE(alignment_for(7) == 4);
     REQUIRE(alignment_for(8) == 8);
     REQUIRE(alignment_for(9) == 8);
-    REQUIRE(alignment_for(100) == max_alignment);
+    REQUIRE(alignment_for(100) == detail::max_alignment);
 }
 
 TEST_CASE("salt::memory::ilog2", "[salt-memory/align.hpp]") {

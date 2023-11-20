@@ -236,7 +236,7 @@ struct [[nodiscard]] allocator_traits final {
         if constexpr (detail::has_max_alignment<allocator_type>)
             return allocator.max_alignment();
         else
-            return memory::max_alignment;
+            return detail::max_alignment;
     }
 };
 // clang-format on

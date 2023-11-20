@@ -36,8 +36,8 @@ TEST_CASE("salt::memory::detail::free_list_array", "[salt-memory/free_list_array
         CHECK(array.max_node_size() == 16u);
         CHECK(array.size() <= 5u);
 
-        CHECK(array[1].node_size() == free_list::min_size);
-        CHECK(array[2].node_size() == free_list::min_size);
+        CHECK(array[1].node_size() == free_list::min_node_size);
+        CHECK(array[2].node_size() == free_list::min_node_size);
         CHECK(array[9].node_size() == 16u);
         CHECK(array[15].node_size() == 16u);
     }

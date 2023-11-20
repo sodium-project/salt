@@ -25,13 +25,13 @@ TEST_CASE("salt::memory::detail::fixed_stack", "[salt-memory/fixed_stack.hpp]") 
             CHECK(ptr);
             CHECK(is_aligned(ptr, 2u));
 
-            ptr = stack.allocate(end, 10, max_alignment);
+            ptr = stack.allocate(end, 10, detail::max_alignment);
             CHECK(ptr);
-            CHECK(is_aligned(ptr, max_alignment));
+            CHECK(is_aligned(ptr, detail::max_alignment));
 
-            ptr = stack.allocate(end, 10, 2 * max_alignment);
+            ptr = stack.allocate(end, 10, 2 * detail::max_alignment);
             CHECK(ptr);
-            CHECK(is_aligned(ptr, 2 * max_alignment));
+            CHECK(is_aligned(ptr, 2 * detail::max_alignment));
         }
 
         SECTION("unwind") {

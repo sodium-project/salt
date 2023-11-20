@@ -183,7 +183,7 @@ private:
     constexpr bool fill(free_list& pool) noexcept {
         auto const top = stack_.top();
         if (auto const remaining = static_cast<size_type>(block_end() - top)) {
-            if (auto const offset = align_offset(top, max_alignment); offset < remaining) {
+            if (auto const offset = align_offset(top, detail::max_alignment); offset < remaining) {
                 stack_.advance(offset, debug_magic::alignment_memory);
 
                 auto const size = remaining - offset;
@@ -195,7 +195,7 @@ private:
     }
 
     constexpr void try_reserve_memory(free_list& pool, size_type capacity) noexcept {
-        auto* memory = stack_.allocate(block_end(), capacity, max_alignment);
+        auto* memory = stack_.allocate(block_end(), capacity, detail::max_alignment);
         if (!memory)
             fill(pool);
         else
@@ -203,11 +203,11 @@ private:
     }
 
     constexpr memory_block reserve_memory(free_list& pool, size_type capacity) noexcept {
-        auto* memory = stack_.allocate(block_end(), capacity, max_alignment);
+        auto* memory = stack_.allocate(block_end(), capacity, detail::max_alignment);
         if (!memory) {
             fill(pool);
             stack_ = allocate_block();
-            memory = stack_.allocate(block_end(), capacity, max_alignment);
+            memory = stack_.allocate(block_end(), capacity, detail::max_alignment);
 
             if (!memory)
                 return {};
@@ -287,7 +287,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
 
     static constexpr size_type max_alignment(allocator_type const& allocator) noexcept {
         (void)allocator;
-        return max_alignment;
+        return detail::max_alignment;
     }
 };
 // clang-format on

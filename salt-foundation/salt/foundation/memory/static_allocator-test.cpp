@@ -37,13 +37,13 @@ TEST_CASE("salt::memory::static_allocator", "[salt-memory/static_allocator.hpp]"
 
     auto* ptr = allocator.allocate_node(sizeof(char), alignof(char));
     CHECK(is_aligned(ptr, alignof(char)));
-    CHECK_FALSE(is_aligned(ptr, max_alignment));
+    CHECK_FALSE(is_aligned(ptr, detail::max_alignment));
     allocator.deallocate_node(ptr, 1, 1);
 
     std::vector<void*> nodes;
     for (std::size_t i = 0u; i < 8u; ++i) {
-        auto* node = allocator.allocate_node(i, max_alignment);
-        CHECK(is_aligned(node, max_alignment));
+        auto* node = allocator.allocate_node(i, detail::max_alignment);
+        CHECK(is_aligned(node, detail::max_alignment));
         nodes.push_back(node);
     }
 

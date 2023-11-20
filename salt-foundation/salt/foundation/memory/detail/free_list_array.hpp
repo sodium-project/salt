@@ -27,13 +27,13 @@ struct [[nodiscard]] free_list_array final {
     constexpr free_list_array(fixed_stack&   stack,
                               const_iterator begin,
                               size_type      max_node_size) noexcept
-            : size_ {access_policy::index_from_size(max_node_size) - min_size + 1},
+            : size_ {access_policy::index_from_size(max_node_size) - min_node_size + 1},
               array_{static_cast<free_list_type*>(stack.allocate(
                       begin, size_ * sizeof(free_list_type), alignof(free_list_type)))}
     {
         SALT_ASSERT(array_, "Insufficient memory for free lists.");
         for (size_type i = 0u; i < size_; ++i) {
-            auto node_size = access_policy::size_from_index(i + min_size);
+            auto node_size = access_policy::size_from_index(i + min_node_size);
             construct_at(array_ + i, node_size);
         }
     }
@@ -53,9 +53,9 @@ struct [[nodiscard]] free_list_array final {
 
     constexpr free_list_type& operator[](std::size_t node_size) const noexcept {
         auto index = access_policy::index_from_size(node_size);
-        if (index < min_size)
-            index = min_size;
-        return array_[index - min_size];
+        if (index < min_node_size)
+            index = min_node_size;
+        return array_[index - min_node_size];
     }
 
     constexpr size_type size() const noexcept {
@@ -63,12 +63,12 @@ struct [[nodiscard]] free_list_array final {
     }
 
     constexpr size_type max_node_size() const noexcept {
-        return access_policy::size_from_index(size_ + min_size - 1);
+        return access_policy::size_from_index(size_ + min_node_size - 1);
     }
 
 private:
-    static constexpr size_type min_size =
-            access_policy::index_from_size(free_list_type::min_size);
+    static constexpr size_type min_node_size =
+            access_policy::index_from_size(free_list_type::min_node_size);
 
     size_type       size_;
     free_list_type* array_;

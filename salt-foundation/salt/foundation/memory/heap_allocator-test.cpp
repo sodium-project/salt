@@ -7,7 +7,7 @@
 using namespace salt::memory;
 
 template <typename Allocator>
-void check_default_allocator(Allocator& allocator, std::size_t alignment = max_alignment) {
+void check_default_allocator(Allocator& allocator, std::size_t alignment = detail::max_alignment) {
     auto* ptr = allocator.allocate_node(1, 1);
     CHECK(is_aligned(ptr, alignment));
 

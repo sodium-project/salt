@@ -17,17 +17,11 @@ struct [[nodiscard]] free_list final {
     using iterator       = byte_type*;
     using const_iterator = byte_type const*;
 
-    static constexpr auto min_size      = sizeof(byte_type*);
+    static constexpr auto min_node_size = sizeof(byte_type*);
     static constexpr auto min_alignment = alignof(byte_type*);
 
-    static constexpr size_type min_block_size(size_type node_size, size_type node_count) noexcept {
-        return (node_size < min_size ? min_size : node_size) * node_count;
-    }
-
     constexpr explicit free_list(size_type node_size) noexcept
-            : first_    {nullptr},
-              node_size_{node_size > min_size ? node_size : min_size},
-              capacity_ {0u} {}
+            : first_{nullptr}, node_size_{min(node_size)}, capacity_{0u} {}
 
     constexpr free_list(size_type node_size, void* memory, size_type size) noexcept
             : free_list{node_size} {
@@ -38,8 +32,8 @@ struct [[nodiscard]] free_list final {
 
     constexpr free_list(free_list&& other) noexcept
             : first_    {utility::exchange(other.first_, nullptr)},
-              node_size_{other.node_size_},
-              capacity_ {utility::exchange(other.capacity_, 0u)} {}
+              node_size_{other.node_size_                        },
+              capacity_ {utility::exchange(other.capacity_, 0u)  } {}
 
     constexpr free_list& operator=(free_list&& other) noexcept {
         free_list tmp{meta::move(other)};
@@ -118,7 +112,15 @@ struct [[nodiscard]] free_list final {
         return nullptr == first_;
     }
 
+    static constexpr size_type min_block_size(size_type node_size, size_type node_count) noexcept {
+        return (node_size < min_node_size ? min_node_size : node_size) * node_count;
+    }
+
 private:
+    static constexpr size_type min(size_type node_size) noexcept {
+        return (node_size < min_node_size ? min_node_size : node_size);
+    }
+
     constexpr void insert_impl(void* memory, size_type size) noexcept {
         auto node_count = size / node_size_;
         SALT_ASSERT(node_count > 0);
@@ -144,18 +146,14 @@ struct [[nodiscard]] ordered_free_list final {
     using byte_type      = std::byte;
     using size_type      = std::size_t;
     using iterator       = byte_type*;
-    using const_iterator = byte_type const*;
+    using const_iterator = byte_type const*;    
 
-    static constexpr auto min_size      = sizeof(byte_type*);
+    static constexpr auto min_node_size = sizeof(byte_type*);
     static constexpr auto min_alignment = alignof(byte_type*);
 
-    static constexpr size_type min_block_size(size_type node_size, size_type node_count) noexcept {
-        return (node_size < min_size ? min_size : node_size) * node_count;
-    }
-
     constexpr explicit ordered_free_list(size_type node_size) noexcept
-            : node_size_{node_size > min_size ? node_size : min_size}, capacity_{0u},
-              last_dealloc_{end_node()}, last_dealloc_prev_{begin_node()} {
+            : node_size_        {min(node_size)}, capacity_         {0u          },
+              last_dealloc_     {end_node()    }, last_dealloc_prev_{begin_node()} {
         xor_set_next(begin_node(), nullptr, end_node());
         xor_set_next(end_node(), begin_node(), nullptr);
     }
@@ -299,7 +297,15 @@ struct [[nodiscard]] ordered_free_list final {
         return 0u == capacity_;
     }
 
+    static constexpr size_type min_block_size(size_type node_size, size_type node_count) noexcept {
+        return (node_size < min_node_size ? min_node_size : node_size) * node_count;
+    }
+
 private:
+    static constexpr size_type min(size_type node_size) noexcept {
+        return (node_size < min_node_size ? min_node_size : node_size);
+    }
+
     constexpr iterator insert_impl(void* memory, size_type size) noexcept {
         auto node_count = size / node_size_;
         SALT_ASSERT(node_count > 0);

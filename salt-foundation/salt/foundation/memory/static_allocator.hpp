@@ -11,7 +11,7 @@ namespace salt::memory {
 // allocation. The storage type is simply a byte array aligned for maximum alignment.
 template <std::size_t Size>
 struct [[nodiscard]] static_allocator_storage final {
-    alignas(max_alignment) std::byte storage[Size];
+    alignas(detail::max_alignment) std::byte storage[Size];
 };
 
 // A stateful `RawAllocator` that uses a fixed sized storage for the allocations.
@@ -24,7 +24,7 @@ struct [[nodiscard]] static_allocator {
     // clang-format off
     template <std::size_t Size> requires
         meta::same_size <static_allocator_storage<Size>, Size> and
-        meta::same_align<static_allocator_storage<Size>, max_alignment>
+        meta::same_align<static_allocator_storage<Size>, detail::max_alignment>
     constexpr explicit static_allocator(static_allocator_storage<Size>& storage) noexcept
             : stack_{&storage}, end_{stack_.top() + Size} {}
     // clang-format on
@@ -59,7 +59,7 @@ struct [[nodiscard]] static_block_allocator {
     // clang-format off
     template <std::size_t Size> requires
         meta::same_size <static_allocator_storage<Size>, Size> and
-        meta::same_align<static_allocator_storage<Size>, max_alignment>
+        meta::same_align<static_allocator_storage<Size>, detail::max_alignment>
     constexpr static_block_allocator(size_type                       block_size,
                                      static_allocator_storage<Size>& storage) noexcept
             : current_   {static_cast<std::byte*>(static_cast<void*>(&storage))},

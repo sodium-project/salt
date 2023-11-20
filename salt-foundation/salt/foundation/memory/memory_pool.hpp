@@ -30,6 +30,8 @@ public:
     using difference_type = typename allocator_type::difference_type;
     using pool_type       = PoolType;
 
+    static constexpr size_type min_node_size = memory_list::min_node_size;
+
     template <typename... Args>
     constexpr memory_pool(size_type node_size, size_type block_size, Args&&... args) noexcept
             : arena_{block_size, meta::forward<Args>(args)...}, list_{node_size} {
@@ -103,8 +105,6 @@ public:
     constexpr allocator_type& allocator() noexcept {
         return arena_.allocator();
     }
-
-    static constexpr size_type min_node_size = memory_list::min_size;
 
     static constexpr size_type min_block_size(size_type node_size, size_type count) noexcept {
         return memory_block_stack::offset() + memory_list::min_block_size(node_size, count);

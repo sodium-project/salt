@@ -306,14 +306,16 @@ public:
             : allocator_type{meta::move(allocator)}, block_size_{block_size} {}
 
     constexpr memory_block allocate_block() noexcept {
-        auto* memory = allocator_traits::allocate_array(allocator(), block_size_, 1, max_alignment);
+        auto*        memory = allocator_traits::allocate_array(allocator(), block_size_, 1,
+                                                               detail::max_alignment);
         memory_block block{memory, block_size_};
         block_size_ = new_block_size(block_size_);
         return block;
     }
 
     constexpr void deallocate_block(memory_block block) noexcept {
-        allocator_traits::deallocate_array(allocator(), block.memory, block.size, 1, max_alignment);
+        allocator_traits::deallocate_array(allocator(), block.memory, block.size, 1,
+                                           detail::max_alignment);
     }
 
     constexpr size_type block_size() const noexcept {
@@ -359,7 +361,8 @@ public:
 
     constexpr memory_block allocate_block() noexcept {
         SALT_ASSERT(block_size_, "salt::memory::fixed_block_allocator ran out of memory.");
-        auto memory = allocator_traits::allocate_array(allocator(), block_size_, 1, max_alignment);
+        auto         memory = allocator_traits::allocate_array(allocator(), block_size_, 1,
+                                                               detail::max_alignment);
         memory_block block(memory, block_size_);
         block_size_ = 0u;
         return block;
@@ -368,7 +371,7 @@ public:
     constexpr void deallocate_block(memory_block block) noexcept {
         // clang-format off
         detail::debug_check_pointer([&] { return block_size_ == 0u; }, info(), block.memory);
-        allocator_traits::deallocate_array(allocator(), block.memory, block.size, 1, max_alignment);
+        allocator_traits::deallocate_array(allocator(), block.memory, block.size, 1, detail::max_alignment);
         block_size_ = block.size;
         // clang-format on
     }

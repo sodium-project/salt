@@ -7,8 +7,10 @@
 
 namespace salt::memory {
 
+namespace detail {
 // __STDCPP_DEFAULT_NEW_ALIGNMENT__
 inline constexpr auto max_alignment = alignof(std::max_align_t);
+} // namespace detail
 
 // clang-format off
 template <meta::integral I>
@@ -50,7 +52,7 @@ constexpr std::size_t ilog2_ceil(std::size_t value) noexcept {
 }
 
 constexpr std::size_t alignment_for(std::size_t size) noexcept {
-    return size >= max_alignment ? max_alignment : (std::size_t{1} << ilog2(size));
+    return size >= detail::max_alignment ? detail::max_alignment : (std::size_t{1} << ilog2(size));
 }
 
 constexpr std::size_t align_offset(std::uintptr_t address, std::size_t alignment) noexcept {

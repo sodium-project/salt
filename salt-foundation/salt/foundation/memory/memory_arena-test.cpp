@@ -19,7 +19,7 @@ TEST_CASE("salt::memory::memory_block_stack", "[salt-memory/memory_arena.hpp]") 
     auto top = stack.top();
     CHECK(top.memory >= static_cast<void*>(&memory));
     CHECK(top.size <= 1024);
-    CHECK(is_aligned(top.memory, max_alignment));
+    CHECK(is_aligned(top.memory, detail::max_alignment));
 
     SECTION("contains") {
         CHECK(stack.contains(top.memory));
@@ -44,7 +44,7 @@ TEST_CASE("salt::memory::memory_block_stack", "[salt-memory/memory_arena.hpp]") 
         auto other_top = other.top();
         CHECK(other_top.memory >= static_cast<void*>(&memory));
         CHECK(other_top.size <= 1024);
-        CHECK(is_aligned(other_top.memory, max_alignment));
+        CHECK(is_aligned(other_top.memory, detail::max_alignment));
     }
 
     static_allocator_storage<1024> a, b, c;
