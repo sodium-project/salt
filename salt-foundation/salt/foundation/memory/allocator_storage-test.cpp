@@ -13,7 +13,7 @@ struct test_allocator {
     using allocator_type  = salt::memory::heap_allocator;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using is_stateful     = std::true_type;
+    using stateful        = salt::meta::true_type;
 
     void* allocate_node(size_type size, size_type alignment) noexcept {
         auto mem        = allocator_type{}.allocate_node(size, alignment);

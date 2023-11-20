@@ -53,15 +53,17 @@ concept deprecated_allocator =
 // Specialize it for custom `allocator` types to override this check. For example:
 // ```c++
 // template <typename T>
-// inline constexpr bool allocator_is_raw_allocator<std::allocator<T>> = true;
+// inline constexpr bool is_raw_allocator<std::allocator<T>> = true;
 // ```
 template <typename Allocator>
-inline constexpr bool allocator_is_raw_allocator = not detail::deprecated_allocator<Allocator>;
+inline constexpr bool is_raw_allocator = not detail::deprecated_allocator<Allocator>;
 
+// A `RawAllocator` concept is used to provide single responsibility for the `allocator`.
+// Unlike the `std::allocator<T>` it does not work on a certain type directly, thus it is
+// unable to specify things like pointer types or construction function. It's only
+// responsible for allocating and deallocating raw memory.
 template <typename Allocator>
-concept raw_allocator = allocator_is_raw_allocator<Allocator>;
-template <typename Allocator>
-inline constexpr bool is_raw_allocator = raw_allocator<Allocator>;
+concept raw_allocator = is_raw_allocator<Allocator>;
 
 namespace detail {
 
@@ -125,33 +127,44 @@ concept has_max_alignment =
     requires(Allocator&& allocator) {
         { allocator.max_alignment() } noexcept -> meta::integer;
     };
+
+template <typename Allocator>
+constexpr auto is_stateful() noexcept {
+    if constexpr (requires { typename Allocator::stateful; }) {
+        return typename Allocator::stateful{};
+    } else if constexpr (meta::empty<Allocator>) {
+        static_assert(meta::default_constructible<Allocator>,
+                      "RawAllocator is empty but not default constructible. This means it is not a "
+                      "stateless allocator. If this is actually intended provide the appropriate "
+                      "stateful type alias in your class.");
+        return std::false_type{};
+    } else {
+        return std::true_type{};
+    }
+}
+template <typename Allocator>
+using has_stateful_type = decltype(is_stateful<Allocator>());
 // clang-format on
 
 } // namespace detail
 
 // clang-format off
+// - A `stateful` allocator has some state, i.e. member variables, that need to be stored across calls.
+// - A `stateless` allocator can be constructed on-the-fly for each member function call.
 template <typename Allocator>
-concept empty_allocator =
-    meta::is_empty_v           <Allocator> and
-    meta::default_constructible<Allocator>;
-template <typename Allocator>
-inline constexpr bool is_empty_allocator = empty_allocator<Allocator>;
+struct [[nodiscard]] is_stateful_allocator : detail::has_stateful_type<Allocator> {};
 
-template <typename Allocator>
-concept stateful_allocator =
-    not empty_allocator<Allocator>                and
-    requires { typename Allocator::is_stateful; } and
-    Allocator::is_stateful::value == true;
-template <typename Allocator>
-inline constexpr bool is_stateful_allocator = stateful_allocator<Allocator>;
+// Specifies whether or not a `RawAllocator` has shared semantics. It's shared, if
+// multiple objects refer to the same internal allocator and if it can be copied.
+template <raw_allocator RawAllocator>
+struct [[nodiscard]] is_shared_allocator : meta::false_type {};
 
 template <typename Allocator>
 struct [[nodiscard]] allocator_traits final {
     using allocator_type  = Allocator;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
-    using is_stateful     = meta::condition<is_stateful_allocator<Allocator>,
-                                            meta::true_type, meta::false_type>;
+    using stateful        = is_stateful_allocator<allocator_type>;
 
     static constexpr void*
     allocate_node(allocator_type& allocator,

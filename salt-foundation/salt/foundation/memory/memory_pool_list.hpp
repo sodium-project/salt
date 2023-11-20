@@ -229,7 +229,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
     using allocator_type  = memory_pool_list<PoolType, BucketType, RawAllocator>;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
-    using is_stateful     = std::true_type;
+    using stateful        = meta::true_type;
 
     static constexpr void*
     allocate_node(allocator_type& allocator,

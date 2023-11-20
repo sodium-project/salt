@@ -20,7 +20,7 @@ public:
     using mutex_type      = storage_mutex;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using is_stateful     = typename allocator_traits::is_stateful;
+    using stateful        = typename allocator_traits::stateful;
 
     constexpr allocator_storage() noexcept = default;
 
@@ -168,7 +168,8 @@ struct [[nodiscard]] direct_storage : allocator_traits<RawAllocator>::allocator_
     constexpr direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(meta::move(allocator)) {}
 
-    constexpr direct_storage(direct_storage&& other) noexcept : allocator_type(meta::move(other)) {}
+    constexpr direct_storage(direct_storage&& other) noexcept
+            : allocator_type(meta::move(other)) {}
 
     constexpr direct_storage& operator=(direct_storage&& other) noexcept {
         allocator_type::operator=(meta::move(other));
@@ -197,13 +198,6 @@ protected:
 template <raw_allocator RawAllocator>
 using allocator_adapter = allocator_storage<direct_storage<RawAllocator>, no_mutex>;
 
-// TODO:
-//  Try to rewrite it using the concept.
-// clang-format off
-template <raw_allocator RawAllocator>
-struct [[nodiscard]] is_shared_allocator;
-// clang-format on
-
 namespace detail {
 
 struct [[nodiscard]] reference_stateful  final {};
@@ -218,9 +212,8 @@ reference_shared    reference_type(meta::true_type  stateful, meta::true_type  s
 
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] allocator_reference final {
-    using is_stateful = typename allocator_traits<RawAllocator>::is_stateful;
-    using is_shared   = is_shared_allocator<RawAllocator>;
-    using type        = decltype(reference_type(is_stateful{}, is_shared{}));
+    using type        = decltype(reference_type(meta::declval<is_stateful_allocator<RawAllocator>>(),
+                                                meta::declval<  is_shared_allocator<RawAllocator>>()));
 };
 template <raw_allocator RawAllocator>
 using allocator_reference_t = typename allocator_reference<RawAllocator>::type;
@@ -292,15 +285,6 @@ private:
 
 } // namespace detail
 
-// Specifies whether or not a `RawAllocator` has shared semantics. It's shared, if
-// multiple objects refer to the same internal allocator and if it can be copied.
-// TODO:
-//  Try to use the concepts
-// clang-format off
-template <raw_allocator RawAllocator>
-struct [[nodiscard]] is_shared_allocator : meta::false_type {};
-// clang-format on
-
 template <typename RawAllocator>
 using reference_storage_base =
         detail::reference_storage_base<typename allocator_traits<RawAllocator>::allocator_type,
@@ -322,7 +306,8 @@ public:
 
     constexpr reference_storage() noexcept = default;
 
-    constexpr explicit reference_storage(allocator_type& allocator) noexcept : base{allocator} {}
+    constexpr explicit reference_storage(allocator_type& allocator) noexcept
+            : base{allocator} {}
 
     constexpr explicit reference_storage(allocator_type const& allocator) noexcept
             : base{allocator} {}
@@ -370,7 +355,7 @@ class [[nodiscard]] reference_storage<any_allocator> {
     struct [[nodiscard]] allocator_concept : composable_allocator_concept {
         using size_type       = typename composable_allocator_concept::size_type;
         using difference_type = typename composable_allocator_concept::difference_type;
-        using is_stateful     = meta::true_type;
+        using stateful        = meta::true_type;
 
         virtual constexpr void clone(void* storage) const noexcept = 0;
 
@@ -497,8 +482,8 @@ public:
     using difference_type = typename allocator_type::difference_type;
 
     // clang-format off
-    template <raw_allocator RawAllocator> requires(
-        not meta::derived_from<meta::decay_t<RawAllocator>, reference_storage>)
+    template <raw_allocator RawAllocator>
+        requires(not meta::derived_from<meta::decay_t<RawAllocator>, reference_storage>)
     constexpr reference_storage(RawAllocator&& allocator) noexcept {
         static_assert(sizeof(wrapper<RawAllocator>) <=
                               sizeof(wrapper<default_instantiation>),
@@ -508,8 +493,8 @@ public:
                            meta::forward<meta::remove_cvref_t<RawAllocator>>  (allocator));
     }
 
-    template <raw_allocator RawAllocator> requires(
-        not allocator_traits<RawAllocator>::is_stateful::value)
+    template <raw_allocator RawAllocator>
+        requires thread_safe_allocator<RawAllocator>
     constexpr reference_storage(RawAllocator const& allocator) noexcept {
         static_assert(sizeof(wrapper<RawAllocator>) <=
                               sizeof(wrapper<default_instantiation>),

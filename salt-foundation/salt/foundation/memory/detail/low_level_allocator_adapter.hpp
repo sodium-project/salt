@@ -27,17 +27,17 @@ concept low_level_allocator =
 template <low_level_allocator Allocator>
 struct [[nodiscard]] low_level_allocator_adapter
         : global_leak_detector<low_level_allocator_leak_handler<Allocator>> {
-    using is_stateful     = meta::false_type;
-    using leak_detector   = global_leak_detector<low_level_allocator_leak_handler<Allocator>>;
     using allocator_type  = Allocator;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
+    using leak_detector   = global_leak_detector<low_level_allocator_leak_handler<Allocator>>;
+    using stateful        = meta::false_type;
 
-    low_level_allocator_adapter() noexcept = default;
-    ~low_level_allocator_adapter()         = default;
+    constexpr low_level_allocator_adapter() noexcept = default;
+    constexpr ~low_level_allocator_adapter()         = default;
 
-    low_level_allocator_adapter(low_level_allocator_adapter&&) noexcept            = default;
-    low_level_allocator_adapter& operator=(low_level_allocator_adapter&&) noexcept = default;
+    constexpr low_level_allocator_adapter(low_level_allocator_adapter&&) noexcept            = default;
+    constexpr low_level_allocator_adapter& operator=(low_level_allocator_adapter&&) noexcept = default;
 
     constexpr void* allocate_node(size_type size, size_type alignment) noexcept {
         auto actual_size = size + (debug_fence_size ? 2u * max_alignment : 0u);

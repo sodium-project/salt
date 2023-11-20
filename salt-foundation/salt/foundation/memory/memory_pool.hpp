@@ -154,7 +154,7 @@ struct [[nodiscard]] allocator_traits<memory_pool<PoolType, RawAllocator>> final
     using allocator_type  = memory_pool<PoolType, RawAllocator>;
     using size_type       = typename allocator_type::size_type;
     using difference_type = typename allocator_type::difference_type;
-    using is_stateful     = std::true_type;
+    using stateful        = meta::true_type;
 
     // clang-format off
     static constexpr void*

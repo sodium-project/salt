@@ -19,7 +19,7 @@ struct [[nodiscard]] static_allocator_storage final {
 struct [[nodiscard]] static_allocator {
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using is_stateful     = meta::true_type;
+    using stateful        = meta::true_type;
 
     // clang-format off
     template <std::size_t Size> requires

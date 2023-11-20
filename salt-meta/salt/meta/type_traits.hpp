@@ -46,14 +46,19 @@ inline constexpr bool is_contains_v = is_contains<T, Ts...>::value;
 
 namespace detail {
 
-template <bool> struct [[nodiscard]] if_;
+template <bool>
+struct [[nodiscard]] if_;
 
-template <> struct [[nodiscard]] if_<true> final {
-    template <typename T, typename F> using type = T;
+template <>
+struct [[nodiscard]] if_<true> final {
+    template <typename T, typename F>
+    using type = T;
 };
 
-template <> struct [[nodiscard]] if_<false> final {
-    template <typename T, typename F> using type = F;
+template <>
+struct [[nodiscard]] if_<false> final {
+    template <typename T, typename F>
+    using type = F;
 };
 
 } // namespace detail

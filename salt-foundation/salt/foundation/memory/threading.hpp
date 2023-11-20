@@ -29,7 +29,7 @@ struct [[nodiscard]] no_mutex {
 // clang-format on
 
 template <typename RawAllocator>
-concept thread_safe_allocator = not allocator_traits<RawAllocator>::is_stateful::value;
+concept thread_safe_allocator = not is_stateful_allocator<RawAllocator>::value;
 template <typename Allocator>
 inline constexpr bool is_thread_safe_allocator = thread_safe_allocator<Allocator>;
 

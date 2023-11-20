@@ -107,6 +107,8 @@ concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) 
 };
 
 template <typename T>
+concept empty = meta::is_empty_v<T>;
+template <typename T>
 concept object = std::is_object_v<T>;
 template <typename T>
 concept function = std::is_function_v<T>;
