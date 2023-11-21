@@ -175,6 +175,18 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
 
         check_allocate_node (any_ref);
         check_allocate_array(any_ref);
+
+        auto const size  = 1;
+        auto const align = 1;
+        auto const count = 8;
+
+        auto* p0 = any_ref.try_allocate_node(size, align);
+        CHECK_FALSE(p0);
+        CHECK_FALSE(any_ref.try_deallocate_node(p0, size, align));
+
+        auto* p1 = any_ref.try_allocate_array(count, size, align);
+        CHECK_FALSE(p1);
+        CHECK_FALSE(any_ref.try_deallocate_array(p1, count, size, align));
     }
 
     SECTION("test composable allocator reference") {
@@ -261,5 +273,39 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
         CHECK(allocator.valid());
         CHECK(allocator.allocated_count()   == 0);
         CHECK(allocator.deallocated_count() == 3);
+    }
+
+    SECTION("test shared reference") {
+        // TODO:
+        //  rewrite this test case in future.
+        using reference_shared = memory::detail::reference_shared;
+        struct shared_storage final
+            : memory::detail::reference_storage_base<stub_allocator, reference_shared>
+        {
+            using base = memory::detail::reference_storage_base<stub_allocator, reference_shared>;
+
+            constexpr shared_storage() noexcept = default;
+
+            constexpr explicit shared_storage(stub_allocator const& allocator) noexcept
+                    : base{allocator} {}
+
+            constexpr explicit operator bool() const noexcept {
+                return base::is_valid();
+            }
+
+            constexpr stub_allocator& allocator() const noexcept {
+                return base::allocator();
+            }
+        };
+
+        shared_storage ref;
+        CHECK(ref);
+
+        stub_allocator const allocator;
+        shared_storage       ref_other(allocator);
+        CHECK(ref_other);
+
+        auto& result = ref.allocator();
+        CHECK_FALSE(result.try_allocate_node(1, 1));
     }
 }
