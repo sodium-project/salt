@@ -9,15 +9,15 @@ namespace salt::memory {
 // - `StorageType` defines the allocator type being stored and how it is stored;
 // - `Mutex` controls synchronization of the access.
 template <typename StorageType, typename Mutex>
-class [[nodiscard]] allocator_storage : StorageType, storage_mutex_t<StorageType, Mutex> {
-    using storage_mutex     = storage_mutex_t<StorageType, Mutex>;
+class [[nodiscard]] allocator_storage : StorageType, mutex_adapter_t<StorageType, Mutex> {
+    using storage_mutex     = mutex_adapter_t<StorageType, Mutex> const;
     using storage_type      = StorageType;
     using allocator_traits  = allocator_traits<typename StorageType::allocator_type>;
     using composable_traits = composable_traits<typename StorageType::allocator_type>;
 
 public:
     using allocator_type  = typename StorageType::allocator_type;
-    using mutex_type      = storage_mutex;
+    using mutex_type      = Mutex;
     using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
     using stateful        = typename allocator_traits::stateful;
@@ -54,69 +54,51 @@ public:
     constexpr allocator_storage& operator=(allocator_storage const&) noexcept = default;
 
     constexpr void* allocate_node(size_type size, size_type alignment) noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return allocator_traits::allocate_node(alloc, size, alignment);
     }
 
     constexpr void* allocate_array(size_type count, size_type size, size_type alignment) noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return allocator_traits::allocate_array(alloc, count, size, alignment);
     }
 
     constexpr void deallocate_node(void* ptr, size_type size, size_type alignment) noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         allocator_traits::deallocate_node(alloc, ptr, size, alignment);
     }
 
     constexpr void deallocate_array(void* ptr, size_type count, size_type size,
                                     size_type alignment) noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         allocator_traits::deallocate_array(alloc, ptr, count, size, alignment);
-    }
-
-    constexpr size_type max_node_size() const noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
-        return allocator_traits::max_node_size(alloc);
-    }
-
-    constexpr size_type max_array_size() const noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
-        return allocator_traits::max_array_size(alloc);
-    }
-
-    constexpr size_type max_alignment() const noexcept {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
-        return allocator_traits::max_alignment(alloc);
     }
 
     constexpr auto try_allocate_node(size_type size, size_type alignment) noexcept
         requires composable_allocator<allocator_type>
     {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return composable_traits::try_allocate_node(alloc, size, alignment);
     }
 
     constexpr auto try_allocate_array(size_type count, size_type size, size_type alignment) noexcept
         requires composable_allocator<allocator_type>
     {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return composable_traits::try_allocate_array(alloc, count, size, alignment);
     }
 
     constexpr auto try_deallocate_node(void* ptr, size_type size, size_type alignment) noexcept
         requires composable_allocator<allocator_type>
     {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return composable_traits::try_deallocate_node(alloc, ptr, size, alignment);
     }
 
@@ -124,9 +106,27 @@ public:
                                         size_type alignment) noexcept
         requires composable_allocator<allocator_type>
     {
-        lock_guard_t<mutex_type> guard{*this};
-        auto&&                   alloc = allocator();
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
         return composable_traits::try_deallocate_array(alloc, ptr, count, size, alignment);
+    }
+
+    constexpr size_type max_node_size() const noexcept {
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
+        return allocator_traits::max_node_size(alloc);
+    }
+
+    constexpr size_type max_array_size() const noexcept {
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
+        return allocator_traits::max_array_size(alloc);
+    }
+
+    constexpr size_type max_alignment() const noexcept {
+        lock_guard_t<storage_mutex> guard{*this};
+        auto&&                      alloc = allocator();
+        return allocator_traits::max_alignment(alloc);
     }
 
     constexpr decltype(auto) allocator() noexcept {
@@ -136,11 +136,11 @@ public:
         return storage_type::allocator();
     }
 
-    constexpr decltype(auto) guard() noexcept {
-        return detail::lock_allocator(allocator(), static_cast<mutex_type&>(*this));
+    constexpr auto guard() noexcept {
+        return detail::lock_allocator(allocator(), static_cast<storage_mutex&>(*this));
     }
-    constexpr decltype(auto) guard() const noexcept {
-        return detail::lock_allocator(allocator(), static_cast<mutex_type&>(*this));
+    constexpr auto guard() const noexcept {
+        return detail::lock_allocator(allocator(), static_cast<storage_mutex&>(*this));
     }
 
     constexpr bool is_composable() const noexcept {
@@ -212,8 +212,8 @@ reference_shared    reference_type(meta::true_type  stateful, meta::true_type  s
 
 template <raw_allocator RawAllocator>
 struct [[nodiscard]] allocator_reference final {
-    using type        = decltype(reference_type(meta::declval<is_stateful_allocator<RawAllocator>>(),
-                                                meta::declval<  is_shared_allocator<RawAllocator>>()));
+    using type = decltype(reference_type(meta::declval<is_stateful_allocator<RawAllocator>>(),
+                                         meta::declval<  is_shared_allocator<RawAllocator>>()));
 };
 template <raw_allocator RawAllocator>
 using allocator_reference_t = typename allocator_reference<RawAllocator>::type;
@@ -236,7 +236,7 @@ protected:
     }
 
     constexpr RawAllocator& allocator() const noexcept {
-        SALT_ASSERT(allocator_ != nullptr);
+        SALT_ASSERT(is_valid());
         return *allocator_;
     }
 
@@ -485,7 +485,7 @@ public:
     template <raw_allocator RawAllocator>
         requires(not meta::derived_from<meta::decay_t<RawAllocator>, reference_storage>)
     constexpr reference_storage(RawAllocator&& allocator) noexcept {
-        static_assert(sizeof(wrapper<RawAllocator>) <=
+        static_assert(sizeof(wrapper<meta::remove_cvref_t<RawAllocator>>) <=
                               sizeof(wrapper<default_instantiation>),
                       "requires all instantiations to have certain maximum size");
         memory::construct_at(
@@ -496,7 +496,7 @@ public:
     template <raw_allocator RawAllocator>
         requires thread_safe_allocator<RawAllocator>
     constexpr reference_storage(RawAllocator const& allocator) noexcept {
-        static_assert(sizeof(wrapper<RawAllocator>) <=
+        static_assert(sizeof(wrapper<meta::remove_cvref_t<RawAllocator>>) <=
                               sizeof(wrapper<default_instantiation>),
                       "requires all instantiations to have certain maximum size");
         memory::construct_at(reinterpret_cast<wrapper<RawAllocator>*>(storage_), allocator);
