@@ -129,6 +129,10 @@ public:
         return allocator_traits::max_alignment(alloc);
     }
 
+    constexpr explicit operator bool() const noexcept {
+        return storage_type::operator bool();
+    }
+
     constexpr decltype(auto) allocator() noexcept {
         return storage_type::allocator();
     }
@@ -526,6 +530,10 @@ public:
 
     constexpr bool is_composable() const noexcept {
         return allocator().is_composable();
+    }
+
+    constexpr explicit operator bool() const noexcept {
+        return true;
     }
 
     constexpr allocator_type& allocator() const noexcept {

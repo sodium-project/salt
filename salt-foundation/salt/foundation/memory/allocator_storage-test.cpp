@@ -117,6 +117,7 @@ TEST_CASE("salt::memory::allocator_adapter", "[salt-memory/allocator_storage.hpp
 
     memory::heap_allocator                            allocator;
     memory::allocator_adapter<memory::heap_allocator> adapter(meta::move(allocator));
+    CHECK_FALSE(adapter.is_composable());
     check_allocate_node<memory::heap_allocator>(adapter);
 
     memory::allocator_adapter<memory::heap_allocator> new_adapter(meta::move(adapter));
@@ -134,6 +135,8 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
         test_allocator                              allocator;
         memory::allocator_reference<test_allocator> ref_stateful(allocator);
         CHECK_FALSE(ref_stateful.is_composable());
+
+        CHECK(ref_stateful);
         CHECK(ref_stateful.max_node_size()  == allocator.max_node_size());
         CHECK(ref_stateful.max_array_size() == allocator.max_node_size());
         CHECK(ref_stateful.max_alignment()  == memory::detail::max_alignment);
@@ -150,6 +153,8 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
         memory::heap_allocator                              allocator;
         memory::allocator_reference<memory::heap_allocator> ref_stateless(allocator);
         CHECK_FALSE(ref_stateless.is_composable());
+    
+        CHECK(ref_stateless);
         CHECK(ref_stateless.max_node_size()  == allocator.max_node_size());
         CHECK(ref_stateless.max_array_size() == allocator.max_node_size());
         CHECK(ref_stateless.max_alignment()  == memory::detail::max_alignment);
@@ -160,8 +165,10 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
 
     SECTION("test any allocator reference") {
         std::allocator<int>             allocator;
-        memory::any_allocator_reference any_ref{allocator};
+        memory::any_allocator_reference any_ref(allocator);
         CHECK_FALSE(any_ref.is_composable());
+
+        CHECK(any_ref);
         CHECK(any_ref.max_node_size()  == static_cast<std::size_t>(-1));
         CHECK(any_ref.max_array_size() == static_cast<std::size_t>(-1));
         CHECK(any_ref.max_alignment()  == memory::detail::max_alignment);
@@ -186,6 +193,27 @@ TEST_CASE("salt::memory::allocator_storage", "[salt-memory/allocator_storage.hpp
         auto* p1 = ref.try_allocate_array(count, size, align);
         CHECK_FALSE(p1);
         CHECK_FALSE(ref.try_deallocate_array(p1, count, size, align));
+    }
+
+    SECTION("test composable any allocator reference") {
+        stub_allocator const            allocator;
+        memory::any_allocator_reference ref(allocator);
+        CHECK(ref.is_composable());
+
+        auto const size  = 1;
+        auto const align = 1;
+        auto const count = 8;
+
+        memory::any_allocator_reference other_ref(allocator);
+        other_ref = ref;
+
+        auto* p0 = other_ref.try_allocate_node(size, align);
+        CHECK_FALSE(p0);
+        CHECK_FALSE(other_ref.try_deallocate_node(p0, size, align));
+
+        auto* p1 = other_ref.try_allocate_array(count, size, align);
+        CHECK_FALSE(p1);
+        CHECK_FALSE(other_ref.try_deallocate_array(p1, count, size, align));
     }
 
     SECTION("test get stored allocator") {
