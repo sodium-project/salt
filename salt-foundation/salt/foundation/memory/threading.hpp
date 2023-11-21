@@ -37,6 +37,49 @@ namespace detail {
 
 // clang-format off
 template <typename Mutex>
+struct [[nodiscard]] mutex_adapter {
+    constexpr mutex_adapter() noexcept = default;
+
+    constexpr mutex_adapter(mutex_adapter const&) noexcept {}
+
+    constexpr mutex_adapter& operator=(mutex_adapter const&) noexcept {
+        return *this;
+    }
+
+    constexpr void lock() const noexcept {
+        mutex_.lock();
+    }
+
+    constexpr void unlock() const noexcept {
+        mutex_.unlock();
+    }
+
+    constexpr bool try_lock() const noexcept {
+        return mutex_.try_lock();
+    }
+
+protected:
+    ~mutex_adapter() = default;
+
+    mutable Mutex mutex_;
+};
+
+template <>
+struct [[nodiscard]] mutex_adapter<no_mutex> {
+    mutex_adapter() noexcept = default;
+
+    constexpr void   lock() const noexcept {}
+    constexpr void unlock() const noexcept {}
+
+    constexpr bool try_lock() const noexcept {
+        return true;
+    }
+
+protected:
+    ~mutex_adapter() = default;
+};
+
+template <typename Mutex>
 struct [[nodiscard]] dummy_lock_guard final {
     using mutex_type = Mutex;
 
@@ -93,12 +136,12 @@ constexpr auto lock_allocator(Allocator& allocator, Mutex& mutex) noexcept {
 } // namespace detail
 
 template <typename Allocator, lockable Mutex>
-using mutex_t = meta::condition<is_thread_safe_allocator<Allocator>, no_mutex, Mutex>;
+using mutex_for_t = meta::condition<is_thread_safe_allocator<Allocator>, no_mutex, Mutex>;
 
 template <typename Storage, lockable Mutex>
-using storage_mutex_t = mutex_t<typename Storage::allocator_type, Mutex>;
+using mutex_adapter_t = detail::mutex_adapter<mutex_for_t<typename Storage::allocator_type, Mutex>>;
 
-template <lockable Mutex>
+template <typename Mutex>
 using lock_guard_t = meta::condition<meta::same_as<Mutex, no_mutex>,
                                      detail::dummy_lock_guard<Mutex>, std::lock_guard<Mutex>>;
 
