@@ -102,7 +102,7 @@ struct [[maybe_unused]] object_leak_detector : Handler {
     }
 
     constexpr object_leak_detector& operator=(object_leak_detector&& other) noexcept {
-        allocated_ = exchange(other.allocated_, 0);
+        allocated_ = utility::exchange(other.allocated_, 0);
         return *this;
     }
 

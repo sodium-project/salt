@@ -28,6 +28,7 @@ salt_static_library(foundation
             "salt/foundation/memory/memory_arena-test.cpp"
             "salt/foundation/memory/memory_pool-test.cpp"
             "salt/foundation/memory/memory_pool_list-test.cpp"
+            "salt/foundation/memory/memory_stack-test.cpp"
             "salt/foundation/memory/static_allocator-test.cpp"
             "salt/foundation/memory/uninitialized_construct-test.cpp"
             "salt/foundation/memory/uninitialized_storage-test.cpp"

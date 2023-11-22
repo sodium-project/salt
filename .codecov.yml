@@ -19,6 +19,7 @@ ignore:
   - "**/meta"
   - "**/foundation/utility"
   - "**/foundation/logging"
+  - "**/foundation/memory/allocator_traits.hpp"
   - "**/foundation/memory/addressof.hpp"
   - "**/foundation/memory/construct_at.hpp"
   - "**/foundation/memory/debugging.cpp"

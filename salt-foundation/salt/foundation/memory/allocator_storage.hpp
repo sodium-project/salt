@@ -341,52 +341,45 @@ protected:
 template <>
 class [[nodiscard]] reference_storage<any_allocator> {
     // clang-format off
-    struct [[nodiscard]] composable_allocator_concept {
+    struct [[nodiscard]] allocator_concept {
         using size_type       = std::size_t;
         using difference_type = std::ptrdiff_t;
-
-        virtual constexpr bool is_composable() const noexcept = 0;
-
-        virtual constexpr void* try_allocate_node (size_type, size_type)            noexcept = 0;
-        virtual constexpr void* try_allocate_array(size_type, size_type, size_type) noexcept = 0;
-
-        virtual constexpr bool try_deallocate_node (void*, size_type, size_type)            noexcept = 0;
-        virtual constexpr bool try_deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
-
-        virtual constexpr ~composable_allocator_concept() = default;
-    };
-
-    struct [[nodiscard]] allocator_concept : composable_allocator_concept {
-        using size_type       = typename composable_allocator_concept::size_type;
-        using difference_type = typename composable_allocator_concept::difference_type;
         using stateful        = meta::true_type;
 
-        virtual constexpr void clone(void* storage) const noexcept = 0;
+        virtual constexpr void clone(void* const) const noexcept = 0;
 
-        virtual constexpr void* allocate_node (size_type, size_type)            noexcept = 0;
-        virtual constexpr void* allocate_array(size_type, size_type, size_type) noexcept = 0;
+        virtual constexpr void*     allocate_node(size_type, size_type) noexcept = 0;
+        virtual constexpr void* try_allocate_node(size_type, size_type) noexcept = 0;
 
-        virtual constexpr void deallocate_node (void*, size_type, size_type)            noexcept = 0;
-        virtual constexpr void deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
+        virtual constexpr void*     allocate_array(size_type, size_type, size_type) noexcept = 0;
+        virtual constexpr void* try_allocate_array(size_type, size_type, size_type) noexcept = 0;
+
+        virtual constexpr void     deallocate_node(void*, size_type, size_type) noexcept = 0;
+        virtual constexpr bool try_deallocate_node(void*, size_type, size_type) noexcept = 0;
+
+        virtual constexpr void     deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
+        virtual constexpr bool try_deallocate_array(void*, size_type, size_type, size_type) noexcept = 0;
+
+        virtual constexpr bool is_composable() const noexcept = 0;
 
         virtual constexpr ~allocator_concept() = default;
 
         constexpr size_type max_node_size() const noexcept {
-            return max_size(allocation_type::node);
+            return max_size(query_type::node);
         }
 
         constexpr size_type max_array_size() const noexcept {
-            return max_size(allocation_type::array);
+            return max_size(query_type::array);
         }
 
         constexpr size_type max_alignment() const noexcept {
-            return max_size(allocation_type::alignment);
+            return max_size(query_type::alignment);
         }
 
     protected:
-        enum class allocation_type : std::uint8_t { node, array, alignment };
+        enum class query_type : std::uint8_t { node, array, alignment };
 
-        virtual constexpr size_type max_size(allocation_type) const noexcept = 0;
+        virtual constexpr size_type max_size(query_type) const noexcept = 0;
     };
     // clang-format on
 
@@ -454,23 +447,22 @@ class [[nodiscard]] reference_storage<any_allocator> {
 
         constexpr bool try_deallocate_array(void* array, size_type count, size_type size,
                                             size_type alignment) noexcept override {
-            // clang-format off
             if constexpr (is_composable_allocator<allocator_type>)
-                return composable_traits::try_deallocate_array(allocator(), array, count, size, alignment);
+                return composable_traits::try_deallocate_array(allocator(), array, count, size,
+                                                               alignment);
             else
                 return false;
-            // clang-format on
         }
 
         constexpr bool is_composable() const noexcept override {
             return is_composable_allocator<allocator_type>;
         }
 
-        constexpr size_type max_size(allocation_type type) const noexcept override {
+        constexpr size_type max_size(query_type type) const noexcept override {
             auto&& alloc = allocator();
-            if (type == allocation_type::node)
+            if (query_type::node == type)
                 return allocator_traits::max_node_size(alloc);
-            else if (type == allocation_type::array)
+            else if (query_type::array == type)
                 return allocator_traits::max_array_size(alloc);
             return allocator_traits::max_alignment(alloc);
         }
