@@ -64,7 +64,7 @@ struct memory_stack : default_leak_detector<detail::memory_stack_leak_handler> {
         auto offset = align_offset(stack_.top() + fence, alignment);
 
         if (auto const grow_size = fence + offset + size + fence;
-            !stack_.top() || grow_size > capacity_left()) {
+            !stack_.top() || grow_size > capacity()) {
             auto block = arena_.allocate_block();
             stack_     = detail::fixed_stack(block.memory);
             offset     = align_offset(stack_.top() + fence, alignment);
@@ -113,7 +113,7 @@ struct memory_stack : default_leak_detector<detail::memory_stack_leak_handler> {
         arena_.shrink_to_fit();
     }
 
-    constexpr size_type capacity_left() const noexcept {
+    constexpr size_type capacity() const noexcept {
         return static_cast<size_type>(end() - stack_.top());
     }
 
@@ -290,7 +290,7 @@ struct [[nodiscard]] composable_traits<memory_stack<BlockAllocator>> final {
                        size_type       size     ,
                        size_type       alignment) noexcept
     {
-        return allocator.try_allocate_array(count * size, alignment);
+        return allocator.try_allocate(count * size, alignment);
     }
 
     static constexpr bool
@@ -301,7 +301,7 @@ struct [[nodiscard]] composable_traits<memory_stack<BlockAllocator>> final {
     {
         (void)size;
         (void)alignment;
-        return allocator.arena_.owns(node);
+        return allocator.arena_.contains(node);
     }
 
     static constexpr bool
@@ -311,7 +311,7 @@ struct [[nodiscard]] composable_traits<memory_stack<BlockAllocator>> final {
                          size_type       size     ,
                          size_type       alignment) noexcept
     {
-        return try_deallocate_node(allocator, array, count, size, alignment);
+        return try_deallocate_node(allocator, array, count * size, alignment);
     }
 };
 // clang-format on

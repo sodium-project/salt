@@ -9,36 +9,46 @@ TEST_CASE("salt::memory::memory_stack", "[salt-memory/memory_stack.hpp]") {
     using test_allocator = test_allocator<std::unordered_map>;
     using memory_stack   = memory_stack<allocator_reference<test_allocator>>;
 
+    detail::memory_stack_leak_handler()(0);
+
     test_allocator allocator;
     memory_stack   stack{memory_stack::min_block_size(100), allocator};
     CHECK(stack.allocator().block_size() == 232u);
 
     CHECK(allocator.allocated_count() == 1u);
-    CHECK(stack.capacity_left()       == 100u);
+    CHECK(stack.capacity()            == 100u);
 
-    auto capacity = stack.capacity_left();
+    auto capacity = stack.capacity();
     SECTION("empty unwind") {
         auto marker = stack.top();
         stack.unwind(marker);
         CHECK(capacity <= 100u);
-        CHECK(allocator.allocated_count() == 1u);
+        CHECK(allocator.allocated_count()   == 1u);
         CHECK(allocator.deallocated_count() == 0u);
+
+        auto m0 = marker;
+        auto m1 = marker;
+        m0.index = 0;
+        m1.index = 1;
+        CHECK_FALSE(m0 == m1);
     }
 
     SECTION("normal allocation/unwind") {
         stack.allocate(10u, 1u);
-        CHECK(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
+        CHECK(stack.capacity() == capacity - 10 - 2 * detail::debug_fence_size);
 
         auto marker = stack.top();
-        auto memory = stack.allocate(10u, 16u);
+        auto memory = composable_traits<memory_stack>::try_allocate_node(stack, 10u, 16u);
         CHECK(is_aligned(memory, 16u));
 
         stack.unwind(marker);
-        CHECK(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
+        CHECK(stack.capacity() == capacity - 10 - 2 * detail::debug_fence_size);
 
-        CHECK(stack.allocate(10u, 16u) == memory);
+        auto array = composable_traits<memory_stack>::try_allocate_array(stack, 1u, 10u, 16u);
+        CHECK(array == memory);
         CHECK(allocator.allocated_count() == 1u);
         CHECK(allocator.deallocated_count() == 0u);
+        CHECK(composable_traits<memory_stack>::try_deallocate_array(stack, array, 1u, 10u, 16u));
     }
 
     SECTION("multiple block allocation/unwind") {
@@ -47,10 +57,11 @@ TEST_CASE("salt::memory::memory_stack", "[salt-memory/memory_stack.hpp]") {
         stack.allocate(10, 1);
         auto marker = stack.top();
 
-        auto old_next = stack.next_capacity();
+        auto old_next = allocator_traits<memory_stack>::max_node_size(stack);
 
         stack.allocate(100, 1);
-        CHECK(stack.next_capacity() > old_next);
+        CHECK(allocator_traits<memory_stack>::max_array_size(stack) > old_next);
+        CHECK(allocator_traits<memory_stack>::max_alignment (stack) > 0);
         CHECK(allocator.allocated_count() == 2u);
         CHECK(allocator.deallocated_count() == 0u);
 
