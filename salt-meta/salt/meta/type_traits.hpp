@@ -173,7 +173,7 @@ struct [[nodiscard]] is_constructible_from
 template <typename T>
 struct [[nodiscard]] template_parameter;
 
-template <template <typename ...> class C, typename T>
+template <template <typename...> class C, typename T>
 struct [[nodiscard]] template_parameter<C<T>> final {
     using type = T;
 };

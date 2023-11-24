@@ -26,4 +26,5 @@ ignore:
   - "**/foundation/memory/launder.hpp"
   - "**/foundation/memory/memory_block.hpp"
   - "**/foundation/memory/memory_pool_type.hpp"
+  - "**/foundation/memory/temporary_allocator.*"
   - "**/foundation/memory/threading.hpp"
