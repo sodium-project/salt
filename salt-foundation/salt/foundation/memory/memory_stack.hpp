@@ -140,7 +140,7 @@ private:
     }
 
     memory_arena<allocator_type> arena_;
-    detail::fixed_stack   stack_;
+    detail::fixed_stack          stack_;
 
     friend allocator_traits<memory_stack>;
     friend composable_traits<memory_stack>;

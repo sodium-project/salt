@@ -30,6 +30,7 @@ salt_static_library(foundation
             "salt/foundation/memory/memory_pool_list-test.cpp"
             "salt/foundation/memory/memory_stack-test.cpp"
             "salt/foundation/memory/static_allocator-test.cpp"
+            "salt/foundation/memory/temporary_allocator-test.cpp"
             "salt/foundation/memory/uninitialized_construct-test.cpp"
             "salt/foundation/memory/uninitialized_storage-test.cpp"
 
@@ -39,6 +40,7 @@ salt_static_library(foundation
             # memory sub-module sources
             "salt/foundation/memory/debugging.cpp"
             "salt/foundation/memory/detail/debug_helpers.cpp"
+            "salt/foundation/memory/temporary_allocator.cpp"
         LINK
             fast_io::fast_io
             salt::platform)

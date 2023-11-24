@@ -1,76 +1,13 @@
 #include <salt/foundation/memory/allocator_storage.hpp>
 #include <salt/foundation/memory/memory_stack.hpp>
+#include <salt/foundation/memory/detail/test_allocator.hpp>
 
 #include <catch2/catch.hpp>
 
-struct memory_info {
-    void*       memory;
-    std::size_t size, align;
-};
-
-struct test_allocator {
-    using allocator_type  = salt::memory::heap_allocator;
-    using size_type       = std::size_t;
-    using difference_type = std::ptrdiff_t;
-    using stateful        = salt::meta::true_type;
-
-    void* allocate_node(size_type size, size_type alignment) noexcept {
-        auto mem        = allocator_type{}.allocate_node(size, alignment);
-        last_allocated_ = {mem, size, alignment};
-        allocated_[mem] = last_allocated_;
-        return mem;
-    }
-
-    void deallocate_node(void* ptr, size_type size, size_type alignment) noexcept {
-        ++dealloc_count_;
-        auto it = allocated_.find(ptr);
-
-        bool const miss = it->second.size != size || it->second.align != alignment;
-        if (it == allocated_.end() || miss) {
-            last_valid_ = false;
-            return;
-        } else {
-            allocated_.erase(it);
-        }
-        allocator_type{}.deallocate_node(ptr, size, alignment);
-    }
-
-    size_type max_node_size() const noexcept {
-        return size_type(-1);
-    }
-
-    bool valid() noexcept {
-        return last_valid_;
-    }
-
-    void reset() noexcept {
-        last_valid_    = true;
-        dealloc_count_ = 0u;
-    }
-
-    memory_info last_allocated() const noexcept {
-        return last_allocated_;
-    }
-
-    size_type allocated_count() const noexcept {
-        return allocated_.size();
-    }
-
-    size_type deallocated_count() const noexcept {
-        return dealloc_count_;
-    }
-
-private:
-    using allocation_map = std::unordered_map<void*, memory_info>;
-    allocation_map allocated_;
-    memory_info    last_allocated_;
-    size_type      dealloc_count_ = 0u;
-    bool           last_valid_    = true;
-};
-
 TEST_CASE("salt::memory::memory_stack", "[salt-memory/memory_stack.hpp]") {
     using namespace salt::memory;
-    using memory_stack = memory_stack<allocator_reference<test_allocator>>;
+    using test_allocator = test_allocator<std::unordered_map>;
+    using memory_stack   = memory_stack<allocator_reference<test_allocator>>;
 
     test_allocator allocator;
     memory_stack   stack{memory_stack::min_block_size(100), allocator};
