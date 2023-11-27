@@ -107,6 +107,11 @@ concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) 
 };
 
 template <typename T>
+concept abstract = std::is_abstract_v<T>;
+template <typename T>
+concept not_abstract = not abstract<T>;
+
+template <typename T>
 concept empty = meta::is_empty_v<T>;
 template <typename T>
 concept object = std::is_object_v<T>;
