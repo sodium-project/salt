@@ -3,12 +3,15 @@
 #include <catch2/catch.hpp>
 
 TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]") {
-    using memory_pool_list    = salt::memory::memory_pool_list<>;
+    using memory_pool_list  = salt::memory::memory_pool_list<>;
+    using allocator_traits  = salt::memory::allocator_traits<memory_pool_list>;
+
     const auto       max_size = 16u;
     memory_pool_list pool{max_size, 4000};
-    CHECK(pool.max_node_size() == max_size);
+    CHECK(allocator_traits::max_node_size (pool) == max_size);
+    CHECK(allocator_traits::max_array_size(pool) >= 4000);
+    CHECK(allocator_traits::max_alignment (pool) >= 8);
     CHECK(pool.capacity() <= 4000u);
-    CHECK(pool.next_capacity() >= 4000u);
     CHECK(pool.allocator().growth_factor() == 2.0f);
 
     for (auto node_size = 0u; node_size < max_size; ++node_size) {
@@ -35,10 +38,10 @@ TEST_CASE("salt::memory::memory_pool_list", "[salt-memory/memory_pool_list.hpp]"
         }
     }
 
-    SECTION("single array alloc") {
-        auto memory = pool.allocate_array(4, 4);
+    SECTION("single array alloc") {        
+        auto memory = allocator_traits::allocate_array(pool, 4, 4, 0);
         CHECK(memory);
-        pool.deallocate_array(memory, 4, 4);
+        allocator_traits::deallocate_array(pool, memory, 4, 4, 0);
     }
 
     SECTION("array alloc/dealloc") {

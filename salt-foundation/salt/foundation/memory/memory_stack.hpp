@@ -16,7 +16,7 @@ struct [[nodiscard]] stack_marker final {
     // clang-format off
     constexpr stack_marker(std::size_t        idx,
                            fixed_stack const& stack,
-                           std::byte const*   block_end) noexcept
+                           std::byte   const* block_end) noexcept
             : index{idx}, top{stack.top()}, end{block_end} {}
     // clang-format on
 

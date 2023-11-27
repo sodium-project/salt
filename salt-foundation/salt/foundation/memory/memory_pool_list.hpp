@@ -237,7 +237,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
                   size_type       alignment)
     {
         (void)alignment;
-        auto* memory = allocator.allocate_node();
+        auto* memory = allocator.allocate_node(size);
         allocator.on_allocate(size);
         return memory;
     }
@@ -261,7 +261,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
                     size_type       alignment) noexcept
     {
         (void)alignment;
-        allocator.deallocate_node(node);
+        allocator.deallocate_node(node, size);
         allocator.on_deallocate(size);
     }
 
@@ -273,7 +273,7 @@ struct [[nodiscard]] allocator_traits<memory_pool_list<PoolType, BucketType, Raw
                      size_type       alignment) noexcept
     {
         (void)alignment;
-        allocator.free_list_.deallocate(array, count * size);
+        allocator.deallocate_array(array, count, size);
         allocator.on_deallocate(count * size);
     }
 

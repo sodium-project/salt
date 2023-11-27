@@ -155,12 +155,12 @@ struct [[nodiscard]] temporary_stack_initializer {
 temporary_stack&
 get_temporary_stack(std::size_t size = temporary_stack_initializer::default_stack_size) noexcept;
 
-// A stateful RawAllocator that handles temporary allocations. It works similar to alloca() but uses
-// a seperate Memory_stack for the allocations, instead of the actual program stack. This avoids the
-// stack overflow error and is portable, with a similar speed. All allocations done in the scope of
-// the allocator object are automatically freed when the object is destroyed.
+// A stateful `RawAllocator` that handles temporary allocations. It works similar to `alloca()` but
+// uses a seperate `memory_stack` for the allocations, instead of the actual program stack. This
+// avoids the stack overflow error and is portable, with a similar speed. All allocations done in
+// the scope of the allocator object are automatically freed when the object is destroyed.
 class [[nodiscard]] temporary_allocator {
-    using stack_unwinder  = memory_stack_unwinder<temporary_stack>;
+    using stack_unwinder = memory_stack_unwinder<temporary_stack>;
 
 public:
     using allocator_type  = temporary_allocator;
