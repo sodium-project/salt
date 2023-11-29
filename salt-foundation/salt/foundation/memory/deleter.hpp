@@ -16,7 +16,7 @@ struct [[nodiscard]] deallocator final : allocator_reference<RawAllocator> {
 
     constexpr deallocator() noexcept = default;
 
-    constexpr deallocator(allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit(false) deallocator(allocator_reference<RawAllocator> allocator) noexcept
             : allocator_reference<RawAllocator>{allocator} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {
@@ -39,7 +39,7 @@ struct [[nodiscard]] deallocator<T[], RawAllocator> final : allocator_reference<
 
     constexpr deallocator() noexcept : size_{0u} {};
 
-    constexpr deallocator(allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit(false) deallocator(allocator_reference<RawAllocator> allocator) noexcept
             : allocator_reference<RawAllocator>{allocator}, size_{0u} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {
@@ -69,7 +69,7 @@ struct [[nodiscard]] deleter : allocator_reference<RawAllocator> {
 
     constexpr deleter() noexcept = default;
 
-    constexpr deleter(allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit(false) deleter(allocator_reference<RawAllocator> allocator) noexcept
             : allocator_reference<RawAllocator>{allocator} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {
@@ -93,7 +93,7 @@ struct [[nodiscard]] deleter<T[], RawAllocator> final : allocator_reference<RawA
 
     constexpr deleter() noexcept : size_{0u} {};
 
-    constexpr deleter(allocator_reference<RawAllocator> allocator) noexcept
+    constexpr explicit(false) deleter(allocator_reference<RawAllocator> allocator) noexcept
             : allocator_reference<RawAllocator>{allocator}, size_{0u} {}
 
     constexpr void operator()(pointer_type pointer) noexcept {

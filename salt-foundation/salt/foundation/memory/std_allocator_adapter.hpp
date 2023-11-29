@@ -82,17 +82,17 @@ public:
     constexpr std_allocator_adapter() noexcept requires(not is_stateful_allocator)
             : allocator_reference{allocator_type{}} {}
 
-    constexpr explicit std_allocator_adapter(allocator_reference const& allocator) noexcept
+    constexpr explicit(false) std_allocator_adapter(allocator_reference const& allocator) noexcept
             : allocator_reference{allocator} {}
 
     template <typename Allocator>
         requires not_derived_from<Allocator, std_allocator_adapter>
-    constexpr std_allocator_adapter(Allocator& allocator) noexcept
+    constexpr explicit(false) std_allocator_adapter(Allocator& allocator) noexcept
             : allocator_reference{allocator} {}
 
     template <typename Allocator>
         requires not_derived_from<Allocator, std_allocator_adapter>
-    constexpr std_allocator_adapter(Allocator const& allocator) noexcept
+    constexpr explicit(false) std_allocator_adapter(Allocator const& allocator) noexcept
             : allocator_reference{allocator} {}
 
     template <typename U>

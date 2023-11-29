@@ -29,7 +29,7 @@ public:
         // use this to prevent constructor being chosen instead of move
         not meta::derived_from<meta::decay_t<Allocator>, allocator_storage>
         and meta::only_constructible<StorageType, Allocator>)
-    constexpr allocator_storage(Allocator&& allocator) noexcept
+    constexpr explicit(false) allocator_storage(Allocator&& allocator) noexcept
             : storage_type{meta::forward<Allocator>(allocator)} {}
 
     template <typename OtherStorage>
@@ -169,7 +169,7 @@ struct [[nodiscard]] direct_storage : allocator_traits<RawAllocator>::allocator_
 
     constexpr direct_storage() noexcept = default;
 
-    constexpr direct_storage(allocator_type&& allocator) noexcept
+    constexpr explicit(false) direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(meta::move(allocator)) {}
 
     constexpr direct_storage(direct_storage&& other) noexcept
@@ -232,7 +232,7 @@ struct [[nodiscard]] reference_storage_base<RawAllocator, reference_stateful> {
 protected:
     constexpr reference_storage_base() noexcept : allocator_{nullptr} {}
 
-    constexpr explicit reference_storage_base(RawAllocator& allocator) noexcept
+    constexpr explicit(false) reference_storage_base(RawAllocator& allocator) noexcept
             : allocator_{&allocator} {}
 
     constexpr bool is_valid() const noexcept {
@@ -254,7 +254,7 @@ struct [[nodiscard]] reference_storage_base<RawAllocator, reference_stateless> {
 protected:
     constexpr reference_storage_base() noexcept = default;
 
-    constexpr explicit reference_storage_base(RawAllocator const&) noexcept {}
+    constexpr explicit(false) reference_storage_base(RawAllocator const&) noexcept {}
 
     constexpr bool is_valid() const noexcept {
         return true;
@@ -272,7 +272,7 @@ struct [[nodiscard]] reference_storage_base<RawAllocator, reference_shared> {
 protected:
     constexpr reference_storage_base() noexcept : allocator_{} {}
 
-    constexpr explicit reference_storage_base(RawAllocator const& allocator) noexcept
+    constexpr explicit(false) reference_storage_base(RawAllocator const& allocator) noexcept
             : allocator_{allocator} {}
 
     constexpr bool is_valid() const noexcept {
@@ -310,10 +310,10 @@ public:
 
     constexpr reference_storage() noexcept = default;
 
-    constexpr explicit reference_storage(allocator_type& allocator) noexcept
+    constexpr explicit(false) reference_storage(allocator_type& allocator) noexcept
             : base{allocator} {}
 
-    constexpr explicit reference_storage(allocator_type const& allocator) noexcept
+    constexpr explicit(false) reference_storage(allocator_type const& allocator) noexcept
             : base{allocator} {}
 
     constexpr reference_storage(reference_storage const&) noexcept = default;
@@ -480,7 +480,7 @@ public:
     // clang-format off
     template <raw_allocator RawAllocator>
         requires(not meta::derived_from<meta::decay_t<RawAllocator>, reference_storage>)
-    constexpr reference_storage(RawAllocator&& allocator) noexcept {
+    constexpr explicit(false) reference_storage(RawAllocator&& allocator) noexcept {
         static_assert(sizeof(wrapper<meta::remove_cvref_t<RawAllocator>>) <=
                               sizeof(wrapper<default_instantiation>),
                       "requires all instantiations to have certain maximum size");
@@ -491,7 +491,7 @@ public:
 
     template <raw_allocator RawAllocator>
         requires thread_safe_allocator<RawAllocator>
-    constexpr reference_storage(RawAllocator const& allocator) noexcept {
+    constexpr explicit(false) reference_storage(RawAllocator const& allocator) noexcept {
         static_assert(sizeof(wrapper<meta::remove_cvref_t<RawAllocator>>) <=
                               sizeof(wrapper<default_instantiation>),
                       "requires all instantiations to have certain maximum size");
@@ -499,10 +499,10 @@ public:
     }
     // clang-format on
 
-    constexpr reference_storage(allocator_concept& allocator) noexcept
+    constexpr explicit(false) reference_storage(allocator_concept& allocator) noexcept
             : reference_storage{static_cast<allocator_concept const&>(allocator)} {}
 
-    constexpr reference_storage(allocator_concept const& allocator) noexcept {
+    constexpr explicit(false) reference_storage(allocator_concept const& allocator) noexcept {
         allocator.clone(&storage_);
     }
 
