@@ -26,6 +26,7 @@ ignore:
   - "**/foundation/debugging.*"
   - "**/foundation/default_allocator.hpp"
   - "**/foundation/deleter.hpp"
+  - "**/foundation/iterator_adapter.hpp"
   - "**/foundation/launder.hpp"
   - "**/foundation/memory_block.hpp"
   - "**/foundation/memory_pool_type.hpp"
