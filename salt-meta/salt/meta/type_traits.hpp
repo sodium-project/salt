@@ -19,6 +19,11 @@ using std::add_pointer_t;
 using std::void_t;
 using std::tuple;
 using std::apply;
+using std::random_access_iterator_tag;
+using std::contiguous_iterator_tag;
+
+template <typename T>
+using iter_diff_t = std::iter_difference_t<T>;
 
 template <typename T>
 inline constexpr bool is_class_v = std::is_class_v<T>;

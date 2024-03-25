@@ -11,6 +11,9 @@ using std::integral;
 using std::movable;
 using std::predicate;
 using std::same_as;
+using std::input_iterator;
+using std::forward_iterator;
+using std::random_access_iterator;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
