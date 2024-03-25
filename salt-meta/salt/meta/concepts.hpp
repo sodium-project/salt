@@ -2,21 +2,24 @@
 
 namespace salt::meta {
 
+using std::common_reference_with;
 using std::constructible_from;
 using std::convertible_to;
-using std::integral;
-using std::same_as;
-using std::movable;
-using std::common_reference_with;
-using std::derived_from;
 using std::default_initializable;
+using std::derived_from;
+using std::integral;
+using std::movable;
 using std::predicate;
+using std::same_as;
+using std::input_iterator;
+using std::forward_iterator;
+using std::random_access_iterator;
 
 template <typename T, std::size_t Size>
 concept same_size = requires { requires sizeof(T) == Size; };
 
 template <typename T, std::size_t Alignment>
-concept same_alignment = requires { requires alignof(T) == Alignment; };
+concept same_align = requires { requires alignof(T) == Alignment; };
 
 template <typename... Ts>
 concept distinct = are_distinct_v<Ts...>;
@@ -107,6 +110,13 @@ concept boolean_testable = detail::boolean_testable_impl<T> and requires(T&& t) 
 };
 
 template <typename T>
+concept abstract = std::is_abstract_v<T>;
+template <typename T>
+concept not_abstract = not abstract<T>;
+
+template <typename T>
+concept empty = meta::is_empty_v<T>;
+template <typename T>
 concept object = std::is_object_v<T>;
 template <typename T>
 concept function = std::is_function_v<T>;
@@ -135,5 +145,8 @@ concept not_volatile = std::is_volatile_v<T> and std::is_volatile_v<U>;
 
 template <typename T, typename... Args>
 concept underlying_constructible = std::conjunction_v<is_constructible_from<T, Args>...>;
+
+template <typename T, typename... Args>
+concept only_constructible = requires(Args&&... args) { new T{std::forward<Args>(args)...}; };
 
 } // namespace salt::meta

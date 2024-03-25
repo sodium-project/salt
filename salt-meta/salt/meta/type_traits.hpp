@@ -11,6 +11,7 @@ using common_type = std::common_type_t<T...>;
 using std::bool_constant;
 using std::true_type;
 using std::false_type;
+using std::decay_t;
 using std::remove_cv_t;
 using std::remove_cvref_t;
 using std::remove_all_extents_t;
@@ -18,6 +19,11 @@ using std::add_pointer_t;
 using std::void_t;
 using std::tuple;
 using std::apply;
+using std::random_access_iterator_tag;
+using std::contiguous_iterator_tag;
+
+template <typename T>
+using iter_diff_t = std::iter_difference_t<T>;
 
 template <typename T>
 inline constexpr bool is_class_v = std::is_class_v<T>;
@@ -45,14 +51,19 @@ inline constexpr bool is_contains_v = is_contains<T, Ts...>::value;
 
 namespace detail {
 
-template <bool> struct [[nodiscard]] if_;
+template <bool>
+struct [[nodiscard]] if_;
 
-template <> struct [[nodiscard]] if_<true> final {
-    template <typename T, typename F> using type = T;
+template <>
+struct [[nodiscard]] if_<true> final {
+    template <typename T, typename F>
+    using type = T;
 };
 
-template <> struct [[nodiscard]] if_<false> final {
-    template <typename T, typename F> using type = F;
+template <>
+struct [[nodiscard]] if_<false> final {
+    template <typename T, typename F>
+    using type = F;
 };
 
 } // namespace detail
@@ -163,5 +174,16 @@ template <typename T, typename U>
 struct [[nodiscard]] is_constructible_from
         : std::bool_constant<std::is_nothrow_destructible_v<T> && std::is_constructible_v<T, U>> {
 };
+
+template <typename T>
+struct [[nodiscard]] template_parameter;
+
+template <template <typename...> class C, typename T>
+struct [[nodiscard]] template_parameter<C<T>> final {
+    using type = T;
+};
+
+template <typename T>
+using template_parameter_t = typename template_parameter<T>::type;
 
 } // namespace salt::meta
