@@ -1,10 +1,16 @@
 #pragma once
+#include <concepts>
+#include <iterator>
+#include <tuple>
+#include <type_traits>
 
-#include <salt/meta/are_distinct.hpp>
-#include <salt/meta/contains.hpp>
-#include <salt/meta/convertible_to.hpp>
-#include <salt/meta/is_specialization.hpp>
-#include <salt/meta/parameter_pack.hpp>
-#include <salt/meta/remove_all_pointers.hpp>
+// clang-format off
+#include <salt/meta/declval.hpp>
+#include <salt/meta/type_traits.hpp>
 #include <salt/meta/concepts.hpp>
+#include <salt/meta/relocatable.hpp>
+#include <salt/meta/memcpyable.hpp>
+#include <salt/meta/compare.hpp>
+#include <salt/meta/integer.hpp>
 #include <salt/meta/prvalue.hpp>
+// clang-format on

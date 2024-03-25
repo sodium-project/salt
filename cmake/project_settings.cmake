@@ -18,7 +18,12 @@ add_library(salt::project_settings INTERFACE IMPORTED)
 target_compile_features(salt::project_settings INTERFACE cxx_std_23)
 
 # Enable output of compile commands during generation. This file will be used by clangd.
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS AND NOT DEFINED ENV{CMAKE_EXPORT_COMPILE_COMMANDS})
+  set(CMAKE_EXPORT_COMPILE_COMMANDS "ON" CACHE BOOL "Enable/Disable output of compile commands during generation.")
+  mark_as_advanced(CMAKE_EXPORT_COMPILE_COMMANDS)
+
+  message(STATUS "CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+endif()
 
 # Let CMake know where to find custom modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
@@ -489,7 +494,7 @@ endif()
 # Don't do this in normal code. Instead add the necessary compile/linker flags to salt::project_settings.
 if(SALT_TARGET_OS STREQUAL "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "(C|c)lang")
     set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
-    if(SALT_BUILD_TYPE STREQUAL "Debug")
+    if(SALT_BUILD_TYPE STREQUAL "DEBUG")
         string(APPEND CMAKE_C_FLAGS_${SALT_BUILD_TYPE}   " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")
         string(APPEND CMAKE_CXX_FLAGS_${SALT_BUILD_TYPE} " -D_DEBUG -D_MT -Xclang --dependent-lib=msvcrtd")        
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -626,14 +631,31 @@ if(SALT_WARNINGS_AS_ERRORS)
 endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
+# C++ Options.
+#-----------------------------------------------------------------------------------------------------------------------
+
+target_compile_options(salt::project_settings INTERFACE
+    # Disable exceptions support and use the variant of C++ libraries without exceptions.
+    -fno-exceptions
+    # Disable generation of information about every class with virtual functions for use by the C++ runtime type
+    # identification features (`dynamic_cast' and `typeid').
+    -fno-rtti)
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Sanitizers.
 #-----------------------------------------------------------------------------------------------------------------------
 
-if(NOT SALT_TARGET_OS STREQUAL "Windows")
-    option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
-    option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread  sanitizer."            NO )
-    option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
-    option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
+option(SALT_ENABLE_SANITIZER_ADDRESS   "Enable address sanitizer."            YES)
+option(SALT_ENABLE_SANITIZER_THREAD    "Enable thread sanitizer."             NO )
+option(SALT_ENABLE_SANITIZER_UNDEFINED "Enable undefined behavior sanitizer." YES)
+option(SALT_ENABLE_SANITIZER_LEAK      "Enable leak sanitizer."               NO )
+
+if(SALT_TARGET_OS STREQUAL "Windows")
+    message(WARNING "Address Sanitizer is not currently supported on Windows. Turning it off...")
+    set(SALT_ENABLE_SANITIZER_ADDRESS   NO)
+    set(SALT_ENABLE_SANITIZER_THREAD    NO)
+    set(SALT_ENABLE_SANITIZER_UNDEFINED NO)
+    set(SALT_ENABLE_SANITIZER_LEAK      NO)
 endif()
 
 if((SALT_ENABLE_SANITIZER_LEAK OR SALT_ENABLE_SANITIZER_ADDRESS) AND SALT_ENABLE_SANITIZER_THREAD)
@@ -660,8 +682,9 @@ endif()
 
 list(JOIN SALT_SANITIZERS "," SALT_ENABLED_SANITIZERS)
 
-target_compile_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
-
-target_link_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
+if(SALT_BUILD_TYPE STREQUAL "DEBUG")
+    target_compile_options(salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
+    target_link_options   (salt::project_settings INTERFACE -fsanitize=${SALT_ENABLED_SANITIZERS})
+endif()
 
 # code: language="CMake" insertSpaces=true tabSize=4

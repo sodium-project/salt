@@ -6,7 +6,7 @@
 #define SALT_TARGET_LINUX   (0)
 
 // clang-format off
-#if defined(_WIN64)
+#if defined(_WIN64) && !defined(__WINE__)
 #    undef  SALT_TARGET_WINDOWS
 #    define SALT_TARGET_WINDOWS (1)
 #elif defined(__APPLE__)

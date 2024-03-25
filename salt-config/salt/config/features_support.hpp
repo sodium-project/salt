@@ -1,28 +1,61 @@
 #pragma once
 
-#if defined(SALT_CLANG_FULL_VERSION) && SALT_CLANG_FULL_VERSION < 140000
-#    define SALT_HAS_NO_CONCEPTS (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 192930134
-#    define SALT_HAS_NO_CONCEPTS (1)
+// Since Apple put a big willie on the implementation of features from C++20, so I can't use part of
+// the features from C++20. What could be better than that?
+#if SALT_TARGET_MACOSX && SALT_CLANG_FULL_VERSION <= 130106
+#    define SALT_HAS_NO_RANGES (1)
 #endif
 
-#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VERSION < 140000)
-#    define SALT_HAS_NO_CONSTEVAL (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 193030704
-#    define SALT_HAS_NO_CONSTEVAL (1)
+#define SALT_HAS_ATTRIBUTE_ASSUME         (0)
+#define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED (0)
+#define SALT_HAS_ATTRIBUTE_ALWAYS_INLINE  (0)
+#define SALT_HAS_ATTRIBUTE_DLLIMPORT      (0)
+#define SALT_HAS_ATTRIBUTE_STDCALL        (0)
+#define SALT_HAS_ATTRIBUTE_MALLOC         (0)
+#define SALT_HAS_ATTRIBUTE_CONST          (0)
+#define SALT_HAS_ATTRIBUTE_NONNULL        (0)
+
+#if __has_cpp_attribute(clang::assume)
+#    undef SALT_HAS_ATTRIBUTE_ASSUME
+#    define SALT_HAS_ATTRIBUTE_ASSUME (1)
 #endif
 
-#if defined(SALT_CLANG_FULL_VERSION) && (SALT_TARGET(APPLE) || SALT_CLANG_FULL_VERSION < 140000)
-#    define SALT_HAS_NO_SOURCE_LOCATION (1)
-#elif defined(SALT_MSC_FULL_VERSION) && SALT_MSC_FULL_VERSION < 193030704
-#    define SALT_HAS_NO_SOURCE_LOCATION (1)
+#if __has_cpp_attribute(gnu::assume_aligned)
+#    undef SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED
+#    define SALT_HAS_ATTRIBUTE_ASSUME_ALIGNED (1)
 #endif
 
-#if defined(SALT_HAS_NO_CONSTEVAL)
-#    define SALT_CONSTEVAL constexpr
-#else
-#    define SALT_CONSTEVAL consteval
+#if __has_cpp_attribute(clang::always_inline)
+#    undef SALT_HAS_ATTRIBUTE_ALWAYS_INLINE
+#    define SALT_HAS_ATTRIBUTE_ALWAYS_INLINE (1)
 #endif
+
+#if __has_cpp_attribute(gnu::dllimport) && !defined(__WINE__)
+#    undef SALT_HAS_ATTRIBUTE_DLLIMPORT
+#    define SALT_HAS_ATTRIBUTE_DLLIMPORT (1)
+#endif
+
+#if __has_cpp_attribute(gnu::stdcall) && !defined(__WINE__)
+#    undef SALT_HAS_ATTRIBUTE_STDCALL
+#    define SALT_HAS_ATTRIBUTE_STDCALL (1)
+#endif
+
+#if __has_cpp_attribute(gnu::malloc)
+#    undef SALT_HAS_ATTRIBUTE_MALLOC
+#    define SALT_HAS_ATTRIBUTE_MALLOC (1)
+#endif
+
+#if __has_cpp_attribute(gnu::const)
+#    undef SALT_HAS_ATTRIBUTE_CONST
+#    define SALT_HAS_ATTRIBUTE_CONST (1)
+#endif
+
+#if __has_cpp_attribute(gnu::returns_nonnull)
+#    undef SALT_HAS_ATTRIBUTE_NONNULL
+#    define SALT_HAS_ATTRIBUTE_NONNULL (1)
+#endif
+
+#define SALT_HAS_ATTRIBUTE(X) SALT_JOIN(SALT_HAS_ATTRIBUTE_, X)
 
 #if __has_cpp_attribute(msvc::no_unique_address)
 // MSVC implements [[no_unique_address]] as a silent no-op currently. If/when MSVC breaks its C++
@@ -43,8 +76,16 @@
 #    define SALT_NO_UNIQUE_ADDRESS /* nothing */
 #endif
 
-// Since Apple put a big willie on the implementation of features from C++20, so I can't use part of
-// the features from C++20. What could be better than that?
-#if SALT_TARGET_MACOSX && SALT_CLANG_FULL_VERSION <= 130106
-#    define SALT_HAS_NO_RANGES (1)
-#endif
+namespace salt::config {
+
+namespace detail {
+struct [[nodiscard]] empty                        final {};
+struct [[nodiscard]] empty_with_no_unique_address final {
+    SALT_NO_UNIQUE_ADDRESS int   a;
+    SALT_NO_UNIQUE_ADDRESS empty e;
+};
+} // namespace detail
+
+constexpr bool has_no_unique_address = sizeof(detail::empty_with_no_unique_address) == 4;
+
+} // namespace salt::config
